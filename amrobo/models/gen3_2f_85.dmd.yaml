@@ -1,19 +1,22 @@
 
 directives:
-- add_directives:
-    file: package://amrobo/two_bins_w_cameras.dmd.yaml
-
-- add_frame:
-    name: mustard_origin
-    X_PF:
-        base_frame: world
-        rotation: !Rpy { deg: [-90.0, 0.0, -90.0 ]}
-        translation: [-0.05, -0.5, 0.09515]
-
 - add_model:
-    name: oreo_mega_stuf
-    file: package://amrobo/oreo_mega_stuf.sdf
-
+    name: gen3
+    file: package://amrobo/gen3_description/urdf/GEN3_URDF_V12_with_damping.urdf
+    default_joint_positions:
+        Actuator1: [0]
+        Actuator2: [0.56]
+        Actuator3: [0]
+        Actuator4: [1.02]
+        Actuator5: [0]
+        Actuator6: [1.29]
+        Actuator7: [0]
 - add_weld:
-    parent: mustard_origin
-    child: mustard::base_link_mustard
+    parent: world
+    child: gen3::base_link
+- add_model:
+    name: 2f_85
+    file: package://amrobo/robotiq_description/urdf/robotiq_2f_85.urdf
+- add_weld:
+    parent: gen3::end_effector_link
+    child: 2f_85::robotiq_arg2f_base_link
