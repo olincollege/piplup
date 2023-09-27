@@ -1,0 +1,11 @@
+<?xml version="1.0"?>
+<package>
+  <name>amrobo</name>
+  <version>0.0.1</version>
+  <description>
+    This package contains meshes and the environment setup for the kinova test setup.
+  </description>
+  <author email="ksuresh@olin.edu">Krishna Suresh</author>
+  <maintainer email="ksuresh@olin.edu">Krishna Suresh</maintainer>
+  <!-- <license>BSD</license> TODO -->
+</package>

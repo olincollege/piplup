@@ -1,0 +1,19 @@
+
+directives:
+- add_directives:
+    file: package://amrobo/two_bins_w_cameras.dmd.yaml
+
+- add_frame:
+    name: mustard_origin
+    X_PF:
+        base_frame: world
+        rotation: !Rpy { deg: [-90.0, 0.0, -90.0 ]}
+        translation: [-0.05, -0.5, 0.09515]
+
+- add_model:
+    name: oreo_mega_stuf
+    file: package://amrobo/oreo_mega_stuf.sdf
+
+- add_weld:
+    parent: mustard_origin
+    child: mustard::base_link_mustard
