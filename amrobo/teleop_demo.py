@@ -2,12 +2,13 @@
 from pydrake.all import *
 import numpy as np
 import matplotlib.pyplot as plt
+import pygame
 
 from kinova_station import KinovaStation, EndEffectorTarget, GripperTarget
 from controllers import GamepadTeleopController
 
-station = KinovaStation(time_step=0.002, n_dof=7)
-station.SetupSinglePegScenario(gripper_type="2f_85", arm_damping=False)
+station = KinovaStation(time_step=0.0005, n_dof=7)
+station.SetupSinglePegScenario(gripper_type="2f_85", arm_damping=True)
 station.ConnectToMeshcatVisualizer()
 station.Finalize()
 
@@ -17,6 +18,10 @@ station = builder.AddSystem(station)
 
 Kp = 10*np.eye(6)
 Kd = 2*np.sqrt(Kp)
+
+pygame.init()
+pygame.joystick.init()
+gamepad = pygame.joystick.Joystick(0)
 
 controller = builder.AddSystem(GamepadTeleopController(
     gamepad, # TODO get from pygame

@@ -77,7 +77,6 @@ def main():
     pygame.init()
     pygame.joystick.init()
     joystick = pygame.joystick.Joystick(0)
-    print(joystick.get_hat(0))
 
     system = Gamepad(joystick)
     simulator = Simulator(system)
