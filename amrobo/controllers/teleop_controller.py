@@ -14,9 +14,9 @@ class GamepadTeleopController(BasicController):
         BasicController.__init__(self, command_type=command_type)
 
         self.gamepad = gamepad
-        self.mode = 0
+        self.mode = 1
         self.linear_speed = 0.5
-        self.angular_speed = 100
+        self.angular_speed = 5
         self.deadzone = 0.1
 
         self.Kp = Kp
@@ -46,15 +46,21 @@ class GamepadTeleopController(BasicController):
 
         # If X button pressed, switch modes
         if self.gamepad.get_button(2):
-            target_twist = np.zeros(6)
-            if self.mode == 0:
-                self.mode = 1
-            else:
-                self.mode = 0
-            print(self.mode)
+            self.mode = 1
+        if self.gamepad.get_button(1):
+            self.mode = 0
 
-        # Set vels according to joystick inputs
-        control_input = [-self.gamepad.get_axis(1), -self.gamepad.get_axis(0), -self.gamepad.get_axis(4)]
+        def CreateStickDeadzone(x, y):
+            stick = np.array([x, y])
+            deadzone = 0.3
+            m = np.linalg.norm(stick)
+            if m < deadzone:
+                return np.array([0, 0])
+            over = (m - deadzone) / (1 - deadzone)
+            return stick * over / m
+        left = CreateStickDeadzone(-self.gamepad.get_axis(1), -self.gamepad.get_axis(0))
+        right = CreateStickDeadzone(-self.gamepad.get_axis(4), -self.gamepad.get_axis(3))
+        control_input = [left[0],left[1],right[0]]
         if np.linalg.norm(control_input) < self.deadzone:
             control_input = np.zeros(3)
         if self.mode == 0:
@@ -62,12 +68,12 @@ class GamepadTeleopController(BasicController):
             self.linear_speed += self.gamepad.get_hat(0)[1] * 0.1
 
         elif self.mode == 1:
-            R_current = RotationMatrix(RollPitchYaw(current_pose[:3]))
+            R_current = RotationMatrix(RollPitchYaw(self.target_pose[:3]))
             R_delta = RotationMatrix(RollPitchYaw(np.array(control_input) * self.angular_speed * time_delta))
             self.target_pose[:3] = RollPitchYaw(R_current.multiply(R_delta)).vector()
-            print()
-            print(np.array(control_input) * self.angular_speed * time_delta)
-            print(self.target_pose[:3])
+            # print()
+            # print(np.array(control_input) * self.angular_speed * time_delta)
+            # print(self.target_pose[:3])
             self.angular_speed += self.gamepad.get_hat(0)[1] * 0.1
 
         

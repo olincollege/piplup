@@ -8,7 +8,13 @@ from kinova_station import KinovaStation, EndEffectorTarget, GripperTarget
 from controllers import GamepadTeleopController
 
 station = KinovaStation(time_step=0.0005, n_dof=7)
-station.SetupSinglePegScenario(gripper_type="2f_85", arm_damping=False)
+station.AddGround()
+station.AddArmWith2f85Gripper(arm_damping=False)
+station.ConnectToDrakeVisualizer()
+X = RigidTransform()
+X.set_translation([0.5,0,0.1])
+X.set_rotation(RotationMatrix(RollPitchYaw([-np.pi/2,0,0])))
+station.AddManipulandFromFile("/home/ksuresh/drake/manipulation/models/ycb/sdf/003_cracker_box.sdf", X)
 station.ConnectToMeshcatVisualizer()
 station.Finalize()
 
