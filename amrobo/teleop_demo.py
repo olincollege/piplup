@@ -8,7 +8,7 @@ from kinova_station import KinovaStation, EndEffectorTarget, GripperTarget
 from controllers import GamepadTeleopController
 
 station = KinovaStation(time_step=0.0005, n_dof=7)
-station.SetupSinglePegScenario(gripper_type="2f_85", arm_damping=True)
+station.SetupSinglePegScenario(gripper_type="2f_85", arm_damping=False)
 station.ConnectToMeshcatVisualizer()
 station.Finalize()
 

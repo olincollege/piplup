@@ -20,6 +20,7 @@ class CommandSequenceController(BasicController):
 
         self.Kp = Kp  # PD gains
         self.Kd = Kd
+        
 
     def CalcGripperCommand(self, context, output):
         t = context.get_time()

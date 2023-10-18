@@ -3,6 +3,8 @@ from kinova_station import EndEffectorTarget
 from controllers.basic_controller import *
 from controllers.command_sequence import *
 
+
+
 class GamepadTeleopController(BasicController):
     def __init__(self, gamepad, 
                        command_type = EndEffectorTarget.kTwist, 
@@ -13,26 +15,33 @@ class GamepadTeleopController(BasicController):
 
         self.gamepad = gamepad
         self.mode = 0
-        self.linear_speed = 3
-        self.angular_speed = 3
-        self.deadzone = 0.05
+        self.linear_speed = 0.5
+        self.angular_speed = 100
+        self.deadzone = 0.1
 
         self.Kp = Kp
         self.Kd = Kd
+        self.target_pose = None
 
     def CalcGripperCommand(self, context, output):
         t = context.get_time()
         pygame.event.get()
         gripper_close = self.gamepad.get_axis(2)
         gripper_open = self.gamepad.get_axis(5)
-        cmd_pos = np.array([(gripper_close - gripper_open)/2 + 0.5])  # TODO from gamepad
+        cmd_pos = np.array([(gripper_close - gripper_open)/2 + 0.5]) 
         output.SetFromVector(cmd_pos)
 
     def CalcEndEffectorCommand(self, context, output):
         t = context.get_time()
+        current_pose = self.ee_pose_port.Eval(context)
+        current_twist = self.ee_twist_port.Eval(context)
 
-        target_twist = np.zeros(6)
+        if self.target_pose is None:
+            self.prev_t = t
+            self.target_pose = current_pose
 
+        time_delta = t-self.prev_t
+        self.prev_t = t
         pygame.event.get()
 
         # If X button pressed, switch modes
@@ -42,34 +51,36 @@ class GamepadTeleopController(BasicController):
                 self.mode = 1
             else:
                 self.mode = 0
+            print(self.mode)
 
         # Set vels according to joystick inputs
         control_input = [-self.gamepad.get_axis(1), -self.gamepad.get_axis(0), -self.gamepad.get_axis(4)]
         if np.linalg.norm(control_input) < self.deadzone:
             control_input = np.zeros(3)
         if self.mode == 0:
-            target_twist[3] = control_input[0] * self.linear_speed
-            target_twist[4] = control_input[1] * self.linear_speed
-            target_twist[5] = control_input[2] * self.linear_speed
-
+            self.target_pose[3:] += np.array(control_input) * self.linear_speed * time_delta 
             self.linear_speed += self.gamepad.get_hat(0)[1] * 0.1
 
         elif self.mode == 1:
-            target_twist[0] = control_input[0] * self.angular_speed
-            target_twist[1] = control_input[1] * self.angular_speed
-            target_twist[2] = control_input[2] * self.angular_speed
-
+            R_current = RotationMatrix(RollPitchYaw(current_pose[:3]))
+            R_delta = RotationMatrix(RollPitchYaw(np.array(control_input) * self.angular_speed * time_delta))
+            self.target_pose[:3] = RollPitchYaw(R_current.multiply(R_delta)).vector()
+            print()
+            print(np.array(control_input) * self.angular_speed * time_delta)
+            print(self.target_pose[:3])
             self.angular_speed += self.gamepad.get_hat(0)[1] * 0.1
 
-        print(target_twist)
-
-        current_pose = self.ee_pose_port.Eval(context)
-        current_twist = self.ee_twist_port.Eval(context)
-
-        # Compute pose and twist errors
+        
+        target_twist = np.zeros(6)
         twist_err = target_twist - current_twist
+        pose_err = self.target_pose - current_pose
 
-        cmd = self.Kd@twist_err
+        R_current = RotationMatrix(RollPitchYaw(current_pose[:3]))
+        R_target = RotationMatrix(RollPitchYaw(self.target_pose[:3]))
+        R_err = R_target.multiply(R_current.transpose())
+        pose_err[:3] = RollPitchYaw(R_err).vector()
+
+        cmd = self.Kp@pose_err + self.Kd@twist_err
 
         output.SetFromVector(cmd)
 
