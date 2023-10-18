@@ -46,10 +46,16 @@ from pydrake.all import (
     StateInterpolatorWithDiscreteDerivative,
     UnitInertia,
     LinearBushingRollPitchYaw,
-    FixedOffsetFrame
+    FixedOffsetFrame,
+    Diagram
 )
 
 from .utils import ConfigureParser
+
+
+class ScopeStation(Diagram):
+
+
 class ExtractBodyPose(LeafSystem):
     def __init__(self, body_poses_output_port, body_index):
         LeafSystem.__init__(self)
