@@ -27,10 +27,9 @@ class Gamepad(LeafSystem):
         self.linear_speed = 0.5
         self.angular_speed = 0.5
 
-        self.linear_vel = [0.0,0.0,0.0]
-        self.angular_vel = [0.0,0.0,0.0]
-
         state = self.DeclareDiscreteState(6)
+
+        self.DeclareVectorOutputPort(name="gripper_vel", size=1, calc=self.update_gripper)
 
         self.DeclareStateOutputPort("vel", state)
 
@@ -39,6 +38,11 @@ class Gamepad(LeafSystem):
             offset_sec=0.0,
             update=self.update
         )
+
+    def update_gripper(self, context, output):
+        gripper_close = self.joystick.get_axis(2)
+        gripper_open = self.joystick.get_axis(5)
+        output.SetFromVector((gripper_close - gripper_open)/2 + 0.5)
 
     def update(self, context, state):
         pygame.event.get()
@@ -81,7 +85,8 @@ def main():
     simulator.set_target_realtime_rate(1.)
     
     context.get_mutable_discrete_state_vector().SetFromVector([0.,0.,0.,0.,0.,0.])
-    simulator.AdvanceTo(60)
+    while True:
+        simulator.AdvanceTo(simulator.get_context().get_time() + 1.0)
 
 
 if __name__ == '__main__':
