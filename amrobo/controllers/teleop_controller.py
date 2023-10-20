@@ -23,12 +23,16 @@ class GamepadTeleopController(BasicController):
         self.Kd = Kd
         self.target_pose = None
 
+    def SetGripperCommandType(self, context, output):
+        command_type = GripperTarget.kVelocity
+        output.SetFrom(AbstractValue.Make(command_type))
+
     def CalcGripperCommand(self, context, output):
         t = context.get_time()
         pygame.event.get()
         gripper_close = self.gamepad.get_axis(2)
         gripper_open = self.gamepad.get_axis(5)
-        cmd_pos = np.array([(gripper_close - gripper_open)/2 + 0.5]) 
+        cmd_pos = np.array([(gripper_close - gripper_open)/2]) 
         output.SetFromVector(cmd_pos)
 
     def CalcEndEffectorCommand(self, context, output):
@@ -61,8 +65,7 @@ class GamepadTeleopController(BasicController):
         left = CreateStickDeadzone(-self.gamepad.get_axis(1), -self.gamepad.get_axis(0))
         right = CreateStickDeadzone(-self.gamepad.get_axis(4), -self.gamepad.get_axis(3))
         control_input = [left[0],left[1],right[0]]
-        if np.linalg.norm(control_input) < self.deadzone:
-            control_input = np.zeros(3)
+
         if self.mode == 0:
             self.target_pose[3:] += np.array(control_input) * self.linear_speed * time_delta 
             self.linear_speed += self.gamepad.get_hat(0)[1] * 0.1
