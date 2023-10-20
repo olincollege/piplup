@@ -7,6 +7,7 @@
 
 from pydrake.all import *
 from kinova_station import EndEffectorTarget, GripperTarget
+import numpy as np
 
 class BasicController(LeafSystem):
     """

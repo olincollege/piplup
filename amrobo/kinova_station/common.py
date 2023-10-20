@@ -2,16 +2,29 @@
 
 from pydrake.all import *
 import numpy as np
-from enum import Enum
+from enum import Enum, auto
+import os
 
+class EndEffectorType(Enum):
+    kNone = auto()
+    kRobotiq_2f_85 = auto()
+    kRobotiq_3f = auto()
+    kRobotiqPowerPick = auto()
+    kPunyo = auto()
+
+class JointTarget(Enum):
+    kPosition = auto()
+    kVelocity = auto()
+    kTorque = auto()
+    
 class EndEffectorTarget(Enum):
-    kPose = 1
-    kTwist = 2
-    kWrench = 3
+    kPose = auto()
+    kTwist = auto()
+    kWrench = auto()
 
 class GripperTarget(Enum):
-    kPosition = 1
-    kVelocity = 2
+    kPosition = auto()
+    kVelocity = auto()
 
 class EndEffectorWrenchCalculator(LeafSystem):
     """
@@ -156,3 +169,9 @@ def draw_points(meshcat, points, color, **kwargs):
         points.shape = (3, 1)
     colors = np.tile(np.asarray(color).reshape(3, 1), (1, points.shape[1]))
     meshcat.set_object(g.PointCloud(points, colors, **kwargs))
+
+
+def ConfigureParser(parser):
+    """Add the manipulation/package.xml index to the given Parser."""
+    package_xml = os.path.join(os.path.dirname(__file__), "../../models/package.xml")
+    parser.package_map().AddPackageXml(filename=package_xml)
