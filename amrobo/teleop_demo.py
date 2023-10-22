@@ -2,7 +2,7 @@ from pydrake.all import *
 import numpy as np
 import matplotlib.pyplot as plt
 from kinova_station import KinovaStation, EndEffectorTarget, GripperTarget
-from controllers import GamepadController, DifferentialInverseKinematicsController
+from controllers import GamepadController, DifferentialInverseKinematicsController, InverseKinematicsController
 
 station = KinovaStation(time_step=0.0005)
 station.AddGround()
@@ -18,8 +18,8 @@ controller_plant = station.GetSubsystemByName(
 frame = controller_plant.GetFrameByName("end_effector_frame")
 
 gamepad: GamepadController = builder.AddSystem(GamepadController(station.meshcat))
-diff_ik_controller: DifferentialInverseKinematicsController = builder.AddSystem(
-    DifferentialInverseKinematicsController(controller_plant, frame)
+ik_controller: InverseKinematicsController = builder.AddSystem(
+    InverseKinematicsController(controller_plant, station.meshcat)
 )
 
 builder.Connect(
@@ -29,7 +29,7 @@ builder.Connect(
 
 builder.Connect(
     gamepad.GetOutputPort("ee_command"),
-    diff_ik_controller.GetInputPort("V_WE_desired"),
+    ik_controller.GetInputPort("V_WE_desired"),
 )
 builder.Connect(
     gamepad.GetOutputPort("gripper_command"),
@@ -38,18 +38,18 @@ builder.Connect(
 
 builder.Connect(
     station.GetOutputPort("gen3.measured_position"),
-    diff_ik_controller.GetInputPort("joint_position"),
+    ik_controller.GetInputPort("joint_position"),
 )
 builder.Connect(
     station.GetOutputPort("gen3.measured_velocity"),
-    diff_ik_controller.GetInputPort("joint_velocity"),
+    ik_controller.GetInputPort("joint_velocity"),
 )
 
 builder.Connect(
-    diff_ik_controller.GetOutputPort("joint_command_velocity"),
+    ik_controller.GetOutputPort("joint_position_target"),
     station.GetInputPort("gen3.joint"),
 )
-
+station.meshcat.SetObject("test", Sphere(0.05), Rgba(0,0.5,0,0.5))
 diagram = builder.Build()
 diagram.set_name("system_diagram")
 

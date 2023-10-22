@@ -146,7 +146,7 @@ class KinovaStation(Diagram):
         )
 
         joint_type_command: PassThrough = self.builder.AddSystem(
-            PassThrough(AbstractValue.Make(JointTarget.kVelocity))
+            PassThrough(AbstractValue.Make(JointTarget.kPosition))
         )
         self.builder.ExportInput(joint_type_command.get_input_port(), "gen3.joint_type")
         self.builder.ExportOutput(
@@ -456,7 +456,7 @@ class Gen3JointController(LeafSystem):
         self.arm_velocity_port = self.DeclareVectorInputPort(
             "arm_velocity", BasicVector(self.plant.num_velocities(self.arm))
         )
-
+        self.DeclareDiscreteState(7)
         # Define output ports
         self.DeclareVectorOutputPort(
             "applied_arm_torque",
@@ -519,7 +519,7 @@ class Gen3JointController(LeafSystem):
 
         ee_twist = J@qd
         output.SetFromVector(ee_twist)
-    def CalcArmTorques(self, context, output):
+    def CalcArmTorques(self, context:Context, output):
         q = self.arm_position_port.Eval(context)
         qd = self.arm_velocity_port.Eval(context)
         self.plant.SetPositions(self.context, q)
@@ -553,9 +553,11 @@ class Gen3JointController(LeafSystem):
             qd_nom = np.zeros(self.plant.num_velocities())
 
             # Use PD controller to map desired q, qd to desired qdd
-            Kp = 1 * np.eye(self.plant.num_positions())
-            Kd = 2 * np.sqrt(Kp)  # critical damping
-            qdd_nom = Kp @ (q_nom - q) + Kd @ (qd_nom - qd)
+            Kp = 100 * np.eye(self.plant.num_positions())
+            Ki = 1 * np.eye(self.plant.num_positions())
+            Kd = 20 * np.sqrt(Kp)  # critical damping
+            context.SetDiscreteState(0, context.get_discrete_state(0).value() + Ki@(q_nom - q))
+            qdd_nom = Kp @ (q_nom - q) + context.get_discrete_state(0).value() + Kd @ (qd_nom - qd)
 
             # Compute joint torques consistent with these desired qdd
             f_ext = MultibodyForces(self.plant)

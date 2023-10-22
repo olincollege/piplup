@@ -50,7 +50,7 @@ class DifferentialInverseKinematicsController(LeafSystem):
         # params.set_nominal_joint_position(q0)
         params.set_end_effector_angular_speed_limit(2)
         params.set_end_effector_translational_velocity_limits([-2, -2, -2], [2, 2, 2])
-        # params.set_joint_centering_gain(10 * np.eye(7))
+        # params.set_joint_centering_gain(1 * np.eye(7))
         params.set_joint_velocity_limits((self.qd_min, self.qd_max))
         params.set_joint_position_limits((self.q_min, self.q_max))
 

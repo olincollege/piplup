@@ -8,7 +8,7 @@ class GamepadController(LeafSystem):
                     -------------------------
                     |                       |
                     |                       |
-                    |                       | ---> ee_command (velocity)
+                    |                       | ---> ee_command (velocity) # TODO Name this as a ee_twist
        ee_pose ---> |                       | 
                     |   GamepadController   |
                     |                       |
@@ -47,7 +47,9 @@ class GamepadController(LeafSystem):
 
         gamepad = self._meshcat.GetGamepad()
         if gamepad.index == None:
-            output.SetFromVector(np.zeros(6))
+            target_twist = np.zeros(6)
+            target_twist[-2] = 0.05
+            output.SetFromVector(target_twist)
             return 
         def CreateStickDeadzone(x, y):
             stick = np.array([x, y])
