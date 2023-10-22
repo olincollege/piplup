@@ -1,5 +1,5 @@
 from kinova_station.simulation_station import KinovaStation
-from kinova_station.common import EndEffectorTarget, GripperTarget
+from kinova_station.common import EndEffectorTarget, GripperTarget, JointTarget
 try:
     from kinova_station.hardware_station import KinovaStationHardwareInterface
 except ImportError:

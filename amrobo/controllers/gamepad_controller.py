@@ -22,12 +22,12 @@ class GamepadController(LeafSystem):
         super().__init__()
 
         self._meshcat = meshcat
-        self.linear_speed = 0.5
+        self.linear_speed = 1
         self.angular_speed = 3
 
         self.ee_pose_port = self.DeclareVectorInputPort(
                                     "ee_pose",
-                                    BasicVector(6)) 
+                                    BasicVector(7)) 
 
         self.DeclareVectorOutputPort(
             "ee_command",
@@ -40,12 +40,15 @@ class GamepadController(LeafSystem):
             BasicVector(1),
             self.CalcGripperCommand
         )
+        self.linear_mode = True
 
     def CalcEndEffectorCommand(self, context, output):
         current_pose = self.ee_pose_port.Eval(context)
 
         gamepad = self._meshcat.GetGamepad()
-
+        if gamepad.index == None:
+            output.SetFromVector(np.zeros(6))
+            return 
         def CreateStickDeadzone(x, y):
             stick = np.array([x, y])
             deadzone = 0.3
@@ -56,17 +59,20 @@ class GamepadController(LeafSystem):
             return stick * over / m
         
         left = CreateStickDeadzone(gamepad.axes[0], -gamepad.axes[1])
-        right = CreateStickDeadzone(-gamepad.axes[3], gamepad.axes[4])
-        z_vel = gamepad.button_values[3] * (self.linear_speed/2) - gamepad.button_values[0] * (self.linear_speed/2)
+        right = CreateStickDeadzone(-gamepad.axes[2], gamepad.axes[3])
+
+        if gamepad.button_values[8]:
+            self.linear_mode = True
+        if gamepad.button_values[9]:
+            self.linear_mode = False
 
         target_twist = np.zeros(6)
 
-        target_twist[3:-1] = left * self.linear_speed
-        target_twist[-1] = z_vel
-
-        ee_rot = RotationMatrix(Quaternion(current_pose[:4]))
-        
-        target_twist[:3] = ee_rot.inverse().multiply(np.array([right[1], 0, right[0]]))
+        if self.linear_mode:
+            target_twist[3:] = np.array([left[0], left[1], right[1]])* self.linear_speed
+        else:
+            ee_rot = RotationMatrix(Quaternion(current_pose[:4]))
+            target_twist[:3] = ee_rot.inverse().multiply(np.array([left[0], right[1], left[1]]))
 
         output.SetFromVector(target_twist)
         
@@ -74,8 +80,11 @@ class GamepadController(LeafSystem):
     def CalcGripperCommand(self, context, output):
         gamepad = self._meshcat.GetGamepad()
 
-        gripper_close = gamepad.axes[2]
-        gripper_open = gamepad.axes[5]
+        if gamepad.index == None:
+            output.SetFromVector(np.zeros(1))
+            return 
+        gripper_close = gamepad.button_values[6]*3
+        gripper_open = gamepad.button_values[7]*3
         cmd_pos = np.array([(gripper_close - gripper_open)/2]) 
         output.SetFromVector(cmd_pos)
     

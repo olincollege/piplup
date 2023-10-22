@@ -32,6 +32,9 @@ class KinovaStation(Diagram):
     gen3.joint --------------> |         KinovaStation         | --> gen3.measured_torque
     gen3.joint_type ---------> |                               | --> gen3.external_torque
                                |                               |
+                               |                               | --> gen3.ee_pose
+                               |                               | --> gen3.ee_twist
+                               |                               |
                                |                               | --> gripper.target_commanded
                                |                               | --> gripper.target_commanded_type
                                |                               |
@@ -192,6 +195,8 @@ class KinovaStation(Diagram):
             gen3_controller.GetOutputPort("applied_arm_torque"), "gen3.measured_torque"
         )
 
+        self.builder.ExportOutput(gen3_controller.GetOutputPort("measured_ee_pose"), "gen3.ee_pose")
+
         self.builder.ExportOutput(
             self.plant.get_generalized_contact_forces_output_port(self.gen3),
             "gen3.external_torque",
@@ -207,7 +212,7 @@ class KinovaStation(Diagram):
         )
 
         gripper_target_type_command: PassThrough = self.builder.AddSystem(
-            PassThrough(AbstractValue.Make(GripperTarget.kPosition))
+            PassThrough(AbstractValue.Make(GripperTarget.kVelocity))
         )
         self.builder.ExportInput(
             gripper_target_type_command.get_input_port(), "gripper.target_type"
@@ -459,48 +464,61 @@ class Gen3JointController(LeafSystem):
             self.CalcArmTorques,
         )
 
+        self.DeclareVectorOutputPort(
+                "measured_ee_pose",
+                BasicVector(7),
+                self.CalcEndEffectorPose,
+                {self.time_ticket()}   # indicate that this doesn't depend on any inputs,
+                )                      # but should still be updated each timestep
+        self.DeclareVectorOutputPort(
+                "measured_ee_twist",
+                BasicVector(6),
+                self.CalcEndEffectorTwist,
+                {self.time_ticket()})
         # Define some relevant frames
         self.world_frame = self.plant.world_frame()
+        self.ee_frame = self.plant.GetFrameByName("end_effector_frame")
 
-        # Set joint limits (set self.{q,qd}_{min,max})
-        self.GetJointLimits()
 
-    def GetJointLimits(self):
+    def get_multibody_plant_for_control(self):
+        return self.plant
+
+    def CalcEndEffectorPose(self, context, output):
         """
-        Iterate through self.plant to establish joint angle
-        and velocity limits.
-
-        Sets:
-
-            self.q_min
-            self.q_max
-            self.qd_min
-            self.qd_max
-
+        This method is called each timestep to determine the end-effector pose
         """
-        q_min = []
-        q_max = []
-        qd_min = []
-        qd_max = []
+        q = self.arm_position_port.Eval(context)
+        qd = self.arm_velocity_port.Eval(context)
+        self.plant.SetPositions(self.context,q)
+        self.plant.SetVelocities(self.context,qd)
 
-        joint_indices = self.plant.GetJointIndices(self.arm)
+        # Compute the rigid transform between the world and end-effector frames
+        X_ee : RigidTransform= self.plant.CalcRelativeTransform(self.context,
+                                                self.world_frame,
+                                                self.ee_frame)
+        ee_pose = np.hstack([X_ee.rotation().ToQuaternion().wxyz(), X_ee.translation()])
 
-        for idx in joint_indices:
-            joint = self.plant.get_joint(idx)
+        output.SetFromVector(ee_pose)
+    
+    def CalcEndEffectorTwist(self, context, output):
+        """
+        This method is called each timestep to determine the end-effector twist
+        """
+        q = self.arm_position_port.Eval(context)
+        qd = self.arm_velocity_port.Eval(context)
+        self.plant.SetPositions(self.context,q)
+        self.plant.SetVelocities(self.context,qd)
 
-            if joint.type_name() == "revolute":  # ignore the joint welded to the world
-                q_min.append(joint.position_lower_limit())
-                q_max.append(joint.position_upper_limit())
-                qd_min.append(joint.velocity_lower_limit())  # note that higher limits
-                qd_max.append(
-                    joint.velocity_upper_limit()
-                )  # are availible in cartesian mode
+        # Compute end-effector Jacobian
+        J = self.plant.CalcJacobianSpatialVelocity(self.context,
+                                                   JacobianWrtVariable.kV,
+                                                   self.ee_frame,
+                                                   np.zeros(3),
+                                                   self.world_frame,
+                                                   self.world_frame)
 
-        self.q_min = np.array(q_min)
-        self.q_max = np.array(q_max)
-        self.qd_min = np.array(qd_min)
-        self.qd_max = np.array(qd_max)
-
+        ee_twist = J@qd
+        output.SetFromVector(ee_twist)
     def CalcArmTorques(self, context, output):
         q = self.arm_position_port.Eval(context)
         qd = self.arm_velocity_port.Eval(context)
@@ -521,7 +539,7 @@ class Gen3JointController(LeafSystem):
             qd_nom = self.joint_target_port.Eval(context)
 
             # Select desired accelerations using a proportional controller
-            Kp = 10 * np.eye(self.plant.num_velocities())
+            Kp = 1000 * np.eye(self.plant.num_velocities())
             qdd_nom = Kp @ (qd_nom - qd)
 
             # Compute joint torques consistent with these desired accelerations
