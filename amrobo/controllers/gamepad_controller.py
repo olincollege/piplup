@@ -48,7 +48,7 @@ class GamepadController(LeafSystem):
         gamepad = self._meshcat.GetGamepad()
         if gamepad.index == None:
             target_twist = np.zeros(6)
-            target_twist[-2] = 0.05
+            # target_twist[-1] = 0.05
             output.SetFromVector(target_twist)
             return 
         def CreateStickDeadzone(x, y):

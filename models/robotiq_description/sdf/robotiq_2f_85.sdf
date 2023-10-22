@@ -97,7 +97,7 @@
           </mesh>
         </geometry>
         <material>
-          <diffuse>0.1 0.1 0.1 1.0</diffuse>
+          <diffuse>0.792156862745098 0.819607843137255 0.933333333333333 1</diffuse>
         </material>
       </visual>
       <visual name='left_outer_knuckle_fixed_joint_lump__left_outer_finger_visual_1'>
@@ -122,8 +122,9 @@
         <limit>
           <lower>-0.8757</lower>
           <upper>0</upper>
-          <effort>1000</effort>
-          <velocity>2</velocity>
+          <effort>0</effort>
+          <!-- <effort>1000</effort>
+          <velocity>2</velocity> -->
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
@@ -131,6 +132,12 @@
         </dynamics>
       </axis>
     </joint>
+    <frame name='left_inner_finger_pad' attached_to='left_inner_finger'>
+      <pose>0 -0.02202 0.03242 0 -0 0</pose>
+    </frame>
+    <frame name='left_inner_finger_bushing' attached_to='left_inner_finger'>
+      <pose>0.0, -0.016, 0.007 0 0 0</pose>
+    </frame>
     <link name='left_inner_finger'>
       <pose relative_to='left_inner_finger_joint'>0 0 0 0 -0 0</pose>
       <inertial>
@@ -174,7 +181,7 @@
           <diffuse>0.1 0.1 0.1 1.0</diffuse>
         </material>
       </visual>
-      <visual name='left_inner_finger_pad_visual_1'>
+      <visual name='left_inner_finger_pad'>
         <pose>0 -0.02202 0.03242 0 -0 0</pose>
         <geometry>
           <box>
@@ -195,8 +202,9 @@
         <limit>
           <lower>0</lower>
           <upper>0.8757</upper>
-          <effort>1000</effort>
-          <velocity>2</velocity>
+          <effort>0</effort>
+          <!-- <effort>1000</effort>
+          <velocity>2</velocity> -->
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
@@ -204,6 +212,9 @@
         </dynamics>
       </axis>
     </joint>
+    <frame name='left_inner_knuckle_bushing' attached_to='left_inner_knuckle'>
+      <pose>0.0, 0.038, 0.043 0 0 0</pose>
+    </frame>
     <link name='left_inner_knuckle'>
       <pose relative_to='left_inner_knuckle_joint'>0 0 0 0 -0 0</pose>
       <inertial>
@@ -249,8 +260,9 @@
         <limit>
           <lower>0</lower>
           <upper>0.8757</upper>
-          <effort>1000</effort>
-          <velocity>2</velocity>
+          <effort>0</effort>
+          <!-- <effort>1000</effort> -->
+          <!-- <velocity>2</velocity> -->
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
@@ -258,6 +270,9 @@
         </dynamics>
       </axis>
     </joint>
+    <frame name='right_inner_knuckle_bushing' attached_to='right_inner_knuckle'>
+      <pose>0.0, 0.038, 0.043 0 -0 0</pose>
+    </frame>
     <link name='right_inner_knuckle'>
       <pose relative_to='right_inner_knuckle_joint'>0 0 0 0 -0 0</pose>
       <inertial>
@@ -353,7 +368,7 @@
           </mesh>
         </geometry>
         <material>
-          <diffuse>0.1 0.1 0.1 1.0</diffuse>
+          <diffuse>0.792156862745098 0.819607843137255 0.933333333333333 1</diffuse>
         </material>
       </visual>
       <visual name='right_outer_knuckle_fixed_joint_lump__right_outer_finger_visual_1'>
@@ -378,8 +393,9 @@
         <limit>
           <lower>-0.8757</lower>
           <upper>0</upper>
-          <effort>1000</effort>
-          <velocity>2</velocity>
+          <effort>0</effort>
+          <!-- <effort>1000</effort> -->
+          <!-- <velocity>2</velocity> -->
         </limit>
         <dynamics>
           <spring_reference>0</spring_reference>
@@ -387,6 +403,12 @@
         </dynamics>
       </axis>
     </joint>
+    <frame name='right_inner_finger_pad' attached_to='right_inner_finger'>
+      <pose>0 -0.02202 0.03242 0 -0 0</pose>
+    </frame>
+    <frame name='right_inner_finger_bushing' attached_to='right_inner_finger'>
+      <pose>0.0, -0.016, 0.007 0 -0 0</pose>
+    </frame>
     <link name='right_inner_finger'>
       <pose relative_to='right_inner_finger_joint'>0 0 0 0 -0 0</pose>
       <inertial>
@@ -442,5 +464,31 @@
         </material>
       </visual>
     </link>
+    <drake:linear_bushing_rpy>
+      <drake:bushing_frameA>left_inner_finger_bushing</drake:bushing_frameA>
+      <drake:bushing_frameC>left_inner_knuckle_bushing</drake:bushing_frameC>
+      <drake:bushing_torque_stiffness>0 15 15</drake:bushing_torque_stiffness>
+      <drake:bushing_torque_damping>0 3 3</drake:bushing_torque_damping>
+      <drake:bushing_force_stiffness>8000 8000 8000</drake:bushing_force_stiffness>
+      <drake:bushing_force_damping>10 10 10</drake:bushing_force_damping>
+    </drake:linear_bushing_rpy>
+    <drake:linear_bushing_rpy>
+      <drake:bushing_frameA>right_inner_finger_bushing</drake:bushing_frameA>
+      <drake:bushing_frameC>right_inner_knuckle_bushing</drake:bushing_frameC>
+      <drake:bushing_torque_stiffness>0 15 15</drake:bushing_torque_stiffness>
+      <drake:bushing_torque_damping>0 3 3</drake:bushing_torque_damping>
+      <drake:bushing_force_stiffness>8000 8000 8000</drake:bushing_force_stiffness>
+      <drake:bushing_force_damping>10 10 10</drake:bushing_force_damping>
+    </drake:linear_bushing_rpy>
+    <drake:collision_filter_group name="left_inner_group">
+      <drake:member>left_inner_knuckle</drake:member>
+      <drake:member>left_inner_finger</drake:member>
+      <drake:ignored_collision_filter_group>left_inner_group</drake:ignored_collision_filter_group>
+    </drake:collision_filter_group>
+    <drake:collision_filter_group name="right_inner_group">
+      <drake:member>right_inner_knuckle</drake:member>
+      <drake:member>right_inner_finger</drake:member>
+      <drake:ignored_collision_filter_group>right_inner_group</drake:ignored_collision_filter_group>
+    </drake:collision_filter_group>
   </model>
 </sdf>

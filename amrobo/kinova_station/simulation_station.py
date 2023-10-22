@@ -113,17 +113,17 @@ class KinovaStation(Diagram):
         to the station (e.g. adding arm, gripper, manipulands) and before using
         this diagram as a system.
         """
-        match self.gripper_type:
-            case EndEffectorType.kRobotiq_2f_85:
-                # Add bushings to model the kinematic loop in the 2F-85 gripper.
-                # This needs to be done pre-Finalize
-                add_2f_85_bushings(self.plant, self.gripper)
-            case EndEffectorType.kRobotiq_3f:
-                pass
-            case EndEffectorType.kRobotiqPowerPick:
-                pass
-            case EndEffectorType.kPunyo:
-                pass
+        # match self.gripper_type:
+        #     case EndEffectorType.kRobotiq_2f_85:
+        #         # Add bushings to model the kinematic loop in the 2F-85 gripper.
+        #         # This needs to be done pre-Finalize
+        #         add_2f_85_bushings(self.plant, self.gripper)
+        #     case EndEffectorType.kRobotiq_3f:
+        #         pass
+        #     case EndEffectorType.kRobotiqPowerPick:
+        #         pass
+        #     case EndEffectorType.kPunyo:
+        #         pass
 
         self.plant.Finalize()
         self.controller_plant.Finalize()
@@ -742,7 +742,6 @@ class GripperController(LeafSystem):
         tau = -Kp @ (position_err) - Kd @ (velocity_err)
 
         output.SetFromVector(tau)
-        # output.SetFromVector(np.array([tau[0], 0, 0, 0, tau[1], 0]))
 
 
 def AddPowerPick(plant, frame_to_weld_gripper_base, X_7G=RigidTransform()):
@@ -757,7 +756,7 @@ def Add2f85(plant, frame_to_weld_gripper_base, X_7G=RigidTransform(), static=Fal
     parser = Parser(plant)
     ConfigureParser(parser)
     gripper = parser.AddModelsFromUrl(
-        f"package://amrobo/robotiq_description/urdf/robotiq_2f_85{'_static' if static else ''}.urdf"
+        f"package://amrobo/robotiq_description/sdf/robotiq_2f_85{'_static' if static else ''}.sdf"
     )[0]
     plant.WeldFrames(
         frame_to_weld_gripper_base,
