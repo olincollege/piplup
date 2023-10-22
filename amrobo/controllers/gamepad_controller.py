@@ -22,8 +22,8 @@ class GamepadController(LeafSystem):
         super().__init__()
 
         self._meshcat = meshcat
-        self.linear_speed = 1
-        self.angular_speed = 3
+        self.linear_speed = 0.1
+        self.angular_speed = 0.8
 
         self.ee_pose_port = self.DeclareVectorInputPort(
                                     "ee_pose",
@@ -71,10 +71,10 @@ class GamepadController(LeafSystem):
         target_twist = np.zeros(6)
 
         if self.linear_mode:
-            target_twist[3:] = np.array([left[0], left[1], right[1]])* self.linear_speed
+            target_twist[3:] = np.array([left[0], left[1], right[1]]) * self.linear_speed
         else:
             ee_rot = RotationMatrix(Quaternion(current_pose[:4]))
-            target_twist[:3] = ee_rot.inverse().multiply(np.array([left[0], right[1], left[1]]))
+            target_twist[:3] = ee_rot.multiply(np.array([-left[0], right[1], left[1]]) * self.angular_speed)
 
         output.SetFromVector(target_twist)
         

@@ -33,6 +33,9 @@ class InverseKinematicsController(LeafSystem):
         self.DeclareVectorOutputPort(
             "joint_position_target", BasicVector(7), self.CalcJointCommand
         )
+        self.DeclareVectorOutputPort(
+            "ee_pose_target", BasicVector(7), self.CalcEETarget,{self.time_ticket()}
+        )
         self.meshcat = meshcat
         self._plant = plant
         self._plant_context = plant.CreateDefaultContext()
@@ -66,6 +69,10 @@ class InverseKinematicsController(LeafSystem):
         X_WE_desired.set_rotation(X_WE_desired.rotation().multiply(R_delta).ToQuaternion())
         discrete_state.set_value(0, np.hstack((X_WE_desired.rotation().ToQuaternion().wxyz(), X_WE_desired.translation())))
         self.meshcat.SetTransform("/drake/test", X_WE_desired)
+
+        X_WE_desired.set_rotation(X_WE_desired.rotation().multiply(RotationMatrix(RollPitchYaw([0, 0, np.pi / 2]))))
+        self.meshcat.SetTransform("/drake/target", X_WE_desired)
+        
         # print(context.get_discrete_state(0).get_value())
 
     def CalcJointCommand(self, context, output):
@@ -100,3 +107,6 @@ class InverseKinematicsController(LeafSystem):
             q_nom = result.GetSolution(q_var)
 
         output.SetFromVector(q_nom)
+
+    def CalcEETarget(self, context : Context, output):
+        output.SetFromVector(context.get_discrete_state(0).get_value())

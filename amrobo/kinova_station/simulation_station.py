@@ -41,7 +41,7 @@ class KinovaStation(Diagram):
     gripper.target ----------> |                               | --> gripper.measured_position
     gripper.target_type -----> |                               | --> gripper.measured_velocity
                                |                               |
-                               |                               | --> camera_[NAME].rgb_image
+    *visual.ee_target_pose* -> |                               | --> camera_[NAME].rgb_image
                                |                               | --> camera_[NAME].depth_image
                                |                               | --> *camera_[NAME].label_image*
                                |                               | --> *camera_[NAME].point_cloud*
@@ -554,8 +554,8 @@ class Gen3JointController(LeafSystem):
 
             # Use PD controller to map desired q, qd to desired qdd
             Kp = 100 * np.eye(self.plant.num_positions())
-            Ki = 1 * np.eye(self.plant.num_positions())
-            Kd = 20 * np.sqrt(Kp)  # critical damping
+            Ki = 0.1 * np.eye(self.plant.num_positions())
+            Kd = 10 * np.eye(self.plant.num_positions())
             context.SetDiscreteState(0, context.get_discrete_state(0).value() + Ki@(q_nom - q))
             qdd_nom = Kp @ (q_nom - q) + context.get_discrete_state(0).value() + Kd @ (qd_nom - qd)
 
@@ -793,73 +793,3 @@ def AddGen3(plant: MultibodyPlant, include_damping=False):
         )
     )
     return gen3
-
-
-def add_2f_85_bushings(plant, gripper):
-    """
-    The Robotiq 2F-85 gripper has a complicated mechanical component which includes
-    a kinematic loop. The original URDF deals with this by using a "mimic" tag,
-    but Drake doesn't support this. So we'll try to close the loop using a bushing,
-    as described in Drake's four-bar linkage example:
-
-        https://github.com/RobotLocomotion/drake/tree/master/examples/multibody/four_bar.
-
-    This needs to be done before plant is finalized.
-    """
-    left_inner_finger = plant.GetFrameByName("left_inner_finger", gripper)
-    left_inner_knuckle = plant.GetFrameByName("left_inner_knuckle", gripper)
-    right_inner_finger = plant.GetFrameByName("right_inner_finger", gripper)
-    right_inner_knuckle = plant.GetFrameByName("right_inner_knuckle", gripper)
-
-    # Add frames which are located at the desired linkage point
-    X_finger = RigidTransform()
-    X_finger.set_translation([0.0, -0.016, 0.007])
-    X_knuckle = RigidTransform()
-    X_knuckle.set_translation([0.0, 0.038, 0.043])
-
-    left_inner_finger_bushing = FixedOffsetFrame(
-        "left_inner_finger_bushing", left_inner_finger, X_finger, gripper
-    )
-    left_inner_knuckle_bushing = FixedOffsetFrame(
-        "left_inner_knuckle_bushing", left_inner_knuckle, X_knuckle, gripper
-    )
-    right_inner_finger_bushing = FixedOffsetFrame(
-        "right_inner_finger_bushing", right_inner_finger, X_finger, gripper
-    )
-    right_inner_knuckle_bushing = FixedOffsetFrame(
-        "right_inner_knuckle_bushing", right_inner_knuckle, X_knuckle, gripper
-    )
-
-    plant.AddFrame(left_inner_finger_bushing)
-    plant.AddFrame(left_inner_knuckle_bushing)
-    plant.AddFrame(right_inner_finger_bushing)
-    plant.AddFrame(right_inner_knuckle_bushing)
-
-    # Force and torque stiffness and damping describe a revolute joint on the z-axis
-    k_xyz = 8000
-    d_xyz = 10
-    k_rpy = 15
-    d_rpy = 3
-    force_stiffness_constants = np.array([k_xyz, k_xyz, k_xyz])
-    force_damping_constants = np.array([d_xyz, d_xyz, d_xyz])
-    torque_stiffness_constants = np.array([0, k_rpy, k_rpy])
-    torque_damping_constants = np.array([0, d_rpy, k_rpy])
-
-    left_finger_bushing = LinearBushingRollPitchYaw(
-        left_inner_finger_bushing,
-        left_inner_knuckle_bushing,
-        torque_stiffness_constants,
-        torque_damping_constants,
-        force_stiffness_constants,
-        force_damping_constants,
-    )
-    right_finger_bushing = LinearBushingRollPitchYaw(
-        right_inner_finger_bushing,
-        right_inner_knuckle_bushing,
-        torque_stiffness_constants,
-        torque_damping_constants,
-        force_stiffness_constants,
-        force_damping_constants,
-    )
-    plant.AddForceElement(left_finger_bushing)
-    plant.AddForceElement(right_finger_bushing)

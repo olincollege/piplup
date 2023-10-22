@@ -23,7 +23,7 @@ ik_controller: InverseKinematicsController = builder.AddSystem(
 )
 
 builder.Connect(
-    station.GetOutputPort("gen3.ee_pose"),
+    ik_controller.GetOutputPort("ee_pose_target"),
     gamepad.GetInputPort("ee_pose")
 )
 
@@ -50,6 +50,9 @@ builder.Connect(
     station.GetInputPort("gen3.joint"),
 )
 station.meshcat.SetObject("test", Sphere(0.05), Rgba(0,0.5,0,0.5))
+ee_base = Mesh("../models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj",1)
+station.meshcat.SetObject("target", ee_base, Rgba(0,0.5,0,0.5))
+station.meshcat.SetCameraPose(np.array([1,-1,1])*0.75, np.array([0,0,0.4]))
 diagram = builder.Build()
 diagram.set_name("system_diagram")
 
