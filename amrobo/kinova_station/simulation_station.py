@@ -195,7 +195,9 @@ class KinovaStation(Diagram):
             gen3_controller.GetOutputPort("applied_arm_torque"), "gen3.measured_torque"
         )
 
-        self.builder.ExportOutput(gen3_controller.GetOutputPort("measured_ee_pose"), "gen3.ee_pose")
+        self.builder.ExportOutput(
+            gen3_controller.GetOutputPort("measured_ee_pose"), "gen3.ee_pose"
+        )
 
         self.builder.ExportOutput(
             self.plant.get_generalized_contact_forces_output_port(self.gen3),
@@ -465,20 +467,20 @@ class Gen3JointController(LeafSystem):
         )
 
         self.DeclareVectorOutputPort(
-                "measured_ee_pose",
-                BasicVector(7),
-                self.CalcEndEffectorPose,
-                {self.time_ticket()}   # indicate that this doesn't depend on any inputs,
-                )                      # but should still be updated each timestep
+            "measured_ee_pose",
+            BasicVector(7),
+            self.CalcEndEffectorPose,
+            {self.time_ticket()},  # indicate that this doesn't depend on any inputs,
+        )  # but should still be updated each timestep
         self.DeclareVectorOutputPort(
-                "measured_ee_twist",
-                BasicVector(6),
-                self.CalcEndEffectorTwist,
-                {self.time_ticket()})
+            "measured_ee_twist",
+            BasicVector(6),
+            self.CalcEndEffectorTwist,
+            {self.time_ticket()},
+        )
         # Define some relevant frames
         self.world_frame = self.plant.world_frame()
         self.ee_frame = self.plant.GetFrameByName("end_effector_frame")
-
 
     def get_multibody_plant_for_control(self):
         return self.plant
@@ -489,37 +491,40 @@ class Gen3JointController(LeafSystem):
         """
         q = self.arm_position_port.Eval(context)
         qd = self.arm_velocity_port.Eval(context)
-        self.plant.SetPositions(self.context,q)
-        self.plant.SetVelocities(self.context,qd)
+        self.plant.SetPositions(self.context, q)
+        self.plant.SetVelocities(self.context, qd)
 
         # Compute the rigid transform between the world and end-effector frames
-        X_ee : RigidTransform= self.plant.CalcRelativeTransform(self.context,
-                                                self.world_frame,
-                                                self.ee_frame)
+        X_ee: RigidTransform = self.plant.CalcRelativeTransform(
+            self.context, self.world_frame, self.ee_frame
+        )
         ee_pose = np.hstack([X_ee.rotation().ToQuaternion().wxyz(), X_ee.translation()])
 
         output.SetFromVector(ee_pose)
-    
+
     def CalcEndEffectorTwist(self, context, output):
         """
         This method is called each timestep to determine the end-effector twist
         """
         q = self.arm_position_port.Eval(context)
         qd = self.arm_velocity_port.Eval(context)
-        self.plant.SetPositions(self.context,q)
-        self.plant.SetVelocities(self.context,qd)
+        self.plant.SetPositions(self.context, q)
+        self.plant.SetVelocities(self.context, qd)
 
         # Compute end-effector Jacobian
-        J = self.plant.CalcJacobianSpatialVelocity(self.context,
-                                                   JacobianWrtVariable.kV,
-                                                   self.ee_frame,
-                                                   np.zeros(3),
-                                                   self.world_frame,
-                                                   self.world_frame)
+        J = self.plant.CalcJacobianSpatialVelocity(
+            self.context,
+            JacobianWrtVariable.kV,
+            self.ee_frame,
+            np.zeros(3),
+            self.world_frame,
+            self.world_frame,
+        )
 
-        ee_twist = J@qd
+        ee_twist = J @ qd
         output.SetFromVector(ee_twist)
-    def CalcArmTorques(self, context:Context, output):
+
+    def CalcArmTorques(self, context: Context, output):
         q = self.arm_position_port.Eval(context)
         qd = self.arm_velocity_port.Eval(context)
         self.plant.SetPositions(self.context, q)
@@ -553,11 +558,17 @@ class Gen3JointController(LeafSystem):
             qd_nom = np.zeros(self.plant.num_velocities())
 
             # Use PD controller to map desired q, qd to desired qdd
-            Kp = 100 * np.eye(self.plant.num_positions())
-            Ki = 0.1 * np.eye(self.plant.num_positions())
-            Kd = 10 * np.eye(self.plant.num_positions())
-            context.SetDiscreteState(0, context.get_discrete_state(0).value() + Ki@(q_nom - q))
-            qdd_nom = Kp @ (q_nom - q) + context.get_discrete_state(0).value() + Kd @ (qd_nom - qd)
+            Kp = 30 * np.eye(self.plant.num_positions())
+            Ki = 0 * np.eye(self.plant.num_positions())
+            Kd = 0 * np.eye(self.plant.num_positions())
+            context.SetDiscreteState(
+                0, context.get_discrete_state(0).value() + Ki @ (q_nom - q)
+            )
+            qdd_nom = (
+                Kp @ (q_nom - q)
+                + context.get_discrete_state(0).value()
+                + Kd @ (qd_nom - qd)
+            )
 
             # Compute joint torques consistent with these desired qdd
             f_ext = MultibodyForces(self.plant)
@@ -745,7 +756,17 @@ class GripperController(LeafSystem):
 
 
 def AddPowerPick(plant, frame_to_weld_gripper_base, X_7G=RigidTransform()):
-    pass  # TODO (krish-suresh)
+    parser = Parser(plant)
+    ConfigureParser(parser)
+    gripper = parser.AddModelsFromUrl(
+        "package://amrobo/robotiq_description/sdf/robotiq_power_pick_45.sdf"
+    )[0]
+    plant.WeldFrames(
+        frame_to_weld_gripper_base,
+        plant.GetFrameByName("robotiq_power_pick_base_link", gripper),
+        X_7G,
+    )
+    return gripper
 
 
 def Add3f(plant, frame_to_weld_gripper_base, X_7G=RigidTransform(), static=False):

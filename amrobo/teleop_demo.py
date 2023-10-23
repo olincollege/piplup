@@ -59,7 +59,7 @@ diagram.set_name("system_diagram")
 
 diagram_context = diagram.CreateDefaultContext()
 
-station.go_home(diagram, diagram_context, name="Home")
+station.go_home(diagram, diagram_context, name="Retract")
 
 # plt.figure()
 # plot_system_graphviz(diagram, max_depth=1)
@@ -69,7 +69,6 @@ station.go_home(diagram, diagram_context, name="Home")
 # Set up simulation
 simulator = Simulator(diagram, diagram_context)
 simulator.set_target_realtime_rate(1.0)
-simulator.set_publish_every_time_step(False)
 
 # Run simulation
 simulator.Initialize()

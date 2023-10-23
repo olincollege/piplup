@@ -1,0 +1,98 @@
+<?xml version="1.0"?>
+<sdf xmlns:drake="http://drake.mit.edu" version="1.9">
+  <model name='robotiq_power_pick_45_model'>
+    <link name='robotiq_power_pick_base_link'>
+      <inertial>
+        <pose>0 0 0.108 0 -0 0</pose>
+        <mass>1.066</mass>
+        <inertia>
+          <ixx>0.00020005</ixx>
+          <ixy>-4.2442e-10</ixy>
+          <ixz>-2.9069e-10</ixz>
+          <iyy>0.00017832</iyy>
+          <iyz>-3.4402e-08</iyz>
+          <izz>0.00013478</izz>
+        </inertia>
+      </inertial>
+      <collision name='robotiq_power_pick_base_collision'>
+        <pose>0 0 0.06 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.055 0.055 0.12</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='robotiq_power_pick_bracket_collision'>
+        <pose>0 0 0.125 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.2 0.2 0.05</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='robotiq_power_pick_cup_0_collision'>
+        <pose>0.078 -0.075 0.172 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.026</radius>
+            <length>0.01</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='robotiq_power_pick_cup_1_collision'>
+        <pose>0.078 0.075 0.172 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.026</radius>
+            <length>0.01</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='robotiq_power_pick_cup_2_collision'>
+        <pose>-0.078 0.075 0.172 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.026</radius>
+            <length>0.01</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='robotiq_power_pick_cup_3_collision'>
+        <pose>-0.078 -0.075 0.172 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.026</radius>
+            <length>0.01</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <visual name='robotiq_power_pick_visual'>
+        <pose>0 0 0 0 -0 0</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>../meshes/visual/robotiq_power_pick_45.obj</uri>
+          </mesh>
+        </geometry>
+        <material>
+          <diffuse>0.1 0.1 0.1 1.0</diffuse>
+        </material>
+      </visual>
+    </link>
+    <frame name="robotiq_power_pick_tcp" attached_to="robotiq_power_pick_base_link">
+      <pose>0 0 0.183 0 0 0</pose>
+    </frame>
+    <frame name="robotiq_power_pick_cup_0" attached_to="robotiq_power_pick_base_link">
+      <pose>0.078 -0.075 0.183 0 0 0</pose>
+    </frame>
+    <frame name="robotiq_power_pick_cup_1" attached_to="robotiq_power_pick_base_link">
+      <pose>0.078 0.075 0.183 0 0 0</pose>
+    </frame>
+    <frame name="robotiq_power_pick_cup_2" attached_to="robotiq_power_pick_base_link">
+      <pose>-0.078 0.075 0.183 0 0 0</pose>
+    </frame>
+    <frame name="robotiq_power_pick_cup_3" attached_to="robotiq_power_pick_base_link">
+      <pose>-0.078 -0.075 0.183 0 0 0</pose>
+    </frame>
+  </model>
+</sdf>
