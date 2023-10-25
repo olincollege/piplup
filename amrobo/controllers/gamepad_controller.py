@@ -8,7 +8,7 @@ class GamepadController(LeafSystem):
                     -------------------------
                     |                       |
                     |                       |
-                    |                       | ---> ee_command (velocity) # TODO Name this as a ee_twist
+                    |                       | ---> X_WE_desired
        ee_pose ---> |                       | 
                     |   GamepadController   |
                     |                       |
@@ -25,13 +25,13 @@ class GamepadController(LeafSystem):
         self.linear_speed = 0.1
         self.angular_speed = 0.8
 
-        self.ee_pose_port = self.DeclareVectorInputPort(
+        self.ee_pose_port : InputPort = self.DeclareAbstractInputPort(
                                     "ee_pose",
-                                    BasicVector(7)) 
+                AbstractValue.Make(RigidTransform()))
 
-        self.DeclareVectorOutputPort(
-            "ee_command",
-            BasicVector(6),
+        self.DeclareAbstractOutputPort(
+            "X_WE_desired",
+            AbstractValue.Make(RigidTransform()),
             self.CalcEndEffectorCommand
         )
 
@@ -43,7 +43,7 @@ class GamepadController(LeafSystem):
         self.linear_mode = True
 
     def CalcEndEffectorCommand(self, context, output):
-        current_pose = self.ee_pose_port.Eval(context)
+        current_pose : RigidTransform = self.ee_pose_port.Eval(context)
 
         gamepad = self._meshcat.GetGamepad()
         if gamepad.index == None:
@@ -73,7 +73,7 @@ class GamepadController(LeafSystem):
         if self.linear_mode:
             target_twist[3:] = np.array([left[0], left[1], right[1]]) * self.linear_speed
         else:
-            ee_rot = RotationMatrix(Quaternion(current_pose[:4]))
+            ee_rot = current_pose.rotation()
             target_twist[:3] = ee_rot.multiply(np.array([-left[0], right[1], left[1]]) * self.angular_speed)
 
         output.SetFromVector(target_twist)

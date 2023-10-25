@@ -41,7 +41,7 @@ class KinovaStation(Diagram):
     gripper.target ----------> |                               | --> gripper.measured_position
     gripper.target_type -----> |                               | --> gripper.measured_velocity
                                |                               |
-    *visual.ee_target_pose* -> |                               | --> camera_[NAME].rgb_image
+                               |                               | --> camera_[NAME].rgb_image
                                |                               | --> camera_[NAME].depth_image
                                |                               | --> *camera_[NAME].label_image*
                                |                               | --> *camera_[NAME].point_cloud*
@@ -171,6 +171,7 @@ class KinovaStation(Diagram):
         gen3_controller: Gen3JointController = self.builder.AddSystem(
             Gen3JointController(self.controller_plant, self.controller_gen3)
         )
+        self.gen3_controller = gen3_controller
         gen3_controller.set_name("gen3_controller")
         self.builder.Connect(
             joint_command.get_output_port(),
@@ -482,8 +483,34 @@ class Gen3JointController(LeafSystem):
         self.world_frame = self.plant.world_frame()
         self.ee_frame = self.plant.GetFrameByName("end_effector_frame")
 
+        self.GetJointLimits()
+
     def get_multibody_plant_for_control(self):
         return self.plant
+
+    def GetJointLimits(self):
+        q_min = []
+        q_max = []
+        qd_min = []
+        qd_max = []
+
+        joint_indices = self.plant.GetJointIndices(
+            self.plant.GetModelInstanceByName("Kinova_Gen3")
+        )
+
+        for idx in joint_indices:
+            joint = self.plant.get_joint(idx)
+
+            if joint.type_name() == "revolute":  # ignore the joint welded to the world
+                q_min.append(joint.position_lower_limit())
+                q_max.append(joint.position_upper_limit())
+                qd_min.append(joint.velocity_lower_limit())
+                qd_max.append(joint.velocity_upper_limit())
+
+        self.q_min = np.array(q_min)
+        self.q_max = np.array(q_max)
+        self.qd_min = np.array(qd_min)
+        self.qd_max = np.array(qd_max)
 
     def CalcEndEffectorPose(self, context, output):
         """
@@ -558,9 +585,9 @@ class Gen3JointController(LeafSystem):
             qd_nom = np.zeros(self.plant.num_velocities())
 
             # Use PD controller to map desired q, qd to desired qdd
-            Kp = 30 * np.eye(self.plant.num_positions())
+            Kp = 1 * np.eye(self.plant.num_positions())
             Ki = 0 * np.eye(self.plant.num_positions())
-            Kd = 0 * np.eye(self.plant.num_positions())
+            Kd = 2 * np.eye(self.plant.num_positions())
             context.SetDiscreteState(
                 0, context.get_discrete_state(0).value() + Ki @ (q_nom - q)
             )
@@ -794,7 +821,7 @@ def AddGen3(plant: MultibodyPlant, include_damping=False):
         # The hardware system has lots of damping so this is more realistic,
         # but requires a simulation with small timesteps.
         arm_url = (
-            "package://amrobo/gen3_description/sdf/gen3_mesh_collision_with_damping.sdf"
+            "package://amrobo/gen3_description/sdf/gen3_mesh_collision.sdf"
         )
     else:
         arm_url = "package://amrobo/gen3_description/sdf/gen3_mesh_collision.sdf"
