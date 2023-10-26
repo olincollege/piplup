@@ -1,0 +1,52 @@
+# This file is licensed under the MIT-0 License.
+# See LICENSE-MIT-0.txt in the current directory.
+
+# This demo simulation shows an IIWA arm with an attached WSG gripper.
+Demo:
+  directives:
+  # - add_directive:
+  #     file:
+  - add_model:
+      name: amazon_table
+      file: package://drake/examples/manipulation_station/models/amazon_table_simplified.sdf
+  - add_weld:
+      parent: world
+      child: amazon_table::amazon_table
+      X_PC:
+        translation: [0.5, 0, 0]
+        rotation: !Rpy { deg: [180.0, 0.0, 0.0 ]}
+  - add_model:
+      name: gen3
+      file: package://amrobo/gen3_description/sdf/gen3_mesh_collision_with_damping.sdf
+      default_joint_positions:
+          Actuator1: [0]
+          Actuator2: [0.56]
+          Actuator3: [0]
+          Actuator4: [1.02]
+          Actuator5: [0]
+          Actuator6: [1.29]
+          Actuator7: [0]
+  - add_weld:
+      parent: world
+      child: gen3::base_link
+  # - add_model:
+  #     name: 2f_85
+  #     file: package://amrobo/robotiq_description/sdf/robotiq_2f_85.sdf
+  # - add_frame:
+  #     name: end_effector_frame
+  #     X_PF:
+  #         base_frame: bracelet_no_vision_link
+  #         translation: [0, 0, -0.0615250000000001]
+  #         rotation: !Rpy { deg: [180, 6.29893042e-31, 0] }
+  # - add_weld:
+  #     parent: gen3::end_effector_frame
+  #     child: 2f_85::robotiq_arg2f_base_link
+  # cameras:
+  #   camera0:
+  #     name: camera0
+  #     X_PB:
+  #       translation: [1.5, 0.8, 1.25]
+  #       rotation: !Rpy { deg: [-120, 5, 125] }
+  model_drivers:
+    gen3: !Gen3Driver
+      hand_model_name: 2f_85

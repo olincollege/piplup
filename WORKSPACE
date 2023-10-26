@@ -1,4 +1,4 @@
-workspace(name = "amrobo")
+workspace(name = "piplup")
 
 # This Bazel WORKSPACE file is taken from the drake-external-examples https://github.com/RobotLocomotion/drake-external-examples/tree/main/drake_bazel_installed
 
