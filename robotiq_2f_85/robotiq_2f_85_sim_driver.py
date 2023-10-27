@@ -76,7 +76,7 @@ class Sim2f85Driver(LeafSystem):
         self.context = self.plant.CreateDefaultContext()
 
         # Declare input ports
-        self.velocity_port = self.DeclareVectorInputPort("velocity", BasicVector(1))
+        self.position_port = self.DeclareVectorInputPort("position", BasicVector(1))
         # self.target_type_port = self.DeclareAbstractInputPort(
         #     "gripper_target_type", AbstractValue.Make(GripperTarget.kVelocity)
         # )
@@ -188,7 +188,7 @@ class Sim2f85Driver(LeafSystem):
 
     def CalcGripperTorque(self, context, output):
         state = self.state_port.Eval(context)
-        target = self.velocity_port.Eval(context)
+        target = self.position_port.Eval(context)
 
         finger_position = self.ComputePosition(state)
         finger_velocity = self.ComputeVelocity(state)
@@ -197,8 +197,9 @@ class Sim2f85Driver(LeafSystem):
         Kp = 10 * np.eye(2)
         Kd = 2 * np.sqrt(0.01 * Kp)
 
-        target_finger_position = finger_position
-        target_finger_velocity = -width * target
+        target = width - width * target * np.ones(2)
+        target_finger_position = target
+        target_finger_velocity = np.zeros(2)
 
         # Determine applied torques with PD controller
         position_err = target_finger_position - finger_position

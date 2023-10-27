@@ -162,7 +162,7 @@ def run(*, scenario: Scenario, graphviz=None):
         gamepad.GetOutputPort("gen3.position"), gen3_driver.GetInputPort("position")
     )
     builder.Connect(
-        gamepad.GetOutputPort("gripper.velocity"), gripper_driver.GetInputPort("velocity")
+        gamepad.GetOutputPort("gripper.position"), gripper_driver.GetInputPort("position")
     )
 
     builder.Connect(gen3_driver.GetOutputPort("state_estimated"), gamepad.GetInputPort("gen3.state"))
@@ -170,7 +170,7 @@ def run(*, scenario: Scenario, graphviz=None):
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
-    meshcat.SetObject("test", Sphere(0.05), Rgba(0,0.5,0,0.5))
+    meshcat.SetObject("ee", Sphere(0.05), Rgba(0,0.5,0,0.5))
     ee_base = Mesh("/home/ksuresh/piplup/models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj",1)
     meshcat.SetObject("target", ee_base, Rgba(0,0.5,0,0.5))
     meshcat.SetCameraPose(np.array([1,-1,1])*0.75, np.array([0,0,0.4]))

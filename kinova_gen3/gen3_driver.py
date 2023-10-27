@@ -7,6 +7,11 @@ from .gen3_control import BuildGen3Control, AddSimGen3Driver
 
 from robotiq_2f_85 import AddSim2f85Driver
 
+# TODO remove
+def ConfigureParser(parser: Parser):
+    """Add the manipulation/package.xml index to the given Parser."""
+    package_xml = "/home/ksuresh/piplup/models/package.xml"
+    parser.package_map().AddPackageXml(filename=package_xml)
 # Driver
 class Gen3Driver:
     __fields__: ClassVar[tuple] = (
@@ -51,11 +56,12 @@ def ApplyDriverConfig(
         ),
         RigidTransform(),
     )
+
     # Make this more generic with tcp_frame or something
     X_ee = RigidTransform()
     X_ee.set_translation([0, 0, -0.0615250000000001])
     X_ee.set_rotation(RotationMatrix(RollPitchYaw([np.pi, 0, 0])))
-    controller_plant.AddFrame(
+    ee_frame = controller_plant.AddFrame(
         FixedOffsetFrame(
             "end_effector_frame",
             controller_plant.GetFrameByName("bracelet_no_vision_link"),
@@ -63,7 +69,16 @@ def ApplyDriverConfig(
             gen3_controller_model_idx,
         )
     )
-    # TODO add gripper mass here
+    parser = Parser(controller_plant)
+    ConfigureParser(parser)
+    gripper = parser.AddModelsFromUrl(
+        f"package://amrobo/robotiq_description/sdf/robotiq_2f_85_static.sdf"
+    )[0]
+    controller_plant.WeldFrames(
+        ee_frame,
+        controller_plant.GetFrameByName("robotiq_arg2f_base_link", gripper),
+        RigidTransform(RotationMatrix(RollPitchYaw([0, 0, np.pi / 2]))),
+    )
     controller_plant.Finalize()
 
     gripper_controller_plant = MultibodyPlant(0.0)
