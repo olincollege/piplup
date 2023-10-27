@@ -46,12 +46,12 @@ Demo:
   - add_weld:
       parent: gen3::end_effector_frame
       child: 2f_85::robotiq_arg2f_base_link
-  # cameras:
-  #   camera0:
-  #     name: camera0
-  #     X_PB:
-  #       translation: [1.5, 0.8, 1.25]
-  #       rotation: !Rpy { deg: [-120, 5, 125] }
+  cameras:
+    camera0:
+      name: camera0
+      X_PB:
+        translation: [1.5, 0.8, 1.25]
+        rotation: !Rpy { deg: [-120, 5, 125] }
   model_drivers:
     gen3: !Gen3Driver
       hand_model_name: 2f_85

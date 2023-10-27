@@ -6,5 +6,6 @@ py_library(
         "robotiq_2f_85_control.py",
         "robotiq_2f_85_sim_driver.py",
     ],
+    data = ["//models"],
     visibility = ["//visibility:public"],
 )

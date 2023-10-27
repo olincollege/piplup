@@ -2,13 +2,14 @@ py_library(
     name = "kinova_gen3",
     srcs = [
         "__init__.py",
-        "gen3_driver.py",
+        "gamepad_diff_ik.py",
         "gen3_constants.py",
         "gen3_control.py",
+        "gen3_driver.py",
         "gen3_sim_driver.py",
-        "gamepad_diff_ik.py"
     ],
-    visibility = ["//visibility:public"],
+    data = ["//models"],
     imports = [".."],
+    visibility = ["//visibility:public"],
     deps = ["//robotiq_2f_85"],
 )
