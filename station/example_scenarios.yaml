@@ -29,18 +29,18 @@ Demo:
   - add_weld:
       parent: world
       child: gen3::base_link
-  # - add_model:
-  #     name: 2f_85
-  #     file: package://amrobo/robotiq_description/sdf/robotiq_2f_85.sdf
-  # - add_frame:
-  #     name: end_effector_frame
-  #     X_PF:
-  #         base_frame: bracelet_no_vision_link
-  #         translation: [0, 0, -0.0615250000000001]
-  #         rotation: !Rpy { deg: [180, 6.29893042e-31, 0] }
-  # - add_weld:
-  #     parent: gen3::end_effector_frame
-  #     child: 2f_85::robotiq_arg2f_base_link
+  - add_model:
+      name: 2f_85
+      file: package://amrobo/robotiq_description/sdf/robotiq_2f_85.sdf
+  - add_frame:
+      name: gen3::end_effector_frame
+      X_PF:
+          base_frame: bracelet_no_vision_link
+          translation: [0, 0, -0.0615250000000001]
+          rotation: !Rpy { deg: [180, 6.29893042e-31, 0] }
+  - add_weld:
+      parent: gen3::end_effector_frame
+      child: 2f_85::robotiq_arg2f_base_link
   # cameras:
   #   camera0:
   #     name: camera0

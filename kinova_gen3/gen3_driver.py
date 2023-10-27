@@ -5,6 +5,7 @@ from .gen3_constants import *
 import numpy as np
 from .gen3_control import BuildGen3Control, AddSimGen3Driver
 
+from robotiq_2f_85 import AddSim2f85Driver
 
 # Driver
 class Gen3Driver:
@@ -32,6 +33,9 @@ def ApplyDriverConfig(
     builder: DiagramBuilder,
 ):
     gen3_model: ModelInstanceInfo = models_from_directives_map[model_instance_name]
+    robotiq_2f_85_model: ModelInstanceInfo  = models_from_directives_map[driver_config.hand_model_name]
+
+    # Make arm controller plant
     controller_plant = MultibodyPlant(0.0)
     parser = Parser(controller_plant)
     controller_models: List[ModelInstanceIndex] = parser.AddModels(
@@ -47,15 +51,49 @@ def ApplyDriverConfig(
         ),
         RigidTransform(),
     )
-
+    # Make this more generic with tcp_frame or something
+    X_ee = RigidTransform()
+    X_ee.set_translation([0, 0, -0.0615250000000001])
+    X_ee.set_rotation(RotationMatrix(RollPitchYaw([np.pi, 0, 0])))
+    controller_plant.AddFrame(
+        FixedOffsetFrame(
+            "end_effector_frame",
+            controller_plant.GetFrameByName("bracelet_no_vision_link"),
+            X_ee,
+            gen3_controller_model_idx,
+        )
+    )
+    # TODO add gripper mass here
     controller_plant.Finalize()
+
+    gripper_controller_plant = MultibodyPlant(0.0)
+    parser = Parser(gripper_controller_plant)
+    controller_models: List[ModelInstanceIndex] = parser.AddModels(
+        robotiq_2f_85_model.model_path
+    )
+    assert len(controller_models) == 1
+    robotiq_2f_85_controller_model_idx = controller_models[0]
+
+    gripper_controller_plant.WeldFrames(
+        gripper_controller_plant.world_frame(),
+        gripper_controller_plant.GetFrameByName(
+            robotiq_2f_85_model.child_frame_name, robotiq_2f_85_controller_model_idx
+        ),
+        RigidTransform(),
+    )
+    gripper_controller_plant.Finalize()
 
     builder.AddNamedSystem(
         f"{model_instance_name}_controller_plant", SharedPointerSystem(controller_plant)
     )
+    builder.AddNamedSystem(
+        f"{driver_config.hand_model_name}_controller_plant", SharedPointerSystem(gripper_controller_plant)
+    )
+
     if driver_config.ip_address and driver_config.port:
         pass  # TODO BuildGen3Control
     else:
         AddSimGen3Driver(
             sim_plant, gen3_model.model_instance, controller_plant, builder
         )
+        AddSim2f85Driver(sim_plant, robotiq_2f_85_model.model_instance, gripper_controller_plant, builder)

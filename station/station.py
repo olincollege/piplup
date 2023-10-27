@@ -38,8 +38,9 @@ from pydrake.visualization import (
     VisualizationConfig,
 )
 
+from pydrake.geometry import StartMeshcat
 
-from kinova_gen3 import Gen3Driver
+from kinova_gen3 import Gen3Driver, GamepadDiffIkController
 
 
 def ConfigureParser(parser: Parser):
@@ -131,9 +132,7 @@ def run(*, scenario: Scenario, graphviz=None):
     # Now the plant is complete.
     sim_plant.Finalize()
 
-    # Add LCM buses. (The simulator will handle polling the network for new
-    # messages and dispatching them to the receivers, i.e., "pump" the bus.)
-    lcm_buses = ApplyLcmBusConfig(lcm_buses=scenario.lcm_buses, builder=builder)
+    lcm_buses = None
 
     # Add actuation inputs.
     ApplyDriverConfigs(
@@ -149,19 +148,35 @@ def run(*, scenario: Scenario, graphviz=None):
         ApplyCameraConfig(config=camera, builder=builder, lcm_buses=lcm_buses)
 
     # Add visualization.
-    ApplyVisualizationConfig(scenario.visualization, builder, lcm_buses)
+    meshcat = StartMeshcat()
+    ApplyVisualizationConfig(
+        scenario.visualization, builder, lcm_buses, meshcat=meshcat
+    )
+    controller_plant : MultibodyPlant= builder.GetSubsystemByName("gen3_controller_plant").get()
+    gen3_driver: System = builder.GetSubsystemByName("Gen3Driver(gen3)")
+    gripper_driver: System = builder.GetSubsystemByName("2f85Driver(2f_85)")
+    gamepad: GamepadDiffIkController = builder.AddNamedSystem("gamepad_control",
+        GamepadDiffIkController(meshcat, controller_plant)
+    )
+    builder.Connect(
+        gamepad.GetOutputPort("gen3.position"), gen3_driver.GetInputPort("position")
+    )
+    builder.Connect(
+        gamepad.GetOutputPort("gripper.velocity"), gripper_driver.GetInputPort("velocity")
+    )
 
-    # src :ConstantVectorSource= builder.AddSystem(ConstantVectorSource(np.array([0, 0.5, 0, 1.0, 0, 1.2, 0])))
+    builder.Connect(gen3_driver.GetOutputPort("state_estimated"), gamepad.GetInputPort("gen3.state"))
 
-    # builder.Connect(src.get_output_port(0), )
-    
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
+
+    meshcat.SetObject("test", Sphere(0.05), Rgba(0,0.5,0,0.5))
+    ee_base = Mesh("/home/ksuresh/piplup/models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj",1)
+    meshcat.SetObject("target", ee_base, Rgba(0,0.5,0,0.5))
+    meshcat.SetCameraPose(np.array([1,-1,1])*0.75, np.array([0,0,0.4]))
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
-    gen3_driver = diagram.GetSubsystemByName("Gen3Driver(gen3)")
-    context = gen3_driver.GetMyMutableContextFromRoot(simulator.get_mutable_context())
-    diagram.GetSubsystemByName("Gen3Driver(gen3)").GetInputPort("position").FixValue(context,np.array([0, 0.5, 0, 1.0, 0, 1.2, 0]))
+
     # Sample the random elements of the context.
     random = RandomGenerator(scenario.random_seed)
     diagram.SetRandomContext(simulator.get_mutable_context(), random)
