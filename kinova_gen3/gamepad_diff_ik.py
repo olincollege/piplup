@@ -151,7 +151,6 @@ class GamepadPoseIntegrator(LeafSystem):
 
         viz_color = Rgba(0,0.5,0,0.5) if linear_mode else Rgba(0,0,0.5,0.5)
         self._meshcat.SetObject("ee", Sphere(0.05), viz_color)
-        # self._meshcat.SetObject("target", Mesh("/home/ksuresh/piplup/models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj",1), viz_color)
 
         X_WE = copy(X_WE_desired)
         self._meshcat.SetTransform("/drake/ee", X_WE)

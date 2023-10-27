@@ -4,14 +4,9 @@ from pydrake.all import *
 from .gen3_constants import *
 import numpy as np
 from .gen3_control import BuildGen3Control, AddSimGen3Driver
-
 from robotiq_2f_85 import AddSim2f85Driver
+from common import ConfigureParser
 
-# TODO remove
-def ConfigureParser(parser: Parser):
-    """Add the manipulation/package.xml index to the given Parser."""
-    package_xml = "/home/ksuresh/piplup/models/package.xml"
-    parser.package_map().AddPackageXml(filename=package_xml)
 # Driver
 class Gen3Driver:
     __fields__: ClassVar[tuple] = (

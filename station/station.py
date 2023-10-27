@@ -42,11 +42,7 @@ from pydrake.geometry import StartMeshcat
 
 from kinova_gen3 import Gen3Driver, GamepadDiffIkController
 
-
-def ConfigureParser(parser: Parser):
-    """Add the manipulation/package.xml index to the given Parser."""
-    package_xml = "/home/ksuresh/piplup/models/package.xml"
-    parser.package_map().AddPackageXml(filename=package_xml)
+from common import ConfigureParser
 
 
 @dc.dataclass
@@ -171,7 +167,7 @@ def run(*, scenario: Scenario, graphviz=None):
     diagram: Diagram = builder.Build()
 
     meshcat.SetObject("ee", Sphere(0.05), Rgba(0,0.5,0,0.5))
-    ee_base = Mesh("/home/ksuresh/piplup/models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj",1)
+    ee_base = Mesh("models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj",1)
     meshcat.SetObject("target", ee_base, Rgba(0,0.5,0,0.5))
     meshcat.SetCameraPose(np.array([1,-1,1])*0.75, np.array([0,0,0.4]))
     simulator = Simulator(diagram)

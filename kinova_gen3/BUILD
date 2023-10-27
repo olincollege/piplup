@@ -11,5 +11,5 @@ py_library(
     data = ["//models"],
     imports = [".."],
     visibility = ["//visibility:public"],
-    deps = ["//robotiq_2f_85"],
+    deps = ["//robotiq_2f_85","//common"],
 )
