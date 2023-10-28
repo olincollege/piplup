@@ -27,7 +27,7 @@ def MakeHardwareStation(
     builder = DiagramBuilder()
 
     # Create the multibody plant and scene graph.
-    sim_plant, scene_graph = AddMultibodyPlant(
+    sim_plant , scene_graph = AddMultibodyPlant(
         config=scenario.plant_config, builder=builder
     )
     parser = Parser(sim_plant)
@@ -67,11 +67,25 @@ def MakeHardwareStation(
             builder.ExportOutput(port, f"{model_name}.{port.get_name()}")
 
     # Add scene cameras.
-    for _, camera in scenario.cameras.items():
+    for camera_name, camera in scenario.cameras.items():
         ApplyCameraConfig(config=camera, builder=builder, lcm_buses=lcm_buses)
+        camera_subsystem : System= builder.GetSubsystemByName(f"rgbd_sensor_{camera_name}")
+        for i in range(camera_subsystem.num_output_ports()):
+            port = camera_subsystem.get_output_port(i)
+            builder.ExportOutput(port, f"{camera_name}.{port.get_name()}")
 
     ApplyVisualizationConfig(
         scenario.visualization, builder, lcm_buses, meshcat=meshcat
     )
+
+    # Export "cheat" ports.
+    builder.ExportOutput(scene_graph.get_query_output_port(), "query_object")
+    builder.ExportOutput(
+        sim_plant.get_contact_results_output_port(), "contact_results"
+    )
+    builder.ExportOutput(
+        sim_plant.get_state_output_port(), "plant_continuous_state"
+    )
+    builder.ExportOutput(sim_plant.get_body_poses_output_port(), "body_poses")
 
     return builder.Build()

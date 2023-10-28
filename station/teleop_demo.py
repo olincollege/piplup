@@ -24,8 +24,8 @@ def run(*, scenario: Scenario, graphviz=None):
     """Runs a simulation of the given scenario."""
     meshcat = StartMeshcat()
     builder = DiagramBuilder()
-    hardware_station: Diagram = builder.AddSystem(
-        MakeHardwareStation(scenario, meshcat)
+    hardware_station: Diagram = builder.AddNamedSystem(
+        "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
     # TODO (krishna) These should be more generic
@@ -67,14 +67,14 @@ def run(*, scenario: Scenario, graphviz=None):
     diagram.SetRandomContext(simulator.get_mutable_context(), random)
 
     # Visualize the diagram, when requested.
+    options = {"plant/split": "I/O"}
     if graphviz is not None:
         with open(graphviz, "w", encoding="utf-8") as f:
-            options = {"plant/split": "I/O"}
             f.write(diagram.GetGraphvizString(options=options))
 
-        plt.figure()
-        plot_graphviz(diagram.GetGraphvizString(options=options))
-        plt.show()
+    plt.figure()
+    plot_system_graphviz(diagram, max_depth=1, options=options)
+    plt.show()
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)
