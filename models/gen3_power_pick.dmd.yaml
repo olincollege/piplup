@@ -2,7 +2,7 @@
 directives:
 - add_model:
     name: gen3
-    file: package://amrobo/gen3_description/sdf/gen3_mesh_collision.sdf
+    file: package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf
     default_joint_positions:
         Actuator1: [0]
         Actuator2: [0.56]
@@ -16,7 +16,7 @@ directives:
     child: gen3::base_link
 - add_model:
     name: power_pick
-    file: package://amrobo/robotiq_description/sdf/robotiq_power_pick_45.sdf
+    file: package://piplup_models/robotiq_description/sdf/robotiq_power_pick_45.sdf
 - add_frame:
     name: end_effector_frame
     X_PF:

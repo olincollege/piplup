@@ -2,7 +2,7 @@
 directives:
 - add_model:
     name: gen3
-    file: package://amrobo/gen3_description/sdf/gen3_mesh_collision.sdf
+    file: package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf
     default_joint_positions:
         Actuator1: [0]
         Actuator2: [0.56]
@@ -11,12 +11,9 @@ directives:
         Actuator5: [0]
         Actuator6: [1.29]
         Actuator7: [0]
-- add_weld:
-    parent: world
-    child: gen3::base_link
 - add_model:
     name: 2f_85
-    file: package://amrobo/robotiq_description/sdf/robotiq_2f_85.sdf
+    file: package://piplup_models/robotiq_description/sdf/robotiq_2f_85.sdf
 - add_frame:
     name: end_effector_frame
     X_PF:

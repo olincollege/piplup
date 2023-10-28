@@ -1,0 +1,162 @@
+<?xml version="1.0"?>
+<sdf version="1.7">
+  <model name="table">
+    <link name="table_body">
+      <visual name="table_visual">
+        <pose degrees="True"> 0 -0.5 0 90 0 0</pose>
+        <geometry>
+          <mesh>
+            <uri>package://piplup_models/scope_station/meshes/table.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+      <collision name="table_collision">
+        <pose> 0.95 0 -0.02 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1.9 1 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <link name="extrusion_frame">
+      <visual name="extrusion_frame_visual_0">
+        <pose> 0.02 0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <visual name="extrusion_frame_visual_1">
+        <pose> 0.02 -0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <visual name="extrusion_frame_visual_2">
+        <pose> 1.06 0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <visual name="extrusion_frame_visual_3">
+        <pose> 1.06 -0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <visual name="extrusion_frame_visual_4">
+        <pose> 0.54 0.48 1.18 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 0.04 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <visual name="extrusion_frame_visual_5">
+        <pose> 0.54 -0.48 1.18 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 0.04 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <visual name="extrusion_frame_visual_6">
+        <pose> 1.06 0 1.18 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 1 0.04</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>0.5 0.5 0.5 1.0</diffuse>
+        </material>
+      </visual>
+      <collision name="extrusion_frame_collision_0">
+        <pose> 0.02 0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="extrusion_frame_collision_1">
+        <pose> 0.02 -0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="extrusion_frame_collision_2">
+        <pose> 1.06 0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="extrusion_frame_collision_3">
+        <pose> 1.06 -0.48 0.6 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 0.04 1.2</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="extrusion_frame_collision_4">
+        <pose> 0.54 0.48 1.18 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 0.04 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="extrusion_frame_collision_5">
+        <pose> 0.54 -0.48 1.18 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>1 0.04 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name="extrusion_frame_collision_6">
+        <pose> 1.06 0 1.18 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.04 1 0.04</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <joint name="extrusion_weld" type="fixed">
+      <parent>table_body</parent>
+      <child>extrusion_frame</child>
+    </joint>
+  </model>
+</sdf>
