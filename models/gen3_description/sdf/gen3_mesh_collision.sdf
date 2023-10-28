@@ -21,7 +21,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/base_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/base_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -30,7 +30,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/base_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/base_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -72,7 +72,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/shoulder_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/shoulder_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -81,7 +81,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/shoulder_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/shoulder_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -123,7 +123,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/half_arm_1_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/half_arm_1_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -132,7 +132,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/half_arm_1_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/half_arm_1_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -174,7 +174,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/half_arm_2_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/half_arm_2_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -183,7 +183,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/half_arm_2_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/half_arm_2_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -225,7 +225,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/forearm_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/forearm_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -234,7 +234,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/forearm_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/forearm_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -276,7 +276,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/spherical_wrist_1_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/spherical_wrist_1_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -285,7 +285,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/spherical_wrist_1_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/spherical_wrist_1_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -327,7 +327,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/spherical_wrist_2_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/spherical_wrist_2_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -336,7 +336,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/spherical_wrist_2_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/spherical_wrist_2_link.obj</uri>
           </mesh>
         </geometry>
       </visual>
@@ -378,7 +378,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/bracelet_no_vision_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/bracelet_no_vision_link.obj</uri>
           </mesh>
         </geometry>
       </collision>
@@ -387,7 +387,7 @@
         <geometry>
           <mesh>
             <scale>1 1 1</scale>
-            <uri>package://amrobo/gen3_description//meshes/bracelet_no_vision_link.obj</uri>
+            <uri>package://piplup_models/gen3_description//meshes/bracelet_no_vision_link.obj</uri>
           </mesh>
         </geometry>
       </visual>

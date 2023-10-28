@@ -5,7 +5,7 @@
       <visual name="table_visual">
         <geometry>
           <mesh>
-            <uri>package://amrobo/scope_station/table_wide.obj</uri>
+            <uri>package://piplup_models/scope_station/table_wide.obj</uri>
           </mesh>
         </geometry>
       </visual>

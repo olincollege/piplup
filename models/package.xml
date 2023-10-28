@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>amrobo</name>
+  <name>piplup_models</name>
   <version>0.0.1</version>
   <description>
     This package contains meshes and the environment setup for the kinova test setup.

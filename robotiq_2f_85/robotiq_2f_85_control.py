@@ -5,6 +5,7 @@ from .robotiq_2f_85_constants import *
 from .robotiq_2f_85_sim_driver import Sim2f85Driver
 import numpy as np
 
+
 def AddSim2f85Driver(
     plant: MultibodyPlant,
     gripper_instance: ModelInstanceIndex,
@@ -23,6 +24,7 @@ def AddSim2f85Driver(
     #     system.GetInputPort("generalized_contact_forces"),
     # )
     builder.Connect(
-        system.GetOutputPort("applied_gripper_torque"), plant.get_actuation_input_port(gripper_instance)
+        system.GetOutputPort("applied_gripper_torque"),
+        plant.get_actuation_input_port(gripper_instance),
     )
     return system

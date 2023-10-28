@@ -67,7 +67,7 @@ def ApplyDriverConfig(
     parser = Parser(controller_plant)
     ConfigureParser(parser)
     gripper = parser.AddModelsFromUrl(
-        f"package://amrobo/robotiq_description/sdf/robotiq_2f_85_static.sdf"
+        f"package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static.sdf"
     )[0]
     controller_plant.WeldFrames(
         ee_frame,
@@ -106,4 +106,8 @@ def ApplyDriverConfig(
         AddSimGen3Driver(
             sim_plant, gen3_model.model_instance, controller_plant, builder
         )
-        AddSim2f85Driver(sim_plant, robotiq_2f_85_model.model_instance, gripper_controller_plant, builder)
+        gripper_sys = AddSim2f85Driver(sim_plant, robotiq_2f_85_model.model_instance, gripper_controller_plant, builder)
+        for i in range(gripper_sys.num_input_ports()):
+            port = gripper_sys.get_input_port(i)
+            if not builder.IsConnectedOrExported(port):
+                builder.ExportInput(port, f"{driver_config.hand_model_name}.{port.get_name()}")
