@@ -1,0 +1,62 @@
+<?xml version="1.0"?>
+<sdf xmlns:drake="http://drake.mit.edu" version="1.9">
+  <model name='robotiq_epick_2cup_model'>
+    <link name='robotiq_epick_2cup_base_link'>
+      <inertial>
+        <pose>0 0 0.108 0 -0 0</pose>
+        <mass>1.066</mass>
+        <inertia>
+          <ixx>0.00020005</ixx>
+          <ixy>-4.2442e-10</ixy>
+          <ixz>-2.9069e-10</ixz>
+          <iyy>0.00017832</iyy>
+          <iyz>-3.4402e-08</iyz>
+          <izz>0.00013478</izz>
+        </inertia>
+      </inertial>
+      <collision name='robotiq_epick_2cup_base_collision'>
+        <pose>0 0 0.0095 0 0 0</pose>
+        <geometry>
+          <cylinder>
+            <radius>0.038</radius>
+            <length>0.019</length>
+          </cylinder>
+        </geometry>
+      </collision>
+      <collision name='robotiq_epick_2cup_body_collision'>
+        <pose>0 0 0.079 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.083 0.048 0.12</size>
+          </box>
+        </geometry>
+      </collision>
+      <collision name='robotiq_epick_2cup_bracket_collision'>
+        <pose>0 0 0.125 0 0 0</pose>
+        <geometry>
+          <box>
+            <size>0.05 0.24 0.03</size>
+          </box>
+        </geometry>
+      </collision>
+      <visual name='robotiq_epick_2cup_visual'>
+        <pose degrees="True">0 0 0.101 -90 0 90</pose>
+        <geometry>
+          <mesh>
+            <scale>1 1 1</scale>
+            <uri>../meshes/visual/robotiq_epick_2cup.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
+    </link>
+    <frame name="robotiq_epick_2cup_tcp" attached_to="robotiq_epick_2cup_base_link">
+      <pose>0 -0.076 0 0 0 0</pose>
+    </frame>
+    <frame name="robotiq_epick_2cup_cup_0" attached_to="robotiq_epick_2cup_base_link">
+      <pose>0.096 -0.076 0 0 0 0</pose>
+    </frame>
+    <frame name="robotiq_epick_2cup_cup_1" attached_to="robotiq_epick_2cup_base_link">
+      <pose>-0.096 -0.076 0 0 0 0</pose>
+    </frame>
+  </model>
+</sdf>
