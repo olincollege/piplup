@@ -11,9 +11,6 @@ directives:
         Actuator5: [0]
         Actuator6: [1.29]
         Actuator7: [0]
-- add_weld:
-    parent: world
-    child: gen3::base_link
 - add_model:
     name: 2f_85
     file: package://piplup_models/robotiq_description/sdf/robotiq_2f_85.sdf

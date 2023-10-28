@@ -7,6 +7,8 @@ filegroup(
         "**/*.xml",
         "**/*.obj",
         "**/*.mtl",
+        "**/*.jpg",
+        "**/*.png",
     ]),
     visibility = ["//visibility:public"],
 )
