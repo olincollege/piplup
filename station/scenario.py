@@ -16,6 +16,7 @@ from pydrake.visualization import VisualizationConfig
 
 
 from kinova_gen3 import Gen3Driver
+from robotiq_epick import EPickDriver
 
 
 @dc.dataclass
@@ -56,6 +57,7 @@ class Scenario:
         str,
         typing.Union[
             Gen3Driver,
+            EPickDriver,
             ZeroForceDriver,
         ],
     ] = dc.field(default_factory=dict)

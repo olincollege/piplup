@@ -46,3 +46,21 @@ http_archive(
 load("@drake_artifacts//:share/drake/repo.bzl", "drake_repository")
 
 drake_repository(name = "drake")
+
+PYBIND_BAZEL_HASH = "fd7d88857cca3d7435b06f3ac6abab77cd9983b2"
+PYBIND_BAZEL_VERSION = "2.11.1"
+http_archive(
+  name = "pybind11_bazel",
+  strip_prefix = "pybind11_bazel-{}".format(PYBIND_BAZEL_HASH),
+  urls = ["https://github.com/pybind/pybind11_bazel/archive/{}.zip".format(PYBIND_BAZEL_HASH)],
+)
+# We still require the pybind library.
+http_archive(
+  name = "pybind11",
+  build_file = "@pybind11_bazel//:pybind11.BUILD",
+  strip_prefix = "pybind11-{}".format(PYBIND_BAZEL_VERSION),
+  urls = ["https://github.com/pybind/pybind11/archive/v{}.tar.gz".format(PYBIND_BAZEL_VERSION)],
+)
+load("@pybind11_bazel//:python_configure.bzl", "python_configure")
+python_configure(name = "local_config_python", python_version = "3")
+
