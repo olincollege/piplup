@@ -1,4 +1,5 @@
-load("@pybind11_bazel//:build_defs.bzl", "pybind_extension")
+load("@drake//tools/skylark:py.bzl", "py_binary", "py_test")
+load("@drake//tools/skylark:pybind.bzl", "pybind_py_library")
 
 cc_library(
     name = "suction_force_model",
@@ -9,7 +10,9 @@ cc_library(
         "suction_force_model.h",
     ],
     deps = [
-        "@drake//:drake_shared_library",
+        "@drake//geometry:scene_graph",
+        "@drake//multibody/plant",
+        "@drake//systems/framework:leaf_system"
     ],
 )
 
@@ -22,7 +25,9 @@ cc_library(
         "suction_gripper_multibody_model.h",
     ],
     deps = [
-        "@drake//:drake_shared_library",
+        "@drake//geometry:scene_graph",
+        "@drake//multibody/plant",
+        "@drake//multibody/tree",
     ],
 )
 
@@ -46,32 +51,33 @@ cc_binary(
         ":example_gripper_multibody_model",
         ":suction_force_model",
         ":suction_gripper_multibody_model",
-        "@drake//:drake_shared_library",
+        "@drake//geometry:drake_visualizer",
+        "@drake//multibody/plant",
+        "@drake//multibody/tree",
+        "@drake//systems/analysis:simulator",
+        "@drake//systems/framework:diagram",
+        "@drake//systems/framework:diagram_builder",
+        "@drake//visualization:visualization_config_functions",
     ],
 )
 
-pybind_extension(
-    name = "suction_gripper",  # This name is not actually created!
-    srcs = ["suction_gripper.cc"],
-    deps = [
-        "@drake//:drake_shared_library",
+pybind_py_library(
+    name = "suction_gripper_py",
+    cc_so_name = "suction_gripper",
+    cc_srcs = ["suction_gripper_py.cc"],
+    cc_deps = [
         ":example_gripper_multibody_model",
         ":suction_force_model",
         ":suction_gripper_multibody_model",
+        "@drake//bindings/pydrake/common:cpp_template_pybind",
+        "@drake//bindings/pydrake/common:default_scalars_pybind",
     ],
-)
-
-py_library(
-    name = "suction_gripper",
-    data = [":suction_gripper.so"],
+    py_deps = ["@drake//bindings/pydrake"],
+    py_imports = ["."],
 )
 
 py_binary(
     name = "package_swing_py",
-    main = "package_swing.py",
-    srcs = ["package_swing.py"],
-    deps = [
-        ":suction_gripper",
-        "@drake//bindings/pydrake",
-    ],
+    srcs = ["package_swing_py.py"],
+    deps = [":suction_gripper_py"],
 )

@@ -8,7 +8,7 @@ py_library(
     data = ["//models"],
     imports = [".."],
     visibility = ["//visibility:public"],
-    deps = ["//kinova_gen3","//robotiq_2f_85","//common"],
+    deps = ["//kinova_gen3","//robotiq_2f_85","//common","@drake//bindings/pydrake",],
 )
 
 

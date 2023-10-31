@@ -12,9 +12,9 @@ kMultibodyTimeStep = 0.002
 plant: MultibodyPlant
 scene_graph: SceneGraph
 plant, scene_graph = AddMultibodyPlantSceneGraph(
-    builder, MultibodyPlant(kMultibodyTimeStep)
+    builder, kMultibodyTimeStep
 )
-world_body = plant.world_body()
+world_frame = plant.world_frame()
 
 kFrictionCoeff = 1.0
 obj_friction = CoulombFriction(kFrictionCoeff, kFrictionCoeff)
@@ -29,13 +29,6 @@ obj_body = plant.AddRigidBody(
     ),
 )
 
-obj_body_collision_geom = plant.RegisterCollisionGeometry(
-    obj_body,
-    RigidTransform(),
-    Box(kPackageLen, kPackageWidth, kPackageLen),
-    "obj_body_collision_geom",
-    obj_friction,
-)
 
 plant.RegisterVisualGeometry(
     obj_body,
@@ -57,23 +50,31 @@ wrist_body = plant.AddRigidBody(
     ),
 )
 
-plant.AddJoint(
-    WeldJoint(
-        "wrist_joint",
-        world_body,
-        RigidTransform(),
-        wrist_body,
-        RigidTransform(),
-        RigidTransform(np.array([0.0, 0.0, kWristHeight])),
-    )
-)
+plant.WeldFrames(world_frame, wrist_body.body_frame(), RigidTransform(np.array([0.0, 0.0, kWristHeight])))
 
+surface_friction = CoulombFriction(
+        static_friction = 0.7,
+        dynamic_friction = 0.5)
+plant.RegisterCollisionGeometry(
+        plant.world_body(),
+        RigidTransform(),
+        HalfSpace(),
+        "ground_collision",
+        surface_friction)
+obj_body_collision_geom = plant.RegisterCollisionGeometry(
+    obj_body,
+    RigidTransform(),
+    Box(kPackageLen, kPackageWidth, kPackageLen),
+    "obj_body_collision_geom",
+    obj_friction,
+)
 suction_gripper = ExampleGripperMultibodyModel(plant, wrist_body)
 suction_cup_act_pt_geom_id_vec = suction_gripper.get_suction_cup_act_pt_geom_id_vec()
 suction_cup_act_pt_geom_id_to_body_idx_map = (
     suction_gripper.get_suction_cup_act_pt_geom_id_to_body_idx_map()
 )
 suction_cup_edge_pt_geom_id_vec = suction_gripper.get_suction_cup_edge_pt_geom_id_vec()
+
 
 plant.set_discrete_contact_solver(DiscreteContactSolver.kSap)
 plant.Finalize()
@@ -86,7 +87,8 @@ kSuctionModelTimeStep = 0.01
 suction_pressure_source = builder.AddSystem(
     CupPressureSource(kPumpPressure, kMaxSuctionDist, kNumSuctionCup)
 )
-obj_geom_id_to_body_idx_map = {obj_body_collision_geom, obj_body.index()}
+obj_geom_id_to_body_idx_map = dict()
+obj_geom_id_to_body_idx_map[obj_body_collision_geom] = obj_body.index()
 cup_obj_interface = builder.AddSystem(
     CupObjInterface(
         kSuctionModelTimeStep,
@@ -113,6 +115,9 @@ builder.Connect(
     cup_obj_interface.GetSuctionForceOutputPort(),
     plant.get_applied_spatial_force_input_port(),
 )
+
+
+AddDefaultVisualization(builder)
 diagram = builder.Build()
 
 simulator = Simulator(diagram)

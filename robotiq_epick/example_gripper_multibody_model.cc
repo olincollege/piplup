@@ -6,7 +6,7 @@
 #include <drake/geometry/shape_specification.h>
 #include <drake/multibody/tree/prismatic_joint.h>
 #include <drake/multibody/tree/prismatic_spring.h>
-
+#include <iostream>
 namespace drake::examples::multibody::suction_gripper {
 
 ExampleGripperMultibodyModel::ExampleGripperMultibodyModel(
