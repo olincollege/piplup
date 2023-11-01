@@ -73,7 +73,7 @@ def run(*, scenario: Scenario, graphviz=None):
             f.write(diagram.GetGraphvizString(options=options))
 
     plt.figure()
-    plot_system_graphviz(diagram, max_depth=1, options=options)
+    plot_system_graphviz(diagram, options=options)
     plt.show()
 
     # Simulate.

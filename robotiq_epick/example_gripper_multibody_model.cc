@@ -130,7 +130,6 @@ ExampleGripperMultibodyModel::ExampleGripperMultibodyModel(
       std::vector<std::vector<drake::geometry::GeometryId>>(
           1, std::vector<drake::geometry::GeometryId>(
                  kNumEdgePtsPerCup));  // allocate memory
-
   for (int suction_cup_edge_pt_idx = 0;
        suction_cup_edge_pt_idx < kNumEdgePtsPerCup; suction_cup_edge_pt_idx++) {
     auto& cup_edge_pt_body = plant_ptr_->AddRigidBody(

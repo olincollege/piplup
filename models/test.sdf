@@ -1,0 +1,41 @@
+<?xml version="1.0"?>
+<sdf version="1.7">
+  <model name="test">
+    <link name="obj_body">
+      <visual name="obj_body_visual_geom">
+        <geometry>
+          <box>
+            <size>0.3 0.15 0.3</size>
+          </box>
+        </geometry>
+      </visual>
+      <collision name="obj_body_collision_geom">
+        <geometry>
+          <box>
+            <size>0.3 0.15 0.3</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <link name="wrist_body">
+      <visual name="obj_body_visual_geom">
+        <geometry>
+          <box>
+            <size>0.3 0.15 0.3</size>
+          </box>
+        </geometry>
+      </visual>
+      <collision name="obj_body_collision_geom">
+        <geometry>
+          <box>
+            <size>0.3 0.15 0.3</size>
+          </box>
+        </geometry>
+      </collision>
+    </link>
+    <joint name="extrusion_weld" type="fixed">
+      <parent>table_body</parent>
+      <child>extrusion_frame</child>
+    </joint>
+  </model>
+</sdf>

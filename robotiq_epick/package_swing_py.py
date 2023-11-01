@@ -7,13 +7,12 @@ from suction_gripper import (
     ExampleGripperMultibodyModel,
 )
 
+
 builder = DiagramBuilder()
 kMultibodyTimeStep = 0.002
-plant: MultibodyPlant
+plant = MultibodyPlant(kMultibodyTimeStep)
 scene_graph: SceneGraph
-plant, scene_graph = AddMultibodyPlantSceneGraph(
-    builder, kMultibodyTimeStep
-)
+plant, scene_graph = AddMultibodyPlantSceneGraph(builder, kMultibodyTimeStep)
 world_frame = plant.world_frame()
 
 kFrictionCoeff = 1.0
@@ -50,24 +49,12 @@ wrist_body = plant.AddRigidBody(
     ),
 )
 
-plant.WeldFrames(world_frame, wrist_body.body_frame(), RigidTransform(np.array([0.0, 0.0, kWristHeight])))
-
-surface_friction = CoulombFriction(
-        static_friction = 0.7,
-        dynamic_friction = 0.5)
-plant.RegisterCollisionGeometry(
-        plant.world_body(),
-        RigidTransform(),
-        HalfSpace(),
-        "ground_collision",
-        surface_friction)
-obj_body_collision_geom = plant.RegisterCollisionGeometry(
-    obj_body,
-    RigidTransform(),
-    Box(kPackageLen, kPackageWidth, kPackageLen),
-    "obj_body_collision_geom",
-    obj_friction,
+plant.WeldFrames(
+    world_frame,
+    wrist_body.body_frame(),
+    RigidTransform(np.array([0.0, 0.0, kWristHeight])),
 )
+
 suction_gripper = ExampleGripperMultibodyModel(plant, wrist_body)
 suction_cup_act_pt_geom_id_vec = suction_gripper.get_suction_cup_act_pt_geom_id_vec()
 suction_cup_act_pt_geom_id_to_body_idx_map = (
@@ -75,6 +62,21 @@ suction_cup_act_pt_geom_id_to_body_idx_map = (
 )
 suction_cup_edge_pt_geom_id_vec = suction_gripper.get_suction_cup_edge_pt_geom_id_vec()
 
+surface_friction = CoulombFriction(static_friction=0.7, dynamic_friction=0.5)
+plant.RegisterCollisionGeometry(
+    plant.world_body(),
+    RigidTransform(),
+    HalfSpace(),
+    "ground_collision",
+    surface_friction,
+)
+obj_body_collision_geom = plant.RegisterCollisionGeometry(
+    obj_body,
+    RigidTransform(),
+    Box(kPackageLen, kPackageWidth, kPackageLen),
+    "obj_body_collision_geom",
+    obj_friction,
+)
 
 plant.set_discrete_contact_solver(DiscreteContactSolver.kSap)
 plant.Finalize()
@@ -120,10 +122,47 @@ builder.Connect(
 AddDefaultVisualization(builder)
 diagram = builder.Build()
 
+# diagram_context = diagram.CreateDefaultContext()
+# scene_graph_context = scene_graph.GetMyContextFromRoot(diagram_context)
+# query_object = scene_graph.get_query_output_port().Eval(scene_graph_context)
+# inspector = query_object.inspector()
+
+
+# for geometry_id in inspector.GetAllGeometryIds():
+#     body = plant.GetBodyFromFrameId(inspector.GetFrameId(geometry_id))
+#     print(body.name())
+
+#     geometry_label = inspector.GetPerceptionProperties(
+#         geometry_id)
+#     if geometry_label != None:
+#         print(int(geometry_label.GetProperty("label", "id")))
+
 simulator = Simulator(diagram)
 
 plant_context = plant.GetMyMutableContextFromRoot(simulator.get_mutable_context())
 
+kCupCenterHeightFromGround = 0.623
+kCupEngageOffset = 0.01
+plant.SetFreeBodyPose(
+    plant_context,
+    obj_body,
+    RigidTransform(
+        RollPitchYaw(0, np.pi / 4,0).ToQuaternion(),
+        np.array(
+            [
+                -kPackageLen / 2 * sin(np.pi / 4),
+                0,
+                kCupCenterHeightFromGround
+                + kCupEngageOffset
+                - kPackageLen / 2 * cos(np.pi / 4),
+            ]
+        ),
+    ),
+)
+#   drake::math::RollPitchYaw<double>(0., M_PI/4, 0.),
+#   Eigen::Vector3d(-kPackageLen / 2 * sin(M_PI/4), 0,
+#                   kCupCenterHeightFromGround + kCupEngageOffset -
+#                       kPackageLen / 2 * cos(M_PI/4))));
 suction_pressure_source_context = suction_pressure_source.GetMyMutableContextFromRoot(
     simulator.get_mutable_context()
 )
