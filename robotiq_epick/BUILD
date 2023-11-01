@@ -81,3 +81,18 @@ py_binary(
     srcs = ["package_swing_py.py"],
     deps = [":suction_gripper_py"],
 )
+
+py_library(
+    name = "robotiq_epick",
+    srcs = [
+        "__init__.py",
+        "epick_driver.py",
+        "epick_control.py",
+    ],
+    data = ["//models"],
+    visibility = ["//visibility:public"],
+    deps = [
+        ":suction_gripper_py",
+        "@drake//bindings/pydrake",
+    ],
+)

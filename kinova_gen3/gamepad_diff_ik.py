@@ -139,6 +139,7 @@ class GamepadPoseIntegrator(LeafSystem):
         )
 
         cmd_pos = np.copy(discrete_state.get_value(self.gripper_pos_state_idx))
+        print(cmd_pos)
         if not gamepad.index == None:
             gripper_close = gamepad.button_values[6] * 3
             gripper_open = gamepad.button_values[7] * 3

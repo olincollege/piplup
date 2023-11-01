@@ -14,7 +14,7 @@ class ExampleGripperMultibodyModel : public SuctionGripperMultibodyModel {
   double CalcCupArea() const override {
     return M_PI * kCupEffectiveDiameter * kCupEffectiveDiameter / 4.0;
   }
-
+  std::string model_name = "suction_gripper";
  private:
   // All values are in SI units
   const drake::math::RigidTransform<double> kWristGripperTransform =

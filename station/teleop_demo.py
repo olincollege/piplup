@@ -42,7 +42,8 @@ def run(*, scenario: Scenario, graphviz=None):
     )
     builder.Connect(
         gamepad.GetOutputPort("gripper.position"),
-        hardware_station.GetInputPort("2f_85.position"),
+        # hardware_station.GetInputPort("2f_85.position"),
+        hardware_station.GetInputPort("epick_2cup.suction_command"),
     )
 
     builder.Connect(
@@ -72,9 +73,9 @@ def run(*, scenario: Scenario, graphviz=None):
         with open(graphviz, "w", encoding="utf-8") as f:
             f.write(diagram.GetGraphvizString(options=options))
 
-    plt.figure()
-    plot_system_graphviz(diagram, options=options)
-    plt.show()
+    # plt.figure()
+    # plot_system_graphviz(diagram, options=options)
+    # plt.show()
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)

@@ -8,4 +8,7 @@ py_library(
     ],
     data = ["//models"],
     visibility = ["//visibility:public"],
+    deps = [
+        "@drake//bindings/pydrake",
+    ],
 )

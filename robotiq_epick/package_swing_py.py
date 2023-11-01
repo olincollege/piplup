@@ -23,7 +23,6 @@ obj_body = plant.AddRigidBody(
     ),
 )
 
-
 plant.RegisterVisualGeometry(
     obj_body,
     RigidTransform(),
@@ -50,13 +49,6 @@ plant.WeldFrames(
     RigidTransform(np.array([0.0, 0.0, kWristHeight])),
 )
 
-suction_gripper = ExampleGripperMultibodyModel(plant, wrist_body)
-suction_cup_act_pt_geom_id_vec = suction_gripper.get_suction_cup_act_pt_geom_id_vec()
-suction_cup_act_pt_geom_id_to_body_idx_map = (
-    suction_gripper.get_suction_cup_act_pt_geom_id_to_body_idx_map()
-)
-suction_cup_edge_pt_geom_id_vec = suction_gripper.get_suction_cup_edge_pt_geom_id_vec()
-
 obj_body_collision_geom = plant.RegisterCollisionGeometry(
     obj_body,
     RigidTransform(),
@@ -65,9 +57,19 @@ obj_body_collision_geom = plant.RegisterCollisionGeometry(
     CoulombFriction(1.0,1.0),
 )
 
+suction_gripper = ExampleGripperMultibodyModel(plant, wrist_body)
+
+
 plant.set_discrete_contact_solver(DiscreteContactSolver.kSap)
 plant.Finalize()
 
+
+
+suction_cup_act_pt_geom_id_vec = suction_gripper.get_suction_cup_act_pt_geom_id_vec()
+suction_cup_act_pt_geom_id_to_body_idx_map = (
+    suction_gripper.get_suction_cup_act_pt_geom_id_to_body_idx_map()
+)
+suction_cup_edge_pt_geom_id_vec = suction_gripper.get_suction_cup_edge_pt_geom_id_vec()
 kPumpPressure = -9e4
 kMaxSuctionDist = 0.004
 kNumSuctionCup = 1

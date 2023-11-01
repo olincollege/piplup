@@ -33,20 +33,19 @@ PYBIND11_MODULE(suction_gripper, m) {
              py::return_value_policy::reference);
 
     py::class_<CupObjInterface, LeafSystem<double>>(m, "CupObjInterface")
-        .def(py::init<
-             double, double, const std::vector<drake::geometry::GeometryId>&,
-             const std::unordered_map<drake::geometry::GeometryId,
-                                      drake::multibody::BodyIndex>&,
-             const std::vector<std::vector<drake::geometry::GeometryId>>&,
-             const std::unordered_map<drake::geometry::GeometryId,
-                                      drake::multibody::BodyIndex>&>(),
-                                      py::arg("time_step"),
-                                      py::arg("suction_cup_area"),
-                                      py::arg("suction_cup_act_pt_geom_id_vec"),
-                                      py::arg("suction_cup_act_pt_geom_id_to_body_idx_map"),
-                                      py::arg("suction_cup_edge_pt_geom_id_vec"),
-                                      py::arg("obj_geom_id_to_body_idx_map")
-                                      )
+        .def(
+            py::init<
+                double, double, const std::vector<drake::geometry::GeometryId>&,
+                const std::unordered_map<drake::geometry::GeometryId,
+                                         drake::multibody::BodyIndex>&,
+                const std::vector<std::vector<drake::geometry::GeometryId>>&,
+                const std::unordered_map<drake::geometry::GeometryId,
+                                         drake::multibody::BodyIndex>&>(),
+            py::arg("time_step"), py::arg("suction_cup_area"),
+            py::arg("suction_cup_act_pt_geom_id_vec"),
+            py::arg("suction_cup_act_pt_geom_id_to_body_idx_map"),
+            py::arg("suction_cup_edge_pt_geom_id_vec"),
+            py::arg("obj_geom_id_to_body_idx_map"))
         .def("GetGeomQueryInputPort", &CupObjInterface::GetGeomQueryInputPort,
              py::return_value_policy::reference)
         .def("GetSuctionCupPressureInputPort",
@@ -63,6 +62,7 @@ PYBIND11_MODULE(suction_gripper, m) {
         .def(py::init<drake::multibody::MultibodyPlant<double>*,
                       const drake::multibody::Body<double>&>(),
              py::arg("plant"), py::arg("wrist_body"))
+        .def_readwrite("model_name", &ExampleGripperMultibodyModel::model_name)
         .def("get_gripper_model_instance",
              &ExampleGripperMultibodyModel::get_gripper_model_instance)
         .def("get_suction_cup_act_pt_geom_id_vec",

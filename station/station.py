@@ -18,6 +18,8 @@ from scenario import Scenario, _load_scenario
 from common import ConfigureParser
 from kinova_gen3 import GamepadDiffIkController
 
+from suction_gripper import ExampleGripperMultibodyModel
+
 
 def MakeHardwareStation(
     scenario: Scenario,
@@ -27,6 +29,7 @@ def MakeHardwareStation(
     builder = DiagramBuilder()
 
     # Create the multibody plant and scene graph.
+    sim_plant : MultibodyPlant
     sim_plant , scene_graph = AddMultibodyPlant(
         config=scenario.plant_config, builder=builder
     )
@@ -36,7 +39,11 @@ def MakeHardwareStation(
     added_models = ProcessModelDirectives(
         directives=ModelDirectives(directives=scenario.directives), parser=parser
     )
-
+    for m in added_models:
+        if "epick" in m.model_name:
+            gripper = ExampleGripperMultibodyModel(sim_plant, sim_plant.GetBodyByName("bracelet_no_vision_link", added_models[0].model_instance))
+    if gripper:
+        added_models.append(gripper)
     # Now the plant is complete.
     sim_plant.Finalize()
 
@@ -60,7 +67,10 @@ def MakeHardwareStation(
         for i in range(driver_subsystem.num_input_ports()):
             port = driver_subsystem.get_input_port(i)
             if not builder.IsConnectedOrExported(port):
-                builder.ExportInput(port, f"{model_name}.{port.get_name()}")
+                if port.get_name() == "geometry_query":
+                    builder.Connect(scene_graph.get_query_output_port(), port)
+                else:
+                    builder.ExportInput(port, f"{model_name}.{port.get_name()}")
         # Export any unconnected output ports.
         for i in range(driver_subsystem.num_output_ports()):
             port = driver_subsystem.get_output_port(i)
