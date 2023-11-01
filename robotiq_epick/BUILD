@@ -1,4 +1,4 @@
-load("@drake//tools/skylark:py.bzl", "py_binary", "py_test")
+load("@drake//tools/skylark:py.bzl", "py_binary")
 load("@drake//tools/skylark:pybind.bzl", "pybind_py_library")
 
 cc_library(
@@ -12,7 +12,7 @@ cc_library(
     deps = [
         "@drake//geometry:scene_graph",
         "@drake//multibody/plant",
-        "@drake//systems/framework:leaf_system"
+        "@drake//systems/framework:leaf_system",
     ],
 )
 
@@ -63,8 +63,6 @@ cc_binary(
 
 pybind_py_library(
     name = "suction_gripper_py",
-    cc_so_name = "suction_gripper",
-    cc_srcs = ["suction_gripper_py.cc"],
     cc_deps = [
         ":example_gripper_multibody_model",
         ":suction_force_model",
@@ -72,6 +70,8 @@ pybind_py_library(
         "@drake//bindings/pydrake/common:cpp_template_pybind",
         "@drake//bindings/pydrake/common:default_scalars_pybind",
     ],
+    cc_so_name = "suction_gripper",
+    cc_srcs = ["suction_gripper_py.cc"],
     py_deps = ["@drake//bindings/pydrake"],
     py_imports = ["."],
 )

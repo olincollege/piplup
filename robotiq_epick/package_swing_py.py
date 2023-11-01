@@ -11,12 +11,7 @@ from suction_gripper import (
 builder = DiagramBuilder()
 kMultibodyTimeStep = 0.002
 plant = MultibodyPlant(kMultibodyTimeStep)
-scene_graph: SceneGraph
-plant, scene_graph = AddMultibodyPlantSceneGraph(builder, kMultibodyTimeStep)
-world_frame = plant.world_frame()
-
-kFrictionCoeff = 1.0
-obj_friction = CoulombFriction(kFrictionCoeff, kFrictionCoeff)
+plant, scene_graph = AddMultibodyPlantSceneGraph(builder, plant)
 
 kPackageMass = 2.73
 kPackageLen = 0.3
@@ -50,7 +45,7 @@ wrist_body = plant.AddRigidBody(
 )
 
 plant.WeldFrames(
-    world_frame,
+    plant.world_frame(),
     wrist_body.body_frame(),
     RigidTransform(np.array([0.0, 0.0, kWristHeight])),
 )
@@ -62,20 +57,12 @@ suction_cup_act_pt_geom_id_to_body_idx_map = (
 )
 suction_cup_edge_pt_geom_id_vec = suction_gripper.get_suction_cup_edge_pt_geom_id_vec()
 
-surface_friction = CoulombFriction(static_friction=0.7, dynamic_friction=0.5)
-plant.RegisterCollisionGeometry(
-    plant.world_body(),
-    RigidTransform(),
-    HalfSpace(),
-    "ground_collision",
-    surface_friction,
-)
 obj_body_collision_geom = plant.RegisterCollisionGeometry(
     obj_body,
     RigidTransform(),
     Box(kPackageLen, kPackageWidth, kPackageLen),
     "obj_body_collision_geom",
-    obj_friction,
+    CoulombFriction(1.0,1.0),
 )
 
 plant.set_discrete_contact_solver(DiscreteContactSolver.kSap)
@@ -121,21 +108,6 @@ builder.Connect(
 
 AddDefaultVisualization(builder)
 diagram = builder.Build()
-
-# diagram_context = diagram.CreateDefaultContext()
-# scene_graph_context = scene_graph.GetMyContextFromRoot(diagram_context)
-# query_object = scene_graph.get_query_output_port().Eval(scene_graph_context)
-# inspector = query_object.inspector()
-
-
-# for geometry_id in inspector.GetAllGeometryIds():
-#     body = plant.GetBodyFromFrameId(inspector.GetFrameId(geometry_id))
-#     print(body.name())
-
-#     geometry_label = inspector.GetPerceptionProperties(
-#         geometry_id)
-#     if geometry_label != None:
-#         print(int(geometry_label.GetProperty("label", "id")))
 
 simulator = Simulator(diagram)
 
