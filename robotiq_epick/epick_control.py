@@ -89,7 +89,7 @@ def AddSimEPickDriver(
     )
 
     inner_builder.ExportInput(
-        suction_pressure_source.GetSuctionCmdInputPort(), "suction_command"
+        suction_pressure_source.GetSuctionCmdInputPort(), "command"
     )
     inner_builder.ExportInput(
         cup_obj_interface.GetGeomQueryInputPort(), "geometry_query"

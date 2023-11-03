@@ -13,7 +13,7 @@ from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 from pydrake.systems.sensors import ApplyCameraConfig
 from pydrake.visualization import ApplyVisualizationConfig
-from scenario import Scenario
+from station.scenario import Scenario
 
 from common import ConfigureParser
 from kinova_gen3 import GamepadDiffIkController

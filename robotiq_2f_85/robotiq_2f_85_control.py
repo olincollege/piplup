@@ -19,10 +19,6 @@ def AddSim2f85Driver(
     builder.Connect(
         plant.get_state_output_port(gripper_instance), system.GetInputPort("state")
     )
-    # builder.Connect(
-    #     plant.get_generalized_contact_forces_output_port(gripper_instance),
-    #     system.GetInputPort("generalized_contact_forces"),
-    # )
     builder.Connect(
         system.GetOutputPort("applied_gripper_torque"),
         plant.get_actuation_input_port(gripper_instance),

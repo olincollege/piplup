@@ -1,49 +1,42 @@
 import argparse
-from typing import List
-
 import matplotlib.pyplot as plt
 import numpy as np
 from pydrake.all import *
 from pydrake.common import RandomGenerator
 from pydrake.geometry import Meshcat, StartMeshcat
-from pydrake.manipulation._manipulation_extra import ApplyDriverConfigs
-from pydrake.multibody.parsing import ModelDirectives, ProcessModelDirectives
-from pydrake.multibody.plant import AddMultibodyPlant
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
-from pydrake.systems.sensors import ApplyCameraConfig
-from pydrake.visualization import ApplyVisualizationConfig
-from scenario import Scenario, load_scenario
 
-from common import ConfigureParser
 from kinova_gen3 import GamepadDiffIkController
-from station import MakeHardwareStation
+from station import MakeHardwareStation, Scenario, load_scenario
 
 
 def run(*, scenario: Scenario, graphviz=None):
-    """Runs a simulation of the given scenario."""
-    meshcat = StartMeshcat()
+    meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-    # TODO (krishna) These should be more generic
+    # TODO (krishna) This should be more generic
+    # ----------
+    gripper_name = scenario.model_drivers["gen3"].hand_model_name
     controller_plant: MultibodyPlant = hardware_station.GetSubsystemByName(
         "gen3_controller_plant"
     ).get()
+    # ----------
 
     gamepad: GamepadDiffIkController = builder.AddNamedSystem(
-        "gamepad_control", GamepadDiffIkController(meshcat, controller_plant)
+        "gamepad_control",
+        GamepadDiffIkController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
         gamepad.GetOutputPort("gen3.position"),
         hardware_station.GetInputPort("gen3.position"),
     )
     builder.Connect(
-        gamepad.GetOutputPort("gripper.position"),
-        # hardware_station.GetInputPort("2f_85.position"),
-        hardware_station.GetInputPort("epick_2cup.suction_command"),
+        gamepad.GetOutputPort(f"{gripper_name}.command"),
+        hardware_station.GetInputPort(f"{gripper_name}.command"),
     )
 
     builder.Connect(
@@ -54,11 +47,11 @@ def run(*, scenario: Scenario, graphviz=None):
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
-    meshcat.SetObject("ee", Sphere(0.05), Rgba(0, 0.5, 0, 0.5))
+    meshcat.SetObject("ee_sphere", Sphere(0.05), Rgba(0, 0.5, 0, 0.5))
     ee_base = Mesh(
         "models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj", 1
     )
-    meshcat.SetObject("target", ee_base, Rgba(0, 0.5, 0, 0.5))
+    meshcat.SetObject("ee_body", ee_base, Rgba(0, 0.5, 0, 0.5))
     meshcat.SetCameraPose(np.array([1, -1, 1]) * 0.75, np.array([0, 0, 0.4]))
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
@@ -73,9 +66,9 @@ def run(*, scenario: Scenario, graphviz=None):
         with open(graphviz, "w", encoding="utf-8") as f:
             f.write(diagram.GetGraphvizString(options=options))
 
-    # plt.figure()
-    # plot_system_graphviz(diagram, options=options)
-    # plt.show()
+        plt.figure()
+        plot_system_graphviz(diagram, options=options)
+        plt.show()
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)
@@ -83,8 +76,8 @@ def run(*, scenario: Scenario, graphviz=None):
 
 def main():
     scenario = load_scenario(
-        filename="models/example_scenarios.yaml",
-        scenario_name="Demo",
+        filename="models/teleop_scenarios.yaml",
+        scenario_name="TeleopSuctionGripper",  # TeleopPlanarGripper
     )
     run(scenario=scenario, graphviz=None)
 
