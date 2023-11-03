@@ -75,9 +75,18 @@ def run(*, scenario: Scenario, graphviz=None):
 
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Run teleop demo for simulated hardware station"
+    )
+    parser.add_argument(
+        "--scenario_name","-s",
+        choices=["TeleopSuctionGripper", "TeleopPlanarGripper"],
+        default="TeleopPlanarGripper",
+    )
+    args = parser.parse_args()
     scenario = load_scenario(
         filename="models/teleop_scenarios.yaml",
-        scenario_name="TeleopSuctionGripper",  # TeleopPlanarGripper
+        scenario_name=args.scenario_name,
     )
     run(scenario=scenario, graphviz=None)
 
