@@ -4,6 +4,7 @@ from pydrake.all import *
 from .gen3_constants import *
 import numpy as np
 
+
 # Sim Gen3 Driver
 class SimGen3Driver(Diagram):
     def __init__(self, controller_plant: MultibodyPlant):

@@ -10,7 +10,9 @@ from copy import copy
 
 # TODO Move to a different package (krishna)
 class GamepadDiffIkController(Diagram):
-    def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str):
+    def __init__(
+        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
+    ):
         super().__init__()
         # TODO detect the computer and specify the gamepad mapping
 
@@ -58,7 +60,9 @@ class GamepadDiffIkController(Diagram):
 
 
 class GamepadPoseIntegrator(LeafSystem):
-    def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str):
+    def __init__(
+        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
+    ):
         super().__init__()
         self._meshcat = meshcat
         self._time_step = 0.005
@@ -78,9 +82,11 @@ class GamepadPoseIntegrator(LeafSystem):
         self.hand_model_name = hand_model_name
         # This can be used to specific arbitrary gripper commands
         if hand_model_name == "2f_85":
-            self.gripper_cmd_state_idx = self.DeclareDiscreteState(1) # Gripper position
+            self.gripper_cmd_state_idx = self.DeclareDiscreteState(
+                1
+            )  # Gripper position
         elif hand_model_name == "epick_2cup":
-            self.gripper_cmd_state_idx = self.DeclareDiscreteState(2) # Suction cmd
+            self.gripper_cmd_state_idx = self.DeclareDiscreteState(2)  # Suction cmd
 
         self.robot_state_port = self.DeclareVectorInputPort(
             "robot_state", controller_plant.num_multibody_states()
@@ -131,7 +137,14 @@ class GamepadPoseIntegrator(LeafSystem):
             else:
                 ee_rot = X_WE_desired.rotation()
                 target_twist[:3] = ee_rot.inverse().multiply(
-                    np.array([-left[0], left[1],right[1],]) * self.angular_speed
+                    np.array(
+                        [
+                            -left[0],
+                            left[1],
+                            right[1],
+                        ]
+                    )
+                    * self.angular_speed
                 )
 
         X_WE_desired.set_translation(
@@ -143,22 +156,26 @@ class GamepadPoseIntegrator(LeafSystem):
             X_WE_desired.rotation().multiply(R_delta).ToQuaternion()
         )
 
-
         # TODO this can be better designed to have the command specification passed in as a call back rather than defined here (krishna)
         if self.hand_model_name == "2f_85":
             cmd_pos = np.copy(discrete_state.get_value(self.gripper_cmd_state_idx))
             if not gamepad.index == None:
                 gripper_close = gamepad.button_values[6] * 3
                 gripper_open = gamepad.button_values[7] * 3
-                pos_delta = np.array([(gripper_close - gripper_open) / 2])*self._time_step
-                cmd_pos = np.clip(cmd_pos+pos_delta, 0, 1)
+                pos_delta = (
+                    np.array([(gripper_close - gripper_open) / 2]) * self._time_step
+                )
+                cmd_pos = np.clip(cmd_pos + pos_delta, 0, 1)
             discrete_state.set_value(self.gripper_cmd_state_idx, cmd_pos)
         elif self.hand_model_name == "epick_2cup":
             if not gamepad.index == None:
-                discrete_state.set_value(self.gripper_cmd_state_idx, np.array([gamepad.button_values[6],gamepad.button_values[7]]))
+                discrete_state.set_value(
+                    self.gripper_cmd_state_idx,
+                    np.array([gamepad.button_values[6], gamepad.button_values[7]]),
+                )
         context.SetAbstractState(self.X_WE_desired_state_idx, X_WE_desired)
 
-        viz_color = Rgba(0,0.5,0,0.5) if linear_mode else Rgba(0,0,0.5,0.5)
+        viz_color = Rgba(0, 0.5, 0, 0.5) if linear_mode else Rgba(0, 0, 0.5, 0.5)
         self._meshcat.SetObject("ee_sphere", Sphere(0.05), viz_color)
 
         X_WE = copy(X_WE_desired)

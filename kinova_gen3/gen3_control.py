@@ -19,6 +19,7 @@ from .gen3_sim_driver import SimGen3Driver
 
 # from kortex_api.autogen.messages import DeviceConfig_pb2, Session_pb2, Base_pb2, VisionConfig_pb2
 
+
 # Build Controls
 def BuildGen3Control():
     pass

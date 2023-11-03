@@ -4,6 +4,7 @@ import os
 
 # This script is a draft version of generating the multibody spring elements for a suction gripper (krishna)
 
+
 def indent(elem, level=0):
     i = "\n" + level * "  "
     if len(elem):
@@ -18,6 +19,7 @@ def indent(elem, level=0):
     else:
         if level and (not elem.tail or not elem.tail.strip()):
             elem.tail = i
+
 
 gripper_model_file = "../robotiq_description/sdf/robotiq_epick_2cup.sdf"
 
@@ -141,12 +143,16 @@ for cup_idx in range(kNumCups):
         sphere = ET.SubElement(geometry, "sphere")
         ET.SubElement(sphere, "radius").text = str(kCupEdgePtDiameter / 2)
 
-        prox_props = ET.SubElement(collision, 'drake:proximity_properties')
-        ET.SubElement(prox_props, 'drake:mu_dynamic').text = str(kCupEdgeFriction)
-        ET.SubElement(prox_props, 'drake:mu_static').text = str(kCupEdgeFriction)
+        prox_props = ET.SubElement(collision, "drake:proximity_properties")
+        ET.SubElement(prox_props, "drake:mu_dynamic").text = str(kCupEdgeFriction)
+        ET.SubElement(prox_props, "drake:mu_static").text = str(kCupEdgeFriction)
 
 indent(root)
 
 file_path_without_extension, _ = os.path.splitext(gripper_model_file)
 tree = ET.ElementTree(root)
-tree.write(f"{file_path_without_extension}_with_contact_springs.sdf", encoding="utf-8", xml_declaration=True)
+tree.write(
+    f"{file_path_without_extension}_with_contact_springs.sdf",
+    encoding="utf-8",
+    xml_declaration=True,
+)

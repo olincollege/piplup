@@ -2,6 +2,7 @@ from enum import Enum, auto
 import numpy as np
 from pydrake.multibody.plant import MultibodyPlant
 
+
 # Constants
 class Gen3ControlLevel(Enum):
     kHighLevel = auto()  # Upto 40Hz
@@ -14,17 +15,16 @@ class Gen3JointControlMode(Enum):
     kVelocity = auto()
     kTorque = auto()
 
-kGen3ArmNumJoints : int = 7
-kGen3KortexAPIPeriod : float = 0.025 # 40hz
+
+kGen3ArmNumJoints: int = 7
+kGen3KortexAPIPeriod: float = 0.025  # 40hz
 
 
 def get_gen3_joint_velocity_limits(plant: MultibodyPlant):
     qd_min = []
     qd_max = []
 
-    joint_indices = plant.GetJointIndices(
-        plant.GetModelInstanceByName("Kinova_Gen3")
-    )
+    joint_indices = plant.GetJointIndices(plant.GetModelInstanceByName("Kinova_Gen3"))
 
     for idx in joint_indices:
         joint = plant.get_joint(idx)
@@ -35,13 +35,12 @@ def get_gen3_joint_velocity_limits(plant: MultibodyPlant):
 
     return (np.array(qd_min), np.array(qd_max))
 
+
 def get_gen3_joint_position_limits(plant: MultibodyPlant):
     q_min = []
     q_max = []
 
-    joint_indices = plant.GetJointIndices(
-        plant.GetModelInstanceByName("Kinova_Gen3")
-    )
+    joint_indices = plant.GetJointIndices(plant.GetModelInstanceByName("Kinova_Gen3"))
 
     for idx in joint_indices:
         joint = plant.get_joint(idx)

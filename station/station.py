@@ -18,6 +18,7 @@ from station.scenario import Scenario
 from common import ConfigureParser
 from kinova_gen3 import GamepadDiffIkController
 
+
 def MakeHardwareStation(
     scenario: Scenario,
     meshcat: Meshcat = None,
