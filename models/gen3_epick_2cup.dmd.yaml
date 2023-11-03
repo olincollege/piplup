@@ -1,0 +1,25 @@
+
+directives:
+- add_model:
+    name: gen3
+    file: package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf
+    default_joint_positions:
+        Actuator1: [0]
+        Actuator2: [0.14]
+        Actuator3: [3.1415]
+        Actuator4: [-2.38]
+        Actuator5: [0]
+        Actuator6: [-0.62]
+        Actuator7: [-1.57]
+- add_model:
+    name: epick_2cup
+    file: package://piplup_models/robotiq_description/sdf/robotiq_epick_2cup_with_contact_springs.sdf
+- add_frame:
+    name: end_effector_frame
+    X_PF:
+        base_frame: bracelet_no_vision_link
+        translation: [0, 0, -0.0615250000000001]
+        rotation: !Rpy { deg: [180, 6.29893042e-31, 0] }
+- add_weld:
+    parent: gen3::end_effector_frame
+    child: epick_2cup::robotiq_epick_2cup_base_link

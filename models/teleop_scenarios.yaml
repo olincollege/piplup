@@ -1,0 +1,58 @@
+TeleopPlanarGripper:
+  directives:
+  - add_directives:
+      file: package://piplup_models/gen3_2f_85.dmd.yaml
+  - add_weld:
+      parent: world
+      child: gen3::base_link
+  - add_directives:
+        file: package://piplup_models/scope_table_w_cameras.dmd.yaml
+  - add_model:
+        name: cracker_box
+        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+        default_free_body_pose:
+            base_link_cracker:
+                translation: [0.4, 0, 0.3]
+                rotation: !Rpy { deg: [90.0, 0.0, 0.0 ]}
+  cameras:
+    camera0:
+      name: camera0
+      depth: True
+      X_PB:
+        base_frame: camera0::base
+  model_drivers:
+    gen3: !Gen3Driver
+      hand_model_name: 2f_85
+
+TeleopSuctionGripper:
+  plant_config:
+    time_step: 0.002
+    discrete_contact_solver: sap
+  directives:
+  - add_directives:
+      file: package://piplup_models/gen3_epick_2cup.dmd.yaml
+  - add_weld:
+      parent: world
+      child: gen3::base_link
+  - add_directives:
+        file: package://piplup_models/scope_table_w_cameras.dmd.yaml
+  - add_model:
+        name: cracker_box
+        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+        default_free_body_pose:
+            base_link_cracker:
+                translation: [0.4, 0, 0.3]
+                rotation: !Rpy { deg: [0.0, 0.0, 0.0 ]}
+  cameras:
+    camera0:
+      name: camera0
+      depth: True
+      X_PB:
+        base_frame: camera0::base
+  model_drivers:
+    gen3: !Gen3Driver
+      hand_model_name: epick_2cup
+    epick_2cup: !EPickDriver
+      num_cups: 2
+      interaction_bodies:
+        - base_link_cracker

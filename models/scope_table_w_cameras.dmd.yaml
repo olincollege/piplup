@@ -1,26 +1,19 @@
 
 directives:
-- add_directives:
-    file: package://piplup_models/gen3_2f_85.dmd.yaml
 - add_model:
     name: table
     file: package://piplup_models/scope_station/models/scope_table.sdf
 - add_weld:
     parent: world
-    child: gen3::base_link
-- add_weld:
-    parent: world
     child: table::table_body
     X_PC:
         translation: [-0.08, 0, 0]
-
 - add_frame:
     name: camera0_origin
     X_PF:
         base_frame: world
         rotation: !Rpy { deg: [90.0, 0, 0.0]}
         translation: [0.5, -.5, 1.1]
-
 - add_model:
     name: camera0
     file: package://piplup_models/realsense_description/sdf/d435_simple.sdf

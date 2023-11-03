@@ -8,10 +8,13 @@ from .gen3_constants import (
 from copy import copy
 
 
-# TODO Move to a different package
+# TODO Move to a different package (krishna)
 class GamepadDiffIkController(Diagram):
-    def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant):
+    def __init__(
+        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
+    ):
         super().__init__()
+        # TODO detect the computer and specify the gamepad mapping
 
         params = DifferentialInverseKinematicsParameters(
             controller_plant.num_positions(), controller_plant.num_velocities()
@@ -34,7 +37,7 @@ class GamepadDiffIkController(Diagram):
 
         builder = DiagramBuilder()
         gamepad: GamepadPoseIntegrator = builder.AddNamedSystem(
-            "gamepad", GamepadPoseIntegrator(meshcat, controller_plant)
+            "gamepad", GamepadPoseIntegrator(meshcat, controller_plant, hand_model_name)
         )
         diff_ik: DifferentialInverseKinematicsIntegrator = builder.AddSystem(
             DifferentialInverseKinematicsIntegrator(
@@ -51,13 +54,15 @@ class GamepadDiffIkController(Diagram):
         builder.ConnectInput("gen3.state", gamepad.GetInputPort("robot_state"))
         builder.ExportOutput(diff_ik.GetOutputPort("joint_positions"), "gen3.position")
         builder.ExportOutput(
-            gamepad.GetOutputPort("gripper_command"), "gripper.position"
+            gamepad.GetOutputPort("gripper_command"), f"{hand_model_name}.command"
         )
         builder.BuildInto(self)
 
 
 class GamepadPoseIntegrator(LeafSystem):
-    def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant):
+    def __init__(
+        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
+    ):
         super().__init__()
         self._meshcat = meshcat
         self._time_step = 0.005
@@ -74,14 +79,20 @@ class GamepadPoseIntegrator(LeafSystem):
         self.linear_mode_state_idx = self.DeclareAbstractState(
             AbstractValue.Make(True)
         )  # gamepad mode
-
-        self.gripper_pos_state_idx = self.DeclareDiscreteState(1)
+        self.hand_model_name = hand_model_name
+        # This can be used to specific arbitrary gripper commands
+        if hand_model_name == "2f_85":
+            self.gripper_cmd_state_idx = self.DeclareDiscreteState(
+                1
+            )  # Gripper position
+        elif hand_model_name == "epick_2cup":
+            self.gripper_cmd_state_idx = self.DeclareDiscreteState(2)  # Suction cmd
 
         self.robot_state_port = self.DeclareVectorInputPort(
             "robot_state", controller_plant.num_multibody_states()
         )
         self.DeclareStateOutputPort("X_WE_desired", self.X_WE_desired_state_idx)
-        self.DeclareStateOutputPort("gripper_command", self.gripper_pos_state_idx)
+        self.DeclareStateOutputPort("gripper_command", self.gripper_cmd_state_idx)
         self.DeclarePeriodicDiscreteUpdateEvent(self._time_step, 0, self.Integrate)
         self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
 
@@ -126,7 +137,14 @@ class GamepadPoseIntegrator(LeafSystem):
             else:
                 ee_rot = X_WE_desired.rotation()
                 target_twist[:3] = ee_rot.inverse().multiply(
-                    np.array([-left[0], left[1],right[1],]) * self.angular_speed
+                    np.array(
+                        [
+                            -left[0],
+                            left[1],
+                            right[1],
+                        ]
+                    )
+                    * self.angular_speed
                 )
 
         X_WE_desired.set_translation(
@@ -138,25 +156,28 @@ class GamepadPoseIntegrator(LeafSystem):
             X_WE_desired.rotation().multiply(R_delta).ToQuaternion()
         )
 
-        cmd_pos = np.copy(discrete_state.get_value(self.gripper_pos_state_idx))
-        if not gamepad.index == None:
-            gripper_close = gamepad.button_values[6] * 3
-            gripper_open = gamepad.button_values[7] * 3
-            pos_delta = np.array([(gripper_close - gripper_open) / 2])*self._time_step
-            cmd_pos = np.clip(cmd_pos+pos_delta, 0, 1)
-
+        # TODO this can be better designed to have the command specification passed in as a call back rather than defined here (krishna)
+        if self.hand_model_name == "2f_85":
+            cmd_pos = np.copy(discrete_state.get_value(self.gripper_cmd_state_idx))
+            if not gamepad.index == None:
+                gripper_close = gamepad.button_values[6] * 3
+                gripper_open = gamepad.button_values[7] * 3
+                pos_delta = (
+                    np.array([(gripper_close - gripper_open) / 2]) * self._time_step
+                )
+                cmd_pos = np.clip(cmd_pos + pos_delta, 0, 1)
+            discrete_state.set_value(self.gripper_cmd_state_idx, cmd_pos)
+        elif self.hand_model_name == "epick_2cup":
+            if not gamepad.index == None:
+                discrete_state.set_value(
+                    self.gripper_cmd_state_idx,
+                    np.array([gamepad.button_values[6], gamepad.button_values[7]]),
+                )
         context.SetAbstractState(self.X_WE_desired_state_idx, X_WE_desired)
-        discrete_state.set_value(self.gripper_pos_state_idx, cmd_pos)
 
-
-        viz_color = Rgba(0,0.5,0,0.5) if linear_mode else Rgba(0,0,0.5,0.5)
-        self._meshcat.SetObject("ee", Sphere(0.05), viz_color)
+        viz_color = Rgba(0, 0.5, 0, 0.5) if linear_mode else Rgba(0, 0, 0.5, 0.5)
+        self._meshcat.SetObject("ee_sphere", Sphere(0.05), viz_color)
 
         X_WE = copy(X_WE_desired)
-        self._meshcat.SetTransform("/drake/ee", X_WE)
-        # X_WE.set_rotation(
-        #     X_WE_desired.rotation().multiply(
-        #         RotationMatrix(RollPitchYaw([0, 0, np.pi / 2]))
-        #     )
-        # )
-        self._meshcat.SetTransform("/drake/target", X_WE)
+        self._meshcat.SetTransform("/drake/ee_sphere", X_WE)
+        self._meshcat.SetTransform("/drake/ee_body", X_WE)

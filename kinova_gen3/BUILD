@@ -11,5 +11,9 @@ py_library(
     data = ["//models"],
     imports = [".."],
     visibility = ["//visibility:public"],
-    deps = ["//robotiq_2f_85","//common"],
+    deps = [
+        "//common",
+        "//robotiq_2f_85",
+        "@drake//bindings/pydrake",
+    ],
 )

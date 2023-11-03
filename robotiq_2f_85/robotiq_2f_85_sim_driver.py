@@ -4,15 +4,16 @@ from pydrake.all import *
 from .robotiq_2f_85_constants import *
 import numpy as np
 
+
 class Sim2f85Driver(LeafSystem):
-    def __init__(self, plant:MultibodyPlant):
+    def __init__(self, plant: MultibodyPlant):
         LeafSystem.__init__(self)
 
         self.plant = plant
         self.context = self.plant.CreateDefaultContext()
 
         # Declare input ports
-        self.position_port = self.DeclareVectorInputPort("position", BasicVector(1))
+        self.position_port = self.DeclareVectorInputPort("command", BasicVector(1))
         # self.target_type_port = self.DeclareAbstractInputPort(
         #     "gripper_target_type", AbstractValue.Make(GripperTarget.kVelocity)
         # )

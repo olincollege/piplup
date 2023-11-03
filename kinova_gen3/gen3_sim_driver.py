@@ -4,6 +4,7 @@ from pydrake.all import *
 from .gen3_constants import *
 import numpy as np
 
+
 # Sim Gen3 Driver
 class SimGen3Driver(Diagram):
     def __init__(self, controller_plant: MultibodyPlant):
@@ -61,7 +62,7 @@ class SimGen3Driver(Diagram):
         builder.ConnectInput("state", state_pass.get_input_port())
         builder.ExportOutput(state_pass.get_output_port(), "state_estimated")
         builder.ExportOutput(inverse_dynamics.get_output_port(), "torque_commanded")
-        # TODO torque_measured should come from the sim_plant not the controller
+        # TODO torque_measured should come from the sim_plant not the controller (krishna)
         builder.ExportOutput(inverse_dynamics.get_output_port(), "torque_measured")
         builder.ExportOutput(contact_forces.get_output_port(), "torque_external")
 
