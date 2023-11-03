@@ -84,7 +84,6 @@ void CupPressureSource::CalcSuctionCupPressure(
         } else {
             pressure = 0.;
         }
-        drake::log()->info(pressure);
         (*suction_cup_pressure_ptr)[suction_cup_idx] = suction_cmd * pressure;
     }
 }

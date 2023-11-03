@@ -5,12 +5,12 @@ directives:
     file: package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf
     default_joint_positions:
         Actuator1: [0]
-        Actuator2: [0.56]
-        Actuator3: [0]
-        Actuator4: [1.02]
+        Actuator2: [0.14]
+        Actuator3: [3.1415]
+        Actuator4: [-2.38]
         Actuator5: [0]
-        Actuator6: [1.29]
-        Actuator7: [0]
+        Actuator6: [-0.62]
+        Actuator7: [-1.57]
 - add_model:
     name: epick_2cup
     file: package://piplup_models/robotiq_description/sdf/robotiq_epick_2cup_with_contact_springs.sdf
