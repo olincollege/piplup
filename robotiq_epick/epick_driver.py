@@ -3,15 +3,18 @@ from types import SimpleNamespace
 from pydrake.all import *
 import numpy as np
 from common import ConfigureParser
-from suction_gripper import CupPressureSource, CupObjInterface
 from .epick_control import AddSimEPickDriver
+
 
 # Driver
 class EPickDriver:
     __fields__: ClassVar[tuple] = (
-        SimpleNamespace(name="cup_frames", type=List[str]),
+        SimpleNamespace(name="num_cups", type=int),
+        SimpleNamespace(name="interaction_bodies", type=List[str]),
     )
-    cup_frames: List[str]
+    num_cups: int
+    interaction_bodies: List[str]
+
 
 def ApplyDriverConfig(
     driver_config: EPickDriver,
@@ -21,10 +24,29 @@ def ApplyDriverConfig(
     lcm_buses: LcmBuses,
     builder: DiagramBuilder,
 ):
-    suction_gripper = models_from_directives_map["suction_gripper"]
-    obj_model_info :ModelInstanceInfo = models_from_directives_map["cracker_box"]
-    obj_body = sim_plant.GetBodyByName("base_link_cracker", obj_model_info.model_instance)
+    # TODO if hardware apply epick modbus interface (krishna)
 
-    diag = AddSimEPickDriver(sim_plant, suction_gripper,obj_body ,builder)
+    gripper_model: ModelInstanceInfo = models_from_directives_map[model_instance_name]
+    obj_bodies = []
+    for body_name in driver_config.interaction_bodies:
+        body = sim_plant.GetBodyByName(body_name)
+        if body == None:
+            raise RuntimeError(
+                f"Interaction body for suction gripper not found: {body_name}"
+            )
+        obj_bodies.append(body)
 
-    builder.Connect(diag.GetOutputPort("suction_force"), sim_plant.get_applied_spatial_force_input_port())
+    if not obj_bodies:
+        raise RuntimeError(f"At least 1 interaction body must be added")
+
+    diag = AddSimEPickDriver(
+        sim_plant,
+        gripper_model.model_instance,
+        obj_bodies,
+        builder,
+    )
+
+    builder.Connect(
+        diag.GetOutputPort("suction_force"),
+        sim_plant.get_applied_spatial_force_input_port(),
+    )

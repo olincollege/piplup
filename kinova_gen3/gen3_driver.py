@@ -66,14 +66,26 @@ def ApplyDriverConfig(
     )
     parser = Parser(controller_plant)
     ConfigureParser(parser)
-    gripper = parser.AddModelsFromUrl(
-        f"package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static.sdf"
-    )[0]
-    controller_plant.WeldFrames(
-        ee_frame,
-        controller_plant.GetFrameByName("robotiq_arg2f_base_link", gripper),
-        RigidTransform(RotationMatrix(RollPitchYaw([0, 0, np.pi / 2]))),
-    )
+    if driver_config.hand_model_name == "2f_85":
+        gripper = parser.AddModelsFromUrl(
+
+            f"package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static.sdf"
+        )[0]
+        controller_plant.WeldFrames(
+            ee_frame,
+            controller_plant.GetFrameByName("robotiq_arg2f_base_link", gripper),
+            RigidTransform(RotationMatrix(RollPitchYaw([0, 0, np.pi / 2]))),
+        )
+    elif driver_config.hand_model_name == "epick_2cup":
+        gripper = parser.AddModelsFromUrl(
+
+            f"package://piplup_models/robotiq_description/sdf/robotiq_epick_2cup.sdf"
+        )[0]
+        controller_plant.WeldFrames(
+            ee_frame,
+            controller_plant.GetFrameByName("robotiq_epick_2cup_base_link", gripper),
+            RigidTransform(),
+        )
     controller_plant.Finalize()
 
     gripper_controller_plant = MultibodyPlant(0.0)
@@ -101,7 +113,7 @@ def ApplyDriverConfig(
     )
 
     if driver_config.ip_address and driver_config.port:
-        pass  # TODO BuildGen3Control
+        pass  # TODO BuildGen3Control (krishna)
     else:
         AddSimGen3Driver(
             sim_plant, gen3_model.model_instance, controller_plant, builder

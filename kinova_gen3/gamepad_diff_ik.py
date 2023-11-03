@@ -8,7 +8,7 @@ from .gen3_constants import (
 from copy import copy
 
 
-# TODO Move to a different package
+# TODO Move to a different package (krishna)
 class GamepadDiffIkController(Diagram):
     def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant):
         super().__init__()
@@ -75,7 +75,7 @@ class GamepadPoseIntegrator(LeafSystem):
             AbstractValue.Make(True)
         )  # gamepad mode
 
-        self.gripper_pos_state_idx = self.DeclareDiscreteState(1)
+        self.gripper_pos_state_idx = self.DeclareDiscreteState(2)
 
         self.robot_state_port = self.DeclareVectorInputPort(
             "robot_state", controller_plant.num_multibody_states()
@@ -138,16 +138,18 @@ class GamepadPoseIntegrator(LeafSystem):
             X_WE_desired.rotation().multiply(R_delta).ToQuaternion()
         )
 
-        cmd_pos = np.copy(discrete_state.get_value(self.gripper_pos_state_idx))
-        if not gamepad.index == None:
-            gripper_close = gamepad.button_values[6] * 3
-            gripper_open = gamepad.button_values[7] * 3
-            pos_delta = np.array([(gripper_close - gripper_open) / 2])*self._time_step
-            cmd_pos = np.clip(cmd_pos+pos_delta, 0, 1)
+        # TODO this needs to be generic to the type of gripper thats on the robot (krishna)
+        # cmd_pos = np.copy(discrete_state.get_value(self.gripper_pos_state_idx))
+        # if not gamepad.index == None:
+        #     gripper_close = gamepad.button_values[6] * 3
+        #     gripper_open = gamepad.button_values[7] * 3
+        #     pos_delta = np.array([(gripper_close - gripper_open) / 2])*self._time_step
+        #     cmd_pos = np.clip(cmd_pos+pos_delta, 0, 1)
+        # discrete_state.set_value(self.gripper_pos_state_idx, cmd_pos)
 
         context.SetAbstractState(self.X_WE_desired_state_idx, X_WE_desired)
-        discrete_state.set_value(self.gripper_pos_state_idx, cmd_pos)
-
+        if not gamepad.index == None:
+            discrete_state.set_value(self.gripper_pos_state_idx, np.array([gamepad.button_values[6],gamepad.button_values[7]]))
 
         viz_color = Rgba(0,0.5,0,0.5) if linear_mode else Rgba(0,0,0.5,0.5)
         self._meshcat.SetObject("ee", Sphere(0.05), viz_color)

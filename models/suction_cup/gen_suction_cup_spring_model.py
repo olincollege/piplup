@@ -2,6 +2,8 @@ import xml.etree.ElementTree as ET
 import numpy as np
 import os
 
+# This script is a draft version of generating the multibody spring elements for a suction gripper (krishna)
+
 def indent(elem, level=0):
     i = "\n" + level * "  "
     if len(elem):

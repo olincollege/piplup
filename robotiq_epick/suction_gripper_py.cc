@@ -1,18 +1,18 @@
 #include <drake/bindings/pydrake/common/cpp_template_pybind.h>
 #include <drake/bindings/pydrake/common/default_scalars_pybind.h>
+#include <drake/geometry/geometry_ids.h>
+#include <drake/geometry/geometry_state.h>
 #include <pybind11/pybind11.h>
+#include <functional>
 
-#include "robotiq_epick/example_gripper_multibody_model.h"
 #include "robotiq_epick/suction_force_model.h"
-
 namespace py = pybind11;
 
 using drake::pydrake::DefineTemplateClassWithDefault;
 using drake::pydrake::GetPyParam;
 using drake::systems::LeafSystem;
-
-namespace drake::examples::multibody::suction_gripper {
-namespace {
+namespace piplup {
+namespace suction_gripper {
 
 PYBIND11_MODULE(suction_gripper, m) {
     m.doc() = "Suction vacuum gripper python bindings.";
@@ -33,19 +33,16 @@ PYBIND11_MODULE(suction_gripper, m) {
              py::return_value_policy::reference);
 
     py::class_<CupObjInterface, LeafSystem<double>>(m, "CupObjInterface")
-        .def(
-            py::init<
-                double, double, const std::vector<drake::geometry::GeometryId>&,
-                const std::unordered_map<drake::geometry::GeometryId,
-                                         drake::multibody::BodyIndex>&,
-                const std::vector<std::vector<drake::geometry::GeometryId>>&,
-                const std::unordered_map<drake::geometry::GeometryId,
-                                         drake::multibody::BodyIndex>&>(),
-            py::arg("time_step"), py::arg("suction_cup_area"),
-            py::arg("suction_cup_act_pt_geom_id_vec"),
-            py::arg("suction_cup_act_pt_geom_id_to_body_idx_map"),
-            py::arg("suction_cup_edge_pt_geom_id_vec"),
-            py::arg("obj_geom_id_to_body_idx_map"))
+        .def(py::init<double, double, const drake::multibody::BodyIndex&,
+                      const std::pair<drake::geometry::FrameId, std::vector<drake::math::RigidTransformd>> &,
+                      const std::vector<drake::geometry::GeometryIdSet>&,
+                      const std::unordered_map<drake::geometry::GeometryId,
+                                               drake::multibody::BodyIndex>&>(),
+             py::arg("time_step"), py::arg("suction_cup_area"),
+             py::arg("gripper_body"),
+             py::arg("action_point_frames"),
+             py::arg("edge_points"),
+             py::arg("obj_geom_id_to_body_idx_map"))
         .def("GetGeomQueryInputPort", &CupObjInterface::GetGeomQueryInputPort,
              py::return_value_policy::reference)
         .def("GetSuctionCupPressureInputPort",
@@ -57,22 +54,6 @@ PYBIND11_MODULE(suction_gripper, m) {
         .def("GetCupObjDistOutputPort",
              &CupObjInterface::GetCupObjDistOutputPort,
              py::return_value_policy::reference);
-
-    py::class_<ExampleGripperMultibodyModel>(m, "ExampleGripperMultibodyModel")
-        .def(py::init<drake::multibody::MultibodyPlant<double>*,
-                      const drake::multibody::Body<double>&>(),
-             py::arg("plant"), py::arg("wrist_body"))
-        .def_readwrite("model_name", &ExampleGripperMultibodyModel::model_name)
-        .def("get_gripper_model_instance",
-             &ExampleGripperMultibodyModel::get_gripper_model_instance)
-        .def("get_suction_cup_act_pt_geom_id_vec",
-             &ExampleGripperMultibodyModel::get_suction_cup_act_pt_geom_id_vec)
-        .def("get_suction_cup_act_pt_geom_id_to_body_idx_map",
-             &ExampleGripperMultibodyModel::
-                 get_suction_cup_act_pt_geom_id_to_body_idx_map)
-        .def("get_suction_cup_edge_pt_geom_id_vec",
-             &ExampleGripperMultibodyModel::get_suction_cup_edge_pt_geom_id_vec)
-        .def("CalcCupArea", &ExampleGripperMultibodyModel::CalcCupArea);
 }
-}  // namespace
-}  // namespace drake::examples::multibody::suction_gripper
+}  // namespace suction_gripper
+}  // namespace piplup

@@ -71,7 +71,7 @@ class Scenario:
     visualization: VisualizationConfig = VisualizationConfig()
 
 
-def _load_scenario(*, filename, scenario_name):
+def load_scenario(*, filename, scenario_name):
     """Implements the command-line handling logic for scenario data.
     Returns a `Scenario` object loaded from the given input arguments.
     """

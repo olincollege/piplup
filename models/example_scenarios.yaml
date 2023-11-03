@@ -27,6 +27,6 @@ Demo:
     gen3: !Gen3Driver
       hand_model_name: epick_2cup
     epick_2cup: !EPickDriver
-      cup_frames:
-        - epick_2cup::robotiq_epick_2cup_cup_0
-        - epick_2cup::robotiq_epick_2cup_cup_1
+      num_cups: 2
+      interaction_bodies:
+        - base_link_cracker

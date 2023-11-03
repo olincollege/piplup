@@ -13,7 +13,7 @@ directives:
         Actuator7: [0]
 - add_model:
     name: epick_2cup
-    file: package://piplup_models/robotiq_description/sdf/robotiq_epick_2cup.sdf
+    file: package://piplup_models/robotiq_description/sdf/robotiq_epick_2cup_with_contact_springs.sdf
 - add_frame:
     name: end_effector_frame
     X_PF:

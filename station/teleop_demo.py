@@ -13,7 +13,7 @@ from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 from pydrake.systems.sensors import ApplyCameraConfig
 from pydrake.visualization import ApplyVisualizationConfig
-from scenario import Scenario, _load_scenario
+from scenario import Scenario, load_scenario
 
 from common import ConfigureParser
 from kinova_gen3 import GamepadDiffIkController
@@ -82,7 +82,7 @@ def run(*, scenario: Scenario, graphviz=None):
 
 
 def main():
-    scenario = _load_scenario(
+    scenario = load_scenario(
         filename="models/example_scenarios.yaml",
         scenario_name="Demo",
     )
