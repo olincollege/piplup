@@ -1,23 +1,8 @@
 workspace(name = "piplup")
 
 # This Bazel WORKSPACE file is taken from the drake-external-examples https://github.com/RobotLocomotion/drake-external-examples/tree/main/drake_bazel_installed
-DRAKE_COMMIT = "master"
+DRAKE_COMMIT = "v1.22.0"
 DRAKE_CHECKSUM = ""
-
-# Or choose a specific revision of Drake to use.
-# DRAKE_COMMIT = "be4f658487f739ba04ec079de46f9459b719636d"
-# DRAKE_CHECKSUM = "31ec8f87df3ceb6516de3c33a14c5d59ac5c003b4faf93ac526877d2e150b394"
-#
-# You can also use DRAKE_COMMIT to choose a Drake release; eg:
-# DRAKE_COMMIT = "v0.15.0"
-#
-# Before changing the COMMIT, temporarily uncomment the next line so that Bazel
-# displays the suggested new value for the CHECKSUM.
-# DRAKE_CHECKSUM = "0" * 64
-
-# Or to temporarily build against a local checkout of Drake, at the bash prompt
-# set an environment variable before building:
-#  export EXAMPLES_LOCAL_DRAKE_PATH=/home/user/stuff/drake
 
 # Load an environment variable.
 load("//:environ.bzl", "environ_repository")
