@@ -25,7 +25,7 @@
         </geometry>
       </collision>
     </link>
-    <link name="extrusion_frame">
+    <!-- <link name="extrusion_frame">
       <visual name="extrusion_frame_visual_0">
         <pose> 0.02 0.48 0.6 0 0 0</pose>
         <geometry>
@@ -163,6 +163,6 @@
     <joint name="extrusion_weld" type="fixed">
       <parent>table_body</parent>
       <child>extrusion_frame</child>
-    </joint>
+    </joint> -->
   </model>
 </sdf>
