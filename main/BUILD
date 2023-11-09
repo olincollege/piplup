@@ -6,3 +6,10 @@ py_binary(
     imports = [".."],
     deps = ["//station:station"],
 )
+
+py_binary(
+    name = "hardware_demo",
+    srcs = ["hardware_demo.py"],
+    imports = [".."],
+    deps = ["//station:station"],
+)

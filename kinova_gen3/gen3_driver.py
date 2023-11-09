@@ -3,7 +3,7 @@ from types import SimpleNamespace
 from pydrake.all import *
 from .gen3_constants import *
 import numpy as np
-from .gen3_control import BuildGen3Control, AddSimGen3Driver
+from .gen3_control import AddSimGen3Driver
 from robotiq_2f_85 import AddSim2f85Driver
 from common import ConfigureParser
 
@@ -14,14 +14,10 @@ class Gen3Driver:
         SimpleNamespace(name="hand_model_name", type=str),
         SimpleNamespace(name="control_level", type=Gen3ControlLevel),
         SimpleNamespace(name="control_mode", type=Gen3JointControlMode),
-        SimpleNamespace(name="ip_address", type=str),
-        SimpleNamespace(name="port", type=int),
     )
     hand_model_name: str
     control_level: Gen3ControlLevel = Gen3ControlLevel.kHighLevel
     control_mode: Gen3JointControlMode = Gen3JointControlMode.kPosition
-    ip_address: str = None
-    port: int = None
 
 
 # Driver Functions
@@ -114,23 +110,18 @@ def ApplyDriverConfig(
         SharedPointerSystem(gripper_controller_plant),
     )
 
-    if driver_config.ip_address and driver_config.port:
-        pass  # TODO BuildGen3Control (krishna)
-    else:
-        AddSimGen3Driver(
-            sim_plant, gen3_model.model_instance, controller_plant, builder
-        )
+    AddSimGen3Driver(sim_plant, gen3_model.model_instance, controller_plant, builder)
 
-        if driver_config.hand_model_name == "2f_85":
-            gripper_sys = AddSim2f85Driver(
-                sim_plant,
-                robotiq_2f_85_model.model_instance,
-                gripper_controller_plant,
-                builder,
-            )
-            for i in range(gripper_sys.num_input_ports()):
-                port = gripper_sys.get_input_port(i)
-                if not builder.IsConnectedOrExported(port):
-                    builder.ExportInput(
-                        port, f"{driver_config.hand_model_name}.{port.get_name()}"
-                    )
+    if driver_config.hand_model_name == "2f_85":
+        gripper_sys = AddSim2f85Driver(
+            sim_plant,
+            robotiq_2f_85_model.model_instance,
+            gripper_controller_plant,
+            builder,
+        )
+        for i in range(gripper_sys.num_input_ports()):
+            port = gripper_sys.get_input_port(i)
+            if not builder.IsConnectedOrExported(port):
+                builder.ExportInput(
+                    port, f"{driver_config.hand_model_name}.{port.get_name()}"
+                )

@@ -22,8 +22,10 @@ from kinova_gen3 import GamepadDiffIkController
 def MakeHardwareStation(
     scenario: Scenario,
     meshcat: Meshcat = None,
-    hardware: bool = False,
 ) -> Diagram:
+    if scenario.hardware_interface:
+        return MakeHardwareStationInterface(scenario, meshcat)
+
     builder = DiagramBuilder()
 
     # Create the multibody plant and scene graph.
@@ -91,3 +93,12 @@ def MakeHardwareStation(
     builder.ExportOutput(sim_plant.get_body_poses_output_port(), "body_poses")
 
     return builder.Build()
+
+
+def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
+    raise RuntimeError("Hardware interface not impl")
+    builder = DiagramBuilder()
+
+    diagram = builder.Build()
+    diagram.set_name("HardwareStationInterface")
+    return diagram

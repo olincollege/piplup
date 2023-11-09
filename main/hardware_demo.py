@@ -86,7 +86,7 @@ def main():
     )
     args = parser.parse_args()
     scenario = load_scenario(
-        filename="models/teleop_scenarios.yaml",
+        filename="models/teleop_scenarios_hardware.yaml",
         scenario_name=args.scenario_name,
     )
     run(scenario=scenario, graphviz=None)
