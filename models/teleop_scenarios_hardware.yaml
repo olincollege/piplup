@@ -20,6 +20,8 @@ TeleopPlanarGripper:
       depth: True
       X_PB:
         base_frame: camera0::base
+      width: 1280
+      height: 720
   model_drivers:
     gen3: !Gen3Driver
       hand_model_name: 2f_85
@@ -27,3 +29,5 @@ TeleopPlanarGripper:
     gen3:
       ip_address: 192.168.1.10
       port: 10001
+    camera0:
+      serial_number: 141722074426
