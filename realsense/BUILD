@@ -34,6 +34,7 @@ pybind_py_library(
         ":realsensed400",
         "@drake//bindings/pydrake/common:cpp_template_pybind",
         "@drake//bindings/pydrake/common:default_scalars_pybind",
+        "@drake//bindings/pydrake/common:serialize_pybind",
     ],
     cc_so_name = "realsensed400",
     cc_srcs = ["realsensed400_py.cc"],
