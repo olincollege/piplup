@@ -1,7 +1,5 @@
 #include "realsense/realsensed400.h"
-
 #include <opencv2/opencv.hpp>
-
 
 int main(int argc, char * argv[])
 {
@@ -11,7 +9,7 @@ int main(int argc, char * argv[])
     config.fps = 30;
     piplup::realsense::RealSenseD400 cam0("141722074426", config);
     piplup::realsense::RealSenseD400 cam1("938422072139", config);
-    
+
     drake::systems::Simulator<double> simulator(cam0);
     simulator.set_target_realtime_rate(1.0);
     while(true)

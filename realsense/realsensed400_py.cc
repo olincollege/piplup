@@ -1,6 +1,5 @@
 
 #include "realsense/realsensed400.h"
-
 #include <drake/bindings/pydrake/common/cpp_template_pybind.h>
 #include <drake/bindings/pydrake/common/default_scalars_pybind.h>
 #include <drake/bindings/pydrake/common/serialize_pybind.h>
@@ -10,11 +9,11 @@
 #include <pybind11/pybind11.h>
 namespace py = pybind11;
 
-using drake::pydrake::DefineTemplateClassWithDefault;
-using drake::pydrake::GetPyParam;
 using drake::pydrake::DefAttributesUsingSerialize;
-using drake::pydrake::DefReprUsingSerialize;
 using drake::pydrake::DefCopyAndDeepCopy;
+using drake::pydrake::DefineTemplateClassWithDefault;
+using drake::pydrake::DefReprUsingSerialize;
+using drake::pydrake::GetPyParam;
 using drake::pydrake::ParamInit;
 using drake::systems::LeafSystem;
 namespace piplup

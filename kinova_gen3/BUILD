@@ -6,6 +6,7 @@ py_library(
         "gen3_constants.py",
         "gen3_control.py",
         "gen3_driver.py",
+        "gen3_interface.py",
         "gen3_sim_driver.py",
     ],
     data = ["//models"],

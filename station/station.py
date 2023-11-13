@@ -1,22 +1,16 @@
-import argparse
-from typing import List
-
-import matplotlib.pyplot as plt
-import numpy as np
 from pydrake.all import *
-from pydrake.common import RandomGenerator
-from pydrake.geometry import Meshcat, StartMeshcat
+from pydrake.geometry import Meshcat
 from pydrake.manipulation._manipulation_extra import ApplyDriverConfigs
 from pydrake.multibody.parsing import ModelDirectives, ProcessModelDirectives
 from pydrake.multibody.plant import AddMultibodyPlant
-from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 from pydrake.systems.sensors import ApplyCameraConfig
 from pydrake.visualization import ApplyVisualizationConfig
-from station.scenario import Scenario
+from realsensed400 import RealSenseD400, RealsenseInterfaceConfig  # type: ignore
+from kinova_gen3 import Gen3InterfaceConfig
 
 from common import ConfigureParser
-from kinova_gen3 import GamepadDiffIkController
+from station.scenario import Scenario
 
 
 def MakeHardwareStation(
@@ -96,9 +90,39 @@ def MakeHardwareStation(
 
 
 def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
-    raise RuntimeError("Hardware interface not impl")
     builder = DiagramBuilder()
 
+    for model_name, hardware_interface in scenario.hardware_interface.items():
+        interface_subsystem = None
+        if isinstance(hardware_interface, RealsenseInterfaceConfig):
+            hardware_interface: RealsenseInterfaceConfig
+            camera_config = scenario.cameras.get(model_name)
+            if not camera_config:
+                raise RuntimeError(
+                    f"Failed to create hardware interface for camera model: {model_name}, check if camera exists in scenario->camera"
+                )
+
+            interface_subsystem: RealSenseD400 = builder.AddNamedSystem(
+                f"realsense_interface_{model_name}",
+                RealSenseD400(hardware_interface.serial_number, camera_config),
+            )
+        elif isinstance(hardware_interface, Gen3InterfaceConfig):
+            print(model_name)
+            continue
+        else:
+            raise RuntimeError(
+                f"Invalid hardware interface type {hardware_interface} for model {model_name}"
+            )
+
+        for i in range(interface_subsystem.num_input_ports()):
+            port = interface_subsystem.get_input_port(i)
+            if not builder.IsConnectedOrExported(port):
+                builder.ExportInput(port, f"{model_name}.{port.get_name()}")
+        for i in range(interface_subsystem.num_output_ports()):
+            port = interface_subsystem.get_output_port(i)
+            builder.ExportOutput(port, f"{model_name}.{port.get_name()}")
+
+    ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
     diagram = builder.Build()
     diagram.set_name("HardwareStationInterface")
     return diagram

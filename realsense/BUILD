@@ -1,4 +1,3 @@
-load("@drake//tools/skylark:py.bzl", "py_binary")
 load("@drake//tools/skylark:pybind.bzl", "pybind_py_library")
 
 cc_library(

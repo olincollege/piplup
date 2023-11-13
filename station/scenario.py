@@ -15,8 +15,9 @@ from pydrake.systems.sensors import CameraConfig
 from pydrake.visualization import VisualizationConfig
 
 
-from kinova_gen3 import Gen3Driver
+from kinova_gen3 import Gen3Driver, Gen3InterfaceConfig
 from robotiq_epick import EPickDriver
+from realsensed400 import RealsenseInterfaceConfig  # type: ignore
 
 
 @dc.dataclass
@@ -49,9 +50,8 @@ class Scenario:
     hardware_interface: typing.Mapping[
         str,
         typing.Union[
-            Gen3HardwareInterface,
-            EPickHardwareInterface,
-            RealsenseHardwareInterface,
+            Gen3InterfaceConfig,
+            RealsenseInterfaceConfig,
         ],
     ] = dc.field(default_factory=dict)
 
