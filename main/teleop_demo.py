@@ -17,6 +17,7 @@ def run(*, scenario: Scenario, graphviz=None):
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
+    
 
     # TODO (krishna) This should be more generic
     # ----------
@@ -69,6 +70,19 @@ def run(*, scenario: Scenario, graphviz=None):
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
+
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    # for camera in cameras:
+    img_color = hardware_station.GetOutputPort("camera0.color_image").Eval(hardware_station.CreateDefaultContext()).data
+    f, axarr = plt.subplots(1,2) 
+    axarr[0].imshow(img_color)
+    img_depth = hardware_station.GetOutputPort("camera0.depth_image_32f").Eval(hardware_station.CreateDefaultContext()).data
+    axarr[1].imshow(img_depth)
+    plt.show()
+
+
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)

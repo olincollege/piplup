@@ -12,7 +12,7 @@ directives:
     name: camera0_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [90.0, 0, 0.0]}
+        rotation: !Rpy { deg: [-150, 0, 0]}
         translation: [0.5, -.5, 1.1]
 - add_model:
     name: camera0
