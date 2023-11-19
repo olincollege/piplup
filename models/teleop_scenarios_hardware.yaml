@@ -1,4 +1,5 @@
 TeleopPlanarGripper:
+
   directives:
   - add_directives:
       file: package://piplup_models/gen3_2f_85.dmd.yaml
@@ -14,6 +15,7 @@ TeleopPlanarGripper:
             base_link_cracker:
                 translation: [0.4, 0, 0.3]
                 rotation: !Rpy { deg: [90.0, 0.0, 0.0 ]}
+
   cameras:
     camera0:
       name: camera0
@@ -22,12 +24,14 @@ TeleopPlanarGripper:
         base_frame: camera0::base
       width: 1280
       height: 720
+
   model_drivers:
     gen3: !Gen3Driver
       hand_model_name: 2f_85
+
   hardware_interface:
-    gen3:
+    gen3: !Gen3InterfaceConfig
       ip_address: 192.168.1.10
       port: 10001
-    camera0:
-      serial_number: 141722074426
+    camera0: !RealsenseInterfaceConfig
+      serial_number: '141722074426'

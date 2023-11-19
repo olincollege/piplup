@@ -7,8 +7,8 @@ int main(int argc, char * argv[])
     config.width = 640;
     config.height = 480;
     config.fps = 30;
-    piplup::realsense::RealSenseD400 cam0("141722074426", config);
-    piplup::realsense::RealSenseD400 cam1("938422072139", config);
+    piplup::realsense::RealSenseD400 cam0("938422072139", config);
+    // piplup::realsense::RealSenseD400 cam1("141722074426", config);
 
     drake::systems::Simulator<double> simulator(cam0);
     simulator.set_target_realtime_rate(1.0);

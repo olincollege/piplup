@@ -13,6 +13,7 @@ py_library(
         "//kinova_gen3",
         "//robotiq_2f_85",
         "//robotiq_epick",
+        "//realsense:realsensed400_py",
         "@drake//bindings/pydrake",
     ],
 )

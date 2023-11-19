@@ -8,7 +8,6 @@ from pydrake.systems.sensors import ApplyCameraConfig
 from pydrake.visualization import ApplyVisualizationConfig
 from realsensed400 import RealSenseD400, RealsenseInterfaceConfig  # type: ignore
 from kinova_gen3 import Gen3InterfaceConfig
-
 from common import ConfigureParser
 from station.scenario import Scenario
 
@@ -94,6 +93,7 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
 
     for model_name, hardware_interface in scenario.hardware_interface.items():
         interface_subsystem = None
+        print(hardware_interface)
         if isinstance(hardware_interface, RealsenseInterfaceConfig):
             hardware_interface: RealsenseInterfaceConfig
             camera_config = scenario.cameras.get(model_name)
@@ -123,6 +123,6 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
             builder.ExportOutput(port, f"{model_name}.{port.get_name()}")
 
     ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
-    diagram = builder.Build()
+    diagram: Diagram = builder.Build()
     diagram.set_name("HardwareStationInterface")
     return diagram

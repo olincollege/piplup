@@ -1,5 +1,8 @@
 load("@drake//tools/skylark:pybind.bzl", "pybind_py_library")
 
+package(
+    default_visibility = ["//visibility:public"],
+)
 cc_library(
     name = "realsensed400",
     srcs = [
