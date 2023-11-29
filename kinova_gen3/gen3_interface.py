@@ -15,7 +15,7 @@ from kortex_api.autogen.client_stubs.BaseClientRpc import BaseClient
 from kortex_api.autogen.client_stubs.BaseCyclicClientRpc import BaseCyclicClient
 
 from kortex_api.autogen.messages import DeviceConfig_pb2, Session_pb2, Base_pb2, VisionConfig_pb2
-
+import sys
 class Gen3InterfaceConfig:
     __fields__: ClassVar[tuple] = (
         SimpleNamespace(name="port", type=str),

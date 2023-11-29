@@ -8,6 +8,7 @@ from pydrake.systems.sensors import ApplyCameraConfig
 from pydrake.visualization import ApplyVisualizationConfig
 from realsensed400 import RealSenseD400, RealsenseInterfaceConfig  # type: ignore
 from kinova_gen3 import Gen3InterfaceConfig
+from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
 from station.scenario import Scenario
 
@@ -90,6 +91,10 @@ def MakeHardwareStation(
 
 def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
     builder = DiagramBuilder()
+
+    # This is not currently using a config since we are only using one scale
+    uss_dbs_system : System= builder.AddNamedSystem("uss_dbs", USSDBSHardwareInterface())
+    builder.ExportOutput(uss_dbs_system.GetOutputPort("mass"), "uss_dbs.mass")
 
     for model_name, hardware_interface in scenario.hardware_interface.items():
         interface_subsystem = None
