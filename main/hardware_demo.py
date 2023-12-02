@@ -7,8 +7,13 @@ from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
-from kinova_gen3 import GamepadDiffIkController
-from station import MakeHardwareStation, Scenario, load_scenario
+from station import (
+    MakeHardwareStation,
+    Scenario,
+    load_scenario,
+    GamepadTeleopController,
+)
+from kinova_gen3 import Gen3HardwareInterface
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -26,22 +31,27 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: GamepadDiffIkController = builder.AddNamedSystem(
+    gamepad: GamepadTeleopController = builder.AddNamedSystem(
         "gamepad_control",
-        GamepadDiffIkController(meshcat, controller_plant, gripper_name),
+        GamepadTeleopController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
-        gamepad.GetOutputPort("gen3.position"),
-        hardware_station.GetInputPort("gen3.position"),
+        gamepad.GetOutputPort("X_WE_desired"),
+        hardware_station.GetInputPort("gen3.pose"),
     )
     builder.Connect(
-        gamepad.GetOutputPort(f"{gripper_name}.command"),
+        gamepad.GetOutputPort(f"gripper_command"),
         hardware_station.GetInputPort(f"{gripper_name}.command"),
     )
 
     builder.Connect(
         hardware_station.GetOutputPort("gen3.state_estimated"),
-        gamepad.GetInputPort("gen3.state"),
+        gamepad.GetInputPort("robot_state"),
+    )
+
+    builder.Connect(
+        hardware_station.GetOutputPort("gen3.pose_measured"),
+        gamepad.GetInputPort("pose"),
     )
 
     # Build the diagram and its simulator.
@@ -71,7 +81,10 @@ def run(*, scenario: Scenario, graphviz=None):
         plt.show()
 
     # Simulate.
-    simulator.AdvanceTo(scenario.simulation_duration)
+    try:
+        simulator.AdvanceTo(scenario.simulation_duration)
+    except KeyboardInterrupt:
+        hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():

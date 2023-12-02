@@ -392,5 +392,8 @@
         </geometry>
       </visual>
     </link>
+    <frame name='end_effector_frame' attached_to='bracelet_no_vision_link'>
+      <pose degrees="True">0 0 -0.061525 180 6.29893042e-31 0</pose>
+    </frame>
   </model>
 </sdf>

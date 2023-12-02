@@ -36,6 +36,8 @@ class GamepadTeleopController(LeafSystem):
         self.robot_state_port = self.DeclareVectorInputPort(
             "robot_state", controller_plant.num_multibody_states()
         )
+        # self.robot_pose_port = self.DeclareAbstractInputPort("pose", Value(RigidTransform()))
+        # self.robot_pose_port = self.DeclareVectorInputPort("pose", 6)
         self.DeclareStateOutputPort("X_WE_desired", self.X_WE_desired_state_idx)
         self.DeclareStateOutputPort("gripper_command", self.gripper_cmd_state_idx)
         self.DeclarePeriodicDiscreteUpdateEvent(self._time_step, 0, self.Integrate)
@@ -126,3 +128,16 @@ class GamepadTeleopController(LeafSystem):
         X_WE = copy(X_WE_desired)
         self._meshcat.SetTransform("/drake/ee_sphere", X_WE)
         self._meshcat.SetTransform("/drake/ee_body", X_WE)
+
+        robot_state = self.robot_state_port.Eval(context)
+        self.controller_plant.SetPositions(self.plant_context, robot_state[:7])
+        ee_pose: RigidTransform = self.controller_plant.CalcRelativeTransform(
+            self.plant_context, self.world_frame, self.ee_frame
+        )
+        self._meshcat.SetObject("ee_sphere_target", Sphere(0.05), Rgba(0.5, 0, 0, 0.5))
+        self._meshcat.SetTransform("/drake/ee_sphere_target", ee_pose)
+
+        # pose = self.robot_pose_port.Eval(context)
+        # test_pose = RigidTransform(pose[3:])
+        # self._meshcat.SetObject("test", Sphere(0.05), Rgba(0.5, 0.5, 0, 0.5))
+        # self._meshcat.SetTransform("/drake/test", test_pose)

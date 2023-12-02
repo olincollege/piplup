@@ -7,7 +7,7 @@ directives:
     parent: world
     child: table::table_body
     X_PC:
-        translation: [-0.08, 0, 0]
+        translation: [-0.08, 0, -0.02]
 - add_frame:
     name: camera0_origin
     X_PF:

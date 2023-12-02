@@ -48,31 +48,33 @@ def ApplyDriverConfig(
         controller_plant.GetFrameByName(
             gen3_model.child_frame_name, gen3_controller_model_idx
         ),
-        RigidTransform(),
     )
 
     # Make this more generic with tcp_frame or something
-    X_ee = RigidTransform()
-    X_ee.set_translation([0, 0, -0.0615250000000001])
-    X_ee.set_rotation(RotationMatrix(RollPitchYaw([np.pi, 0, 0])))
-    ee_frame = controller_plant.AddFrame(
-        FixedOffsetFrame(
-            "end_effector_frame",
-            controller_plant.GetFrameByName("bracelet_no_vision_link"),
-            X_ee,
-            gen3_controller_model_idx,
-        )
-    )
+    ee_frame = controller_plant.GetFrameByName("end_effector_frame")
     parser = Parser(controller_plant)
     ConfigureParser(parser)
     if driver_config.hand_model_name == "2f_85":
+        X_ee_toolbase = sim_plant.CalcRelativeTransform(
+            sim_plant.CreateDefaultContext(),
+            sim_plant.GetFrameByName("end_effector_frame"),
+            sim_plant.GetFrameByName("robotiq_arg2f_base_link"),
+        )
         gripper = parser.AddModelsFromUrl(
             f"package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static.sdf"
         )[0]
         controller_plant.WeldFrames(
             ee_frame,
             controller_plant.GetFrameByName("robotiq_arg2f_base_link", gripper),
-            RigidTransform(RotationMatrix(RollPitchYaw([0, 0, np.pi / 2]))),
+            X_ee_toolbase,
+        )
+        X_ee_tool = sim_plant.CalcRelativeTransform(
+            sim_plant.CreateDefaultContext(),
+            sim_plant.GetFrameByName("end_effector_frame"),
+            sim_plant.GetFrameByName("tool_frame"),
+        )
+        controller_plant.AddFrame(
+            FixedOffsetFrame("tool_frame", ee_frame, X_ee_tool, gripper)
         )
     elif driver_config.hand_model_name == "epick_2cup":
         gripper = parser.AddModelsFromUrl(
