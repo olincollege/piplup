@@ -6,7 +6,7 @@ class QuestEndeffectorController(LeafSystem):
     def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str):
         super().__init__()
         self._meshcat = meshcat
-        self._time_step = 0.005
+        self._time_step = 0.01
         self.controller_plant = controller_plant
         self.world_frame = controller_plant.world_frame()
         self.ee_frame = controller_plant.GetFrameByName("end_effector_frame")
@@ -44,6 +44,7 @@ class QuestEndeffectorController(LeafSystem):
         ).get_value()
 
         transforms, buttons = self.oculus_reader.get_transformations_and_buttons()
+        
         enable = False
         pose_delta = RigidTransform()
         if 'A' in buttons:
@@ -54,12 +55,23 @@ class QuestEndeffectorController(LeafSystem):
         if enable and not self.movement_freeze_pose:
             self.movement_freeze_pose = controller_pose
         elif enable:
-            pose_delta = self.movement_freeze_pose.InvertAndCompose(controller_pose)
+            pose_delta = controller_pose.InvertAndCompose(self.movement_freeze_pose)
+            position = copy(pose_delta.translation())
+            position[2] = -position[2]
+            # pose_delta.set_translation(np.zeros_like(position))
+            pose_delta.set_translation(position)
+            rot = RollPitchYaw(pose_delta.rotation())
+            rpy = rot.vector()
+            rpy[2] = -rpy[2]
+            pose_delta.set_rotation(RollPitchYaw(rpy))
+            print(pose_delta)
         else:
             self.movement_freeze_pose = None
             self.ee_freeze_pose = copy(X_WE_desired)
 
-        
+        if "rightTrig" in buttons:
+            discrete_state.set_value(self.gripper_cmd_state_idx, np.array(buttons["rightTrig"]))
+
         context.SetAbstractState(self.X_WE_desired_state_idx, self.ee_freeze_pose.multiply(pose_delta))
         
         X_WE = X_WE_desired
