@@ -7,8 +7,7 @@ from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
-from kinova_gen3 import QuestEndeffectorController
-from station import MakeHardwareStation, Scenario, load_scenario
+from station import MakeHardwareStation, Scenario, load_scenario, QuestTeleopController
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -25,9 +24,9 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: QuestEndeffectorController = builder.AddNamedSystem(
+    gamepad: QuestTeleopController = builder.AddNamedSystem(
         "quest_controller",
-        QuestEndeffectorController(meshcat, controller_plant, gripper_name),
+        QuestTeleopController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),

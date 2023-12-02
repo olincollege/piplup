@@ -110,7 +110,13 @@ def ApplyDriverConfig(
         SharedPointerSystem(gripper_controller_plant),
     )
 
-    AddSimGen3Driver(sim_plant, gen3_model.model_instance, controller_plant, builder, Gen3ControlMode(driver_config.control_mode))
+    AddSimGen3Driver(
+        sim_plant,
+        gen3_model.model_instance,
+        controller_plant,
+        builder,
+        Gen3ControlMode(driver_config.control_mode),
+    )
 
     if driver_config.hand_model_name == "2f_85":
         gripper_sys = AddSim2f85Driver(

@@ -4,6 +4,8 @@ py_library(
         "__init__.py",
         "scenario.py",
         "station.py",
+        "gamepad_teleop_controller.py",
+        "quest_teleop_controller.py",
     ],
     data = ["//models"],
     imports = [".."],

@@ -17,8 +17,10 @@ from pydrake.visualization import VisualizationConfig
 
 from kinova_gen3 import Gen3Driver, Gen3InterfaceConfig
 from robotiq_epick import EPickDriver
-from realsensed400 import RealsenseInterfaceConfig # type: ignore
+from realsensed400 import RealsenseInterfaceConfig  # type: ignore
 from uss_dbs import USSDBSInterfaceConfig
+
+
 @dc.dataclass
 class Scenario:
     random_seed: int = 0
@@ -51,7 +53,7 @@ class Scenario:
         typing.Union[
             RealsenseInterfaceConfig,
             Gen3InterfaceConfig,
-            USSDBSInterfaceConfig, # Not currently used
+            USSDBSInterfaceConfig,  # Not currently used
         ],
     ] = dc.field(default_factory=dict)
 

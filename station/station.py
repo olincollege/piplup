@@ -93,7 +93,9 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
     builder = DiagramBuilder()
 
     # This is not currently using a config since we are only using one scale
-    uss_dbs_system : System= builder.AddNamedSystem("uss_dbs", USSDBSHardwareInterface())
+    uss_dbs_system: System = builder.AddNamedSystem(
+        "uss_dbs", USSDBSHardwareInterface()
+    )
     builder.ExportOutput(uss_dbs_system.GetOutputPort("mass"), "uss_dbs.mass")
 
     for model_name, hardware_interface in scenario.hardware_interface.items():

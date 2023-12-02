@@ -2,8 +2,11 @@ from pydrake.all import *
 from oculus_reader.reader import OculusReader
 from copy import copy
 
-class QuestEndeffectorController(LeafSystem):
-    def __init__(self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str):
+
+class QuestTeleopController(LeafSystem):
+    def __init__(
+        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
+    ):
         super().__init__()
         self._meshcat = meshcat
         self._time_step = 0.01
@@ -44,11 +47,11 @@ class QuestEndeffectorController(LeafSystem):
         ).get_value()
 
         transforms, buttons = self.oculus_reader.get_transformations_and_buttons()
-        
+
         enable = False
         pose_delta = RigidTransform()
-        if 'A' in buttons:
-            enable = buttons['A']
+        if "A" in buttons:
+            enable = buttons["A"]
         if "r" in transforms:
             controller_pose = RigidTransform(Isometry3(transforms["r"]))
 
@@ -70,10 +73,14 @@ class QuestEndeffectorController(LeafSystem):
             self.ee_freeze_pose = copy(X_WE_desired)
 
         if "rightTrig" in buttons:
-            discrete_state.set_value(self.gripper_cmd_state_idx, np.array(buttons["rightTrig"]))
+            discrete_state.set_value(
+                self.gripper_cmd_state_idx, np.array(buttons["rightTrig"])
+            )
 
-        context.SetAbstractState(self.X_WE_desired_state_idx, self.ee_freeze_pose.multiply(pose_delta))
-        
+        context.SetAbstractState(
+            self.X_WE_desired_state_idx, self.ee_freeze_pose.multiply(pose_delta)
+        )
+
         X_WE = X_WE_desired
         viz_color = Rgba(0, 0.5, 0, 0.5) if enable else Rgba(0, 0, 0.5, 0.5)
         self._meshcat.SetObject("ee_sphere", Sphere(0.05), viz_color)

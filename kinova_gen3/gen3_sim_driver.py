@@ -73,7 +73,9 @@ class SimGen3Driver(Diagram):
             builder.Connect(
                 diff_ik.GetOutputPort("joint_positions"), interpolator.get_input_port()
             )
-            builder.ExportOutput(diff_ik.GetOutputPort("joint_positions"), "position_commanded")
+            builder.ExportOutput(
+                diff_ik.GetOutputPort("joint_positions"), "position_commanded"
+            )
         elif control_mode == Gen3ControlMode.kPosition:
             builder.ExportInput(interpolator.get_input_port(), "position")
             pos_pass = builder.AddNamedSystem(

@@ -74,9 +74,10 @@ namespace piplup
                         depth_state_idx_);
                 color_img_state.resize(color_width_, color_height_);
                 depth_img_state.resize(depth_width_, depth_height_);
-                memcpy(depth_img_state.at(0, 0),
-                       depth_frame.get_data(),
-                       depth_img_state.size()*2); // TODO why do we have to multiply by 2
+                memcpy(
+                    depth_img_state.at(0, 0),
+                    depth_frame.get_data(),
+                    depth_img_state.size() * 2); // TODO why do we have to multiply by 2
                 memcpy(color_img_state.at(0, 0),
                        color_frame.get_data(),
                        color_img_state.size());

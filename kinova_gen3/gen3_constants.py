@@ -2,6 +2,7 @@ from enum import Enum, auto
 import numpy as np
 from pydrake.multibody.plant import MultibodyPlant
 
+
 # Constants
 class Gen3ControlLevel(Enum):
     kHighLevel = auto()  # Upto 40Hz

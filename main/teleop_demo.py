@@ -7,8 +7,12 @@ from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
-from kinova_gen3 import GamepadPoseIntegrator
-from station import MakeHardwareStation, Scenario, load_scenario
+from station import (
+    MakeHardwareStation,
+    Scenario,
+    load_scenario,
+    GamepadTeleopController,
+)
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -26,9 +30,9 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: GamepadPoseIntegrator = builder.AddNamedSystem(
+    gamepad: GamepadTeleopController = builder.AddNamedSystem(
         "gamepad_control",
-        GamepadPoseIntegrator(meshcat, controller_plant, gripper_name),
+        GamepadTeleopController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),

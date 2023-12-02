@@ -12,7 +12,7 @@ def AddSimGen3Driver(
     gen3_instance: ModelInstanceIndex,
     controller_plant: MultibodyPlant,
     builder: DiagramBuilder,
-    control_mode : Gen3ControlMode,
+    control_mode: Gen3ControlMode,
 ) -> System:
     inner_name = f"Gen3Driver({plant.GetModelInstanceName(gen3_instance)})"
     system: SimGen3Driver = builder.AddNamedSystem(

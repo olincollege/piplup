@@ -1,16 +1,10 @@
 from pydrake.all import *
 import numpy as np
-from pydrake.geometry import Meshcat, SceneGraph
-from .gen3_constants import (
-    get_gen3_joint_velocity_limits,
-    get_gen3_joint_position_limits,
-)
+from pydrake.geometry import Meshcat
 from copy import copy
 
 
-# TODO Move to a different package (krishna)
-
-class GamepadPoseIntegrator(LeafSystem):
+class GamepadTeleopController(LeafSystem):
     def __init__(
         self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
     ):
