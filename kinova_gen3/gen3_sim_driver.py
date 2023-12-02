@@ -7,7 +7,7 @@ import numpy as np
 
 # Sim Gen3 Driver
 class SimGen3Driver(Diagram):
-    def __init__(self, controller_plant: MultibodyPlant):
+    def __init__(self, controller_plant: MultibodyPlant, control_mode: Gen3ControlMode):
         Diagram.__init__(self)
         builder = DiagramBuilder()
         num_positions = controller_plant.num_positions()
@@ -40,7 +40,50 @@ class SimGen3Driver(Diagram):
                 suppress_initial_transient=True,
             ),
         )
-        builder.ExportInput(interpolator.get_input_port(), "position")
+
+        if control_mode == Gen3ControlMode.kPose:
+            params = DifferentialInverseKinematicsParameters(
+                controller_plant.num_positions(), controller_plant.num_velocities()
+            )
+            # q0 = plant.GetPositions(plant.CreateDefaultContext())
+            # params.set_nominal_joint_position(q0)
+            time_step = 0.005
+            params.set_time_step(time_step)
+            params.set_end_effector_angular_speed_limit(2)
+            params.set_end_effector_translational_velocity_limits(
+                [-2, -2, -2], [2, 2, 2]
+            )
+            # params.set_joint_centering_gain(1 * np.eye(7))
+            params.set_joint_velocity_limits(
+                get_gen3_joint_velocity_limits(controller_plant)
+            )
+            params.set_joint_position_limits(
+                get_gen3_joint_position_limits(controller_plant)
+            )
+
+            frame_E = controller_plant.GetFrameByName("end_effector_frame")
+
+            diff_ik: DifferentialInverseKinematicsIntegrator = builder.AddSystem(
+                DifferentialInverseKinematicsIntegrator(
+                    controller_plant, frame_E, time_step, params
+                )
+            )
+            builder.ExportInput(diff_ik.GetInputPort("X_WE_desired"), "pose")
+            builder.ConnectInput("state", diff_ik.GetInputPort("robot_state"))
+            builder.Connect(
+                diff_ik.GetOutputPort("joint_positions"), interpolator.get_input_port()
+            )
+            builder.ExportOutput(diff_ik.GetOutputPort("joint_positions"), "position_commanded")
+        elif control_mode == Gen3ControlMode.kPosition:
+            builder.ExportInput(interpolator.get_input_port(), "position")
+            pos_pass = builder.AddNamedSystem(
+                "position_pass_through", PassThrough(num_positions)
+            )
+            builder.ExportOutput(pos_pass.get_output_port(), "position_commanded")
+            builder.ConnectInput("position", pos_pass.get_input_port())
+        else:
+            raise RuntimeError(f"Unsupported Control Mode: {control_mode}")
+
         builder.ConnectInput("state", inverse_dynamics.GetInputPort("estimated_state"))
         builder.Connect(
             interpolator.GetOutputPort("state"),
@@ -48,11 +91,6 @@ class SimGen3Driver(Diagram):
         )
 
         builder.ExportOutput(inverse_dynamics.get_output_port(), "actuation")
-        pos_pass = builder.AddNamedSystem(
-            "position_pass_through", PassThrough(num_positions)
-        )
-        builder.ConnectInput("position", pos_pass.get_input_port())
-        builder.ExportOutput(pos_pass.get_output_port(), "position_commanded")
 
         builder.ExportOutput(state_demux.get_output_port(0), "position_measured")
         builder.ExportOutput(state_demux.get_output_port(1), "velocity_estimated")

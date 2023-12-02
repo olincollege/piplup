@@ -2,7 +2,6 @@ from enum import Enum, auto
 import numpy as np
 from pydrake.multibody.plant import MultibodyPlant
 
-
 # Constants
 class Gen3ControlLevel(Enum):
     kHighLevel = auto()  # Upto 40Hz
@@ -10,10 +9,13 @@ class Gen3ControlLevel(Enum):
     kLowLevelBypass = auto()  # Upto 1kHz
 
 
-class Gen3JointControlMode(Enum):
+class Gen3ControlMode(Enum):
     kPosition = auto()
-    kVelocity = auto()
-    kTorque = auto()
+    # kVelocity = auto()
+    # kTorque = auto()
+    kPose = auto()
+    # kTwist = auto()
+    # kWrench = auto()
 
 
 kGen3ArmNumJoints: int = 7

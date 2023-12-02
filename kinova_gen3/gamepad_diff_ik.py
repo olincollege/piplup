@@ -9,55 +9,6 @@ from copy import copy
 
 
 # TODO Move to a different package (krishna)
-class GamepadDiffIkController(Diagram):
-    def __init__(
-        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
-    ):
-        super().__init__()
-        # TODO detect the computer and specify the gamepad mapping
-
-        params = DifferentialInverseKinematicsParameters(
-            controller_plant.num_positions(), controller_plant.num_velocities()
-        )
-        # q0 = plant.GetPositions(plant.CreateDefaultContext())
-        # params.set_nominal_joint_position(q0)
-        time_step = 0.005
-        params.set_time_step(time_step)
-        params.set_end_effector_angular_speed_limit(2)
-        params.set_end_effector_translational_velocity_limits([-2, -2, -2], [2, 2, 2])
-        # params.set_joint_centering_gain(1 * np.eye(7))
-        params.set_joint_velocity_limits(
-            get_gen3_joint_velocity_limits(controller_plant)
-        )
-        params.set_joint_position_limits(
-            get_gen3_joint_position_limits(controller_plant)
-        )
-
-        frame_E = controller_plant.GetFrameByName("end_effector_frame")
-
-        builder = DiagramBuilder()
-        gamepad: GamepadPoseIntegrator = builder.AddNamedSystem(
-            "gamepad", GamepadPoseIntegrator(meshcat, controller_plant, hand_model_name)
-        )
-        diff_ik: DifferentialInverseKinematicsIntegrator = builder.AddSystem(
-            DifferentialInverseKinematicsIntegrator(
-                controller_plant, frame_E, time_step, params
-            )
-        )
-        builder.Connect(
-            gamepad.GetOutputPort("X_WE_desired"), diff_ik.GetInputPort("X_WE_desired")
-        )
-        builder.ExportInput(
-            diff_ik.GetInputPort("robot_state"),
-            "gen3.state",
-        )
-        builder.ConnectInput("gen3.state", gamepad.GetInputPort("robot_state"))
-        builder.ExportOutput(diff_ik.GetOutputPort("joint_positions"), "gen3.position")
-        builder.ExportOutput(
-            gamepad.GetOutputPort("gripper_command"), f"{hand_model_name}.command"
-        )
-        builder.BuildInto(self)
-
 
 class GamepadPoseIntegrator(LeafSystem):
     def __init__(

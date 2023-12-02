@@ -7,7 +7,7 @@ from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
-from kinova_gen3 import GamepadPoseIntegrator
+from kinova_gen3 import QuestEndeffectorController
 from station import MakeHardwareStation, Scenario, load_scenario
 
 
@@ -17,7 +17,6 @@ def run(*, scenario: Scenario, graphviz=None):
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
-
     # TODO (krishna) This should be more generic
     # ----------
     gripper_name = scenario.model_drivers["gen3"].hand_model_name
@@ -26,16 +25,16 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: GamepadPoseIntegrator = builder.AddNamedSystem(
-        "gamepad_control",
-        GamepadPoseIntegrator(meshcat, controller_plant, gripper_name),
+    gamepad: QuestEndeffectorController = builder.AddNamedSystem(
+        "quest_controller",
+        QuestEndeffectorController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),
         hardware_station.GetInputPort("gen3.pose"),
     )
     builder.Connect(
-        gamepad.GetOutputPort("gripper_command"),
+        gamepad.GetOutputPort(f"gripper_command"),
         hardware_station.GetInputPort(f"{gripper_name}.command"),
     )
 

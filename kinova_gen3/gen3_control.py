@@ -12,10 +12,11 @@ def AddSimGen3Driver(
     gen3_instance: ModelInstanceIndex,
     controller_plant: MultibodyPlant,
     builder: DiagramBuilder,
+    control_mode : Gen3ControlMode,
 ) -> System:
     inner_name = f"Gen3Driver({plant.GetModelInstanceName(gen3_instance)})"
     system: SimGen3Driver = builder.AddNamedSystem(
-        inner_name, SimGen3Driver(controller_plant)
+        inner_name, SimGen3Driver(controller_plant, control_mode)
     )
     builder.Connect(
         plant.get_state_output_port(gen3_instance), system.GetInputPort("state")
@@ -27,4 +28,5 @@ def AddSimGen3Driver(
     builder.Connect(
         system.GetOutputPort("actuation"), plant.get_actuation_input_port(gen3_instance)
     )
+
     return system
