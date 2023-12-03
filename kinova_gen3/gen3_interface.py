@@ -46,9 +46,7 @@ class Gen3HardwareInterface(LeafSystem):
                 "pose", Value(RigidTransform())
             )
         elif control_mode == Gen3ControlMode.kTwist:
-            self.arm_twist_input_port = self.DeclareVectorInputPort(
-                "twist", 6
-            )
+            self.arm_twist_input_port = self.DeclareVectorInputPort("twist", 6)
         else:
             raise RuntimeError(f"Unsupported control mode {control_mode}")
         self.gripper_command_input_port = self.DeclareVectorInputPort(
@@ -123,6 +121,7 @@ class Gen3HardwareInterface(LeafSystem):
         """
         self.feedback = self.base_cyclic.RefreshFeedback()
         self.last_feedback_time = current_time
+
     def check_for_end_or_abort(self, e):
         """
         Return a closure checking for END or ABORT notifications
@@ -131,20 +130,25 @@ class Gen3HardwareInterface(LeafSystem):
         e -- event to signal when the action is completed
             (will be set when an END or ABORT occurs)
         """
-        def check(notification, e = e):
+
+        def check(notification, e=e):
             # print("EVENT : " + \
             #       Base_pb2.ActionEvent.Name(notification.action_event))
-            if notification.action_event == Base_pb2.ACTION_END \
-            or notification.action_event == Base_pb2.ACTION_ABORT:
+            if (
+                notification.action_event == Base_pb2.ACTION_END
+                or notification.action_event == Base_pb2.ACTION_ABORT
+            ):
                 e.set()
+
         return check
+
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
         print("time is: %s" % context.get_time())
 
         gripper_command = Base_pb2.GripperCommand()
         gripper_command.mode = Base_pb2.GRIPPER_SPEED
-        
+
         finger = gripper_command.gripper.finger.add()
         finger.finger_identifier = 1
         finger.value = self.gripper_command_input_port.Eval(context)[0]
@@ -153,13 +157,13 @@ class Gen3HardwareInterface(LeafSystem):
         if self.control_mode == Gen3ControlMode.kPosition:
             print(self.arm_position_input_port.Eval(context))
         elif self.control_mode == Gen3ControlMode.kPose:
-            pose :RigidTransform= self.arm_pose_input_port.Eval(context)
+            pose: RigidTransform = self.arm_pose_input_port.Eval(context)
             translation = pose.translation()
             rpy = RollPitchYaw(pose.rotation())
             action = Base_pb2.Action()
             action.name = "End-effector pose command"
             action.application_data = ""
-            
+
             cartesian_pose = action.reach_pose.target_pose
             cartesian_pose.theta_x = np.degrees(rpy.roll_angle())
             cartesian_pose.theta_y = np.degrees(rpy.pitch_angle())
@@ -167,11 +171,10 @@ class Gen3HardwareInterface(LeafSystem):
             cartesian_pose.x = translation[0]
             cartesian_pose.y = translation[1]
             cartesian_pose.z = translation[2]
-            
+
             e = threading.Event()
             notification_handle = self.base.OnNotificationActionTopic(
-                self.check_for_end_or_abort(e),
-                Base_pb2.NotificationOptions()
+                self.check_for_end_or_abort(e), Base_pb2.NotificationOptions()
             )
 
             self.base.ExecuteAction(action)
@@ -279,5 +282,5 @@ class Gen3HardwareInterface(LeafSystem):
 
         # Store the end-effector pose so we can use it to compute the camera pose
         self.ee_pose = ee_pose
-        
+
         output.SetFromVector(ee_pose)

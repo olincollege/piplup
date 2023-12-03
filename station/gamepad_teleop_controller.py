@@ -3,6 +3,7 @@ import numpy as np
 from pydrake.geometry import Meshcat
 from copy import copy
 
+
 class GamepadTwistTeleopController(LeafSystem):
     def __init__(
         self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
@@ -25,7 +26,7 @@ class GamepadTwistTeleopController(LeafSystem):
 
     def OutputTwist(self, context: Context, output: BasicVector):
         pose = self.robot_pose_port.Eval(context)
-        X_WE_desired = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(),pose[3:])
+        X_WE_desired = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
         linear_mode = context.get_abstract_state(self.linear_mode_state_idx).get_value()
         target_twist = np.zeros(6)
 
@@ -65,7 +66,7 @@ class GamepadTwistTeleopController(LeafSystem):
                     * self.angular_speed
                 )
         output.SetFromVector(target_twist)
-        
+
     def OutputGripper(self, context: Context, output: BasicVector):
         gamepad = self._meshcat.GetGamepad()
         if self.hand_model_name == "2f_85":
@@ -73,7 +74,9 @@ class GamepadTwistTeleopController(LeafSystem):
             if not gamepad.index == None:
                 gripper_close = gamepad.button_values[6] * 3
                 gripper_open = gamepad.button_values[7] * 3
-                cmd_vel = np.array([(gripper_close - gripper_open) / 2])*self.grip_speed
+                cmd_vel = (
+                    np.array([(gripper_close - gripper_open) / 2]) * self.grip_speed
+                )
             output.set_value(cmd_vel)
         elif self.hand_model_name == "epick_2cup":
             pass
