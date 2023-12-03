@@ -13,6 +13,7 @@ from station import (
     load_scenario,
     GamepadTeleopController,
     GamepadTwistTeleopController,
+    QuestTwistTeleopController,
 )
 from kinova_gen3 import Gen3HardwareInterface
 
@@ -32,9 +33,10 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: GamepadTwistTeleopController = builder.AddNamedSystem(
+    gamepad: System = builder.AddNamedSystem(
         "gamepad_control",
-        GamepadTwistTeleopController(meshcat, controller_plant, gripper_name),
+        # GamepadTwistTeleopController(meshcat, controller_plant, gripper_name),
+        QuestTwistTeleopController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
         gamepad.GetOutputPort("V_WE_desired"),
@@ -63,7 +65,7 @@ def run(*, scenario: Scenario, graphviz=None):
         "models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj", 1
     )
     meshcat.SetObject("ee_body", ee_base, Rgba(0, 0.5, 0, 0.5))
-    # meshcat.SetObject("test_body", ee_base, Rgba(0.5, 0.5, 0, 0.5))
+    meshcat.SetObject("test_body", ee_base, Rgba(0.5, 0.5, 0, 0.5))
     meshcat.SetCameraPose(np.array([1, -1, 1]) * 0.75, np.array([0, 0, 0.4]))
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
@@ -81,7 +83,7 @@ def run(*, scenario: Scenario, graphviz=None):
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
-
+    simulator.Initialize()
     # Simulate.
     try:
         simulator.AdvanceTo(scenario.simulation_duration)

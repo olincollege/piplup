@@ -144,7 +144,7 @@ class Gen3HardwareInterface(LeafSystem):
 
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-        print("time is: %s" % context.get_time())
+        # print("time is: %s" % context.get_time())
 
         gripper_command = Base_pb2.GripperCommand()
         gripper_command.mode = Base_pb2.GRIPPER_SPEED
