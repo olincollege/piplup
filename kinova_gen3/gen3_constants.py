@@ -15,7 +15,7 @@ class Gen3ControlMode(Enum):
     # kVelocity = auto()
     # kTorque = auto()
     kPose = auto()
-    # kTwist = auto()
+    kTwist = auto()
     # kWrench = auto()
 
 

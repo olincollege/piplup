@@ -36,7 +36,7 @@
       </visual>
     </link>
     <joint name='Actuator1' type='revolute'>
-      <pose relative_to='base_link'>0 0 0.15643 -3.14159 0 -0</pose>
+      <pose relative_to='base_link' degrees="True">0 0 0.15643 -180 0 -0</pose>
       <parent>base_link</parent>
       <child>shoulder_link</child>
       <axis>
@@ -87,7 +87,7 @@
       </visual>
     </link>
     <joint name='Actuator2' type='revolute'>
-      <pose relative_to='shoulder_link'>0 0.005375 -0.12838 1.5708 0 -0</pose>
+      <pose relative_to='shoulder_link' degrees="True">0 0.005375 -0.12838 90 0 -0</pose>
       <parent>shoulder_link</parent>
       <child>half_arm_1_link</child>
       <axis>
@@ -138,7 +138,7 @@
       </visual>
     </link>
     <joint name='Actuator3' type='revolute'>
-      <pose relative_to='half_arm_1_link'>0 -0.21038 -0.006375 -1.5708 0 -0</pose>
+      <pose relative_to='half_arm_1_link' degrees="True">0 -0.21038 -0.006375 -90 0 -0</pose>
       <parent>half_arm_1_link</parent>
       <child>half_arm_2_link</child>
       <axis>
@@ -189,7 +189,7 @@
       </visual>
     </link>
     <joint name='Actuator4' type='revolute'>
-      <pose relative_to='half_arm_2_link'>0 0.006375 -0.21038 1.5708 -0 -0</pose>
+      <pose relative_to='half_arm_2_link' degrees="True">0 -0.006375 -0.21038 90 -0 -0</pose>
       <parent>half_arm_2_link</parent>
       <child>forearm_link</child>
       <axis>
@@ -240,7 +240,7 @@
       </visual>
     </link>
     <joint name='Actuator5' type='revolute'>
-      <pose relative_to='forearm_link'>0 -0.20843 -0.006375 -1.5708 0 -0</pose>
+      <pose relative_to='forearm_link' degrees="True">0 -0.20843 -0.006375 -90 0 -0</pose>
       <parent>forearm_link</parent>
       <child>spherical_wrist_1_link</child>
       <axis>
@@ -291,7 +291,7 @@
       </visual>
     </link>
     <joint name='Actuator6' type='revolute'>
-      <pose relative_to='spherical_wrist_1_link'>0 0.000175 -0.10593 1.5708 0 -0</pose>
+      <pose relative_to='spherical_wrist_1_link' degrees="True">0 0.000175 -0.10593 90 0 -0</pose>
       <parent>spherical_wrist_1_link</parent>
       <child>spherical_wrist_2_link</child>
       <axis>
@@ -342,7 +342,7 @@
       </visual>
     </link>
     <joint name='Actuator7' type='revolute'>
-      <pose relative_to='spherical_wrist_2_link'>0 -0.10593 -0.000175 -1.5708 -0 0</pose>
+      <pose relative_to='spherical_wrist_2_link' degrees="True">0 -0.10593 -0.000175 -90 -0 0</pose>
       <parent>spherical_wrist_2_link</parent>
       <child>bracelet_no_vision_link</child>
       <axis>
@@ -393,7 +393,7 @@
       </visual>
     </link>
     <frame name='end_effector_frame' attached_to='bracelet_no_vision_link'>
-      <pose degrees="True">0 0 -0.061525 180 6.29893042e-31 0</pose>
+      <pose degrees="True">0 0 -0.061525 180 0 0</pose>
     </frame>
   </model>
 </sdf>

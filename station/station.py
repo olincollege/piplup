@@ -130,7 +130,7 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
                 controller_plant.GetFrameByName("base_link", gen3_controller_model_idx),
                 RigidTransform(),
             )
-
+            controller_plant.AddFrame(FixedOffsetFrame("tool_frame", controller_plant.GetFrameByName("end_effector_frame"), RigidTransform([0,0,0.12])))
             controller_plant.Finalize()
             builder.AddNamedSystem(
                 f"{model_name}_controller_plant", SharedPointerSystem(controller_plant)

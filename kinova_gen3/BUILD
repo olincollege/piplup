@@ -17,3 +17,12 @@ py_library(
         "@drake//bindings/pydrake",
     ],
 )
+
+load("@drake//tools/skylark:py.bzl", "py_binary")
+
+py_binary(
+    name = "interface_demo",
+    srcs = ["interface_demo.py"],
+    imports = [".."],
+    deps = [":kinova_gen3"],
+)

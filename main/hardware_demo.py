@@ -12,6 +12,7 @@ from station import (
     Scenario,
     load_scenario,
     GamepadTeleopController,
+    GamepadTwistTeleopController,
 )
 from kinova_gen3 import Gen3HardwareInterface
 
@@ -31,23 +32,23 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: GamepadTeleopController = builder.AddNamedSystem(
+    gamepad: GamepadTwistTeleopController = builder.AddNamedSystem(
         "gamepad_control",
-        GamepadTeleopController(meshcat, controller_plant, gripper_name),
+        GamepadTwistTeleopController(meshcat, controller_plant, gripper_name),
     )
     builder.Connect(
-        gamepad.GetOutputPort("X_WE_desired"),
-        hardware_station.GetInputPort("gen3.pose"),
+        gamepad.GetOutputPort("V_WE_desired"),
+        hardware_station.GetInputPort("gen3.twist"),
     )
     builder.Connect(
         gamepad.GetOutputPort(f"gripper_command"),
         hardware_station.GetInputPort(f"{gripper_name}.command"),
     )
 
-    builder.Connect(
-        hardware_station.GetOutputPort("gen3.state_estimated"),
-        gamepad.GetInputPort("robot_state"),
-    )
+    # builder.Connect(
+    #     hardware_station.GetOutputPort("gen3.state_estimated"),
+    #     gamepad.GetInputPort("robot_state"),
+    # )
 
     builder.Connect(
         hardware_station.GetOutputPort("gen3.pose_measured"),
@@ -62,6 +63,7 @@ def run(*, scenario: Scenario, graphviz=None):
         "models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj", 1
     )
     meshcat.SetObject("ee_body", ee_base, Rgba(0, 0.5, 0, 0.5))
+    # meshcat.SetObject("test_body", ee_base, Rgba(0.5, 0.5, 0, 0.5))
     meshcat.SetCameraPose(np.array([1, -1, 1]) * 0.75, np.array([0, 0, 0.4]))
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
@@ -84,6 +86,7 @@ def run(*, scenario: Scenario, graphviz=None):
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:
+        print(simulator.get_actual_realtime_rate())
         hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 

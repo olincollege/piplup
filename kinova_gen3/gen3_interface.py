@@ -1,4 +1,4 @@
-import dataclasses as dc
+import threading
 
 from typing import Any, ClassVar, List, Optional
 from types import SimpleNamespace
@@ -36,31 +36,36 @@ class Gen3InterfaceConfig:
 class Gen3HardwareInterface(LeafSystem):
     def __init__(self, ip_address, port, control_mode):
         LeafSystem.__init__(self)
+        self.control_mode = control_mode
         if control_mode == Gen3ControlMode.kPosition:
             self.arm_position_input_port = self.DeclareVectorInputPort(
                 "position", kGen3ArmNumJoints
             )
         elif control_mode == Gen3ControlMode.kPose:
-            self.arm_position_input_port = self.DeclareAbstractInputPort(
+            self.arm_pose_input_port = self.DeclareAbstractInputPort(
                 "pose", Value(RigidTransform())
+            )
+        elif control_mode == Gen3ControlMode.kTwist:
+            self.arm_twist_input_port = self.DeclareVectorInputPort(
+                "twist", 6
             )
         else:
             raise RuntimeError(f"Unsupported control mode {control_mode}")
-        self.gripper_position_input_port = self.DeclareVectorInputPort(
+        self.gripper_command_input_port = self.DeclareVectorInputPort(
             "2f_85.command", 1
         )
-        self.DeclareVectorOutputPort(
-            "position_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmPosition
-        )
-        self.DeclareVectorOutputPort(
-            "velocity_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmVelocity
-        )
-        self.DeclareVectorOutputPort(
-            "torque_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmTorque
-        )
-        self.DeclareVectorOutputPort(
-            "state_estimated", BasicVector(kGen3ArmNumJoints * 2), self.CalcState
-        )
+        # self.DeclareVectorOutputPort(
+        #     "position_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmPosition
+        # )
+        # self.DeclareVectorOutputPort(
+        #     "velocity_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmVelocity
+        # )
+        # self.DeclareVectorOutputPort(
+        #     "torque_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmTorque
+        # )
+        # self.DeclareVectorOutputPort(
+        #     "state_estimated", BasicVector(kGen3ArmNumJoints * 2), self.CalcState
+        # )
         self.DeclareVectorOutputPort(
             "pose_measured",
             BasicVector(6),
@@ -68,6 +73,7 @@ class Gen3HardwareInterface(LeafSystem):
             {self.time_ticket()},
         )
         self.DeclareContinuousState(1)
+        # self.DeclarePeriodicUnrestrictedUpdateEvent(1/40, 0, self.Integrate)
 
         self.last_feedback_time = -np.inf
         self.feedback = None
@@ -117,10 +123,80 @@ class Gen3HardwareInterface(LeafSystem):
         """
         self.feedback = self.base_cyclic.RefreshFeedback()
         self.last_feedback_time = current_time
+    def check_for_end_or_abort(self, e):
+        """
+        Return a closure checking for END or ABORT notifications
 
+        Arguments:
+        e -- event to signal when the action is completed
+            (will be set when an END or ABORT occurs)
+        """
+        def check(notification, e = e):
+            # print("EVENT : " + \
+            #       Base_pb2.ActionEvent.Name(notification.action_event))
+            if notification.action_event == Base_pb2.ACTION_END \
+            or notification.action_event == Base_pb2.ACTION_ABORT:
+                e.set()
+        return check
+    # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-        # print("time is: %s" % context.get_time())
-        pass
+        print("time is: %s" % context.get_time())
+
+        gripper_command = Base_pb2.GripperCommand()
+        gripper_command.mode = Base_pb2.GRIPPER_SPEED
+        
+        finger = gripper_command.gripper.finger.add()
+        finger.finger_identifier = 1
+        finger.value = self.gripper_command_input_port.Eval(context)[0]
+        self.base.SendGripperCommand(gripper_command)
+
+        if self.control_mode == Gen3ControlMode.kPosition:
+            print(self.arm_position_input_port.Eval(context))
+        elif self.control_mode == Gen3ControlMode.kPose:
+            pose :RigidTransform= self.arm_pose_input_port.Eval(context)
+            translation = pose.translation()
+            rpy = RollPitchYaw(pose.rotation())
+            action = Base_pb2.Action()
+            action.name = "End-effector pose command"
+            action.application_data = ""
+            
+            cartesian_pose = action.reach_pose.target_pose
+            cartesian_pose.theta_x = np.degrees(rpy.roll_angle())
+            cartesian_pose.theta_y = np.degrees(rpy.pitch_angle())
+            cartesian_pose.theta_z = np.degrees(rpy.yaw_angle())
+            cartesian_pose.x = translation[0]
+            cartesian_pose.y = translation[1]
+            cartesian_pose.z = translation[2]
+            
+            e = threading.Event()
+            notification_handle = self.base.OnNotificationActionTopic(
+                self.check_for_end_or_abort(e),
+                Base_pb2.NotificationOptions()
+            )
+
+            self.base.ExecuteAction(action)
+
+            TIMEOUT_DURATION = 20  # seconds
+            finished = e.wait(TIMEOUT_DURATION)
+            self.base.Unsubscribe(notification_handle)
+        elif self.control_mode == Gen3ControlMode.kTwist:
+            cmd_twist = self.arm_twist_input_port.Eval(context)
+            command = Base_pb2.TwistCommand()
+            command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_BASE
+            command.duration = 0
+
+            twist = command.twist
+            twist.angular_x = np.degrees(cmd_twist[0])
+            twist.angular_y = np.degrees(cmd_twist[1])
+            twist.angular_z = np.degrees(cmd_twist[2])
+            twist.linear_x = cmd_twist[3]
+            twist.linear_y = cmd_twist[4]
+            twist.linear_z = cmd_twist[5]
+
+            # Note: this API call takes about 25ms
+            self.base.SendTwistCommand(command)
+        else:
+            raise RuntimeError(f"Unsupported control mode {self.control_mode}")
 
     def CalcArmPosition(self, context, output):
         """
@@ -203,5 +279,5 @@ class Gen3HardwareInterface(LeafSystem):
 
         # Store the end-effector pose so we can use it to compute the camera pose
         self.ee_pose = ee_pose
-
+        
         output.SetFromVector(ee_pose)

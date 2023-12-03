@@ -61,7 +61,9 @@ class SimGen3Driver(Diagram):
                 get_gen3_joint_position_limits(controller_plant)
             )
 
-            frame_E = controller_plant.GetFrameByName("end_effector_frame")
+            frame_E = controller_plant.GetFrameByName(
+                "tool_frame"
+            )  # TODO should be dynamically set from the config
 
             diff_ik: DifferentialInverseKinematicsIntegrator = builder.AddSystem(
                 DifferentialInverseKinematicsIntegrator(
