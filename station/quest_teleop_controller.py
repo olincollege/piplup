@@ -1,6 +1,7 @@
 from pydrake.all import *
 from oculus_reader.reader import OculusReader
 from copy import copy
+import time
 
 
 class QuestTwistTeleopController(LeafSystem):
@@ -93,9 +94,10 @@ class QuestTwistTeleopController(LeafSystem):
         error_pose = X_WE.InvertAndCompose(X_WE_desired)
         translation_error = X_WE_desired.translation() - X_WE.translation()
         rpy_error = RollPitchYaw(error_pose.rotation()).vector()
-        twist[:3] = 0.5 * (X_WE.rotation().matrix() @ rpy_error)
-        twist[3:] = 0.5 * translation_error
-        print(translation_error)
+        twist[:3] = 4 * (X_WE.rotation().matrix() @ rpy_error)
+        twist[3:] = 4.5 * translation_error
+        self.last_translation_error = translation_error
+        # self.last_t =
         output.SetFromVector(twist)
 
 
@@ -154,7 +156,7 @@ class QuestTeleopController(LeafSystem):
         if enable and not self.movement_freeze_pose:
             self.movement_freeze_pose = controller_pose
         elif enable:
-            # TODO these calcs are a bit wrong 
+            # TODO these calcs are a bit wrong
             pose_delta = controller_pose.InvertAndCompose(self.movement_freeze_pose)
             position = copy(pose_delta.translation())
             position[2] = -position[2]
