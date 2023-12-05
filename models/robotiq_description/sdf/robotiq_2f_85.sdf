@@ -38,6 +38,9 @@
         </material>
       </visual>
     </link>
+    <frame name="tool_frame" attached_to="robotiq_arg2f_base_link">
+      <pose>0 0 0.12 0 0 0</pose>
+    </frame>
     <joint name='finger_joint' type='revolute'>
       <pose relative_to='robotiq_arg2f_base_link'>0 -0.030601 0.054904 0 -0 3.14159</pose>
       <parent>robotiq_arg2f_base_link</parent>

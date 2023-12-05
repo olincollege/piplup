@@ -10,10 +10,13 @@ class Gen3ControlLevel(Enum):
     kLowLevelBypass = auto()  # Upto 1kHz
 
 
-class Gen3JointControlMode(Enum):
+class Gen3ControlMode(Enum):
     kPosition = auto()
-    kVelocity = auto()
-    kTorque = auto()
+    # kVelocity = auto()
+    # kTorque = auto()
+    kPose = auto()
+    kTwist = auto()
+    # kWrench = auto()
 
 
 kGen3ArmNumJoints: int = 7

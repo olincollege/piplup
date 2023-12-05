@@ -3,18 +3,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pydrake.all import *
 from pydrake.common import RandomGenerator
-from pydrake.geometry import Meshcat, StartMeshcat, MeshcatPointCloudVisualizer
+from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
-from station import (
-    MakeHardwareStation,
-    Scenario,
-    load_scenario,
-    GamepadTeleopController,
-)
-
-from perception import MakePointCloudGenerator
+from station import MakeHardwareStation, Scenario, load_scenario, QuestTeleopController
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -23,8 +16,6 @@ def run(*, scenario: Scenario, graphviz=None):
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
-    
-
     # TODO (krishna) This should be more generic
     # ----------
     gripper_name = scenario.model_drivers["gen3"].hand_model_name
@@ -33,38 +24,16 @@ def run(*, scenario: Scenario, graphviz=None):
     ).get()
     # ----------
 
-    gamepad: GamepadTeleopController = builder.AddNamedSystem(
-        "gamepad_control",
-        GamepadTeleopController(meshcat, controller_plant, gripper_name),
+    gamepad: QuestTeleopController = builder.AddNamedSystem(
+        "quest_controller",
+        QuestTeleopController(meshcat, controller_plant, gripper_name),
     )
-
-    camera_info: {str: CameraInfo} = {}
-    cameras = list(scenario.cameras.keys())
-
-    for camera in cameras:
-        camera_info[camera] = hardware_station.GetSubsystemByName(f"rgbd_sensor_{camera}").depth_camera_info()
-
-    point_cloud_generator: Diagram = builder.AddNamedSystem(
-        "point_cloud_generator", MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat)
-    )
-    
-    for camera in cameras:
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
-            point_cloud_generator.GetInputPort(f"{camera}_pose")
-        )
-
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.depth_image_32f"),
-            point_cloud_generator.GetInputPort(f"{camera}_depth_image")
-        )
-
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),
         hardware_station.GetInputPort("gen3.pose"),
     )
     builder.Connect(
-        gamepad.GetOutputPort("gripper_command"),
+        gamepad.GetOutputPort(f"gripper_command"),
         hardware_station.GetInputPort(f"{gripper_name}.command"),
     )
 
@@ -98,19 +67,6 @@ def run(*, scenario: Scenario, graphviz=None):
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
-
-    camera_info: {str: CameraInfo} = {}
-    cameras = list(scenario.cameras.keys())
-
-    # for camera in cameras:
-    img_color = hardware_station.GetOutputPort("camera0.color_image").Eval(hardware_station.CreateDefaultContext()).data
-    f, axarr = plt.subplots(1,2) 
-    axarr[0].imshow(img_color)
-    img_depth = hardware_station.GetOutputPort("camera0.depth_image_32f").Eval(hardware_station.CreateDefaultContext()).data
-    axarr[1].imshow(img_depth)
-    plt.show()
-
-
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)

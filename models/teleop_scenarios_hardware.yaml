@@ -1,0 +1,38 @@
+TeleopPlanarGripper:
+
+  directives:
+  - add_directives:
+      file: package://piplup_models/gen3_2f_85.dmd.yaml
+  - add_weld:
+      parent: world
+      child: gen3::base_link
+  - add_directives:
+        file: package://piplup_models/scope_table_w_cameras.dmd.yaml
+  - add_model:
+        name: cracker_box
+        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+        default_free_body_pose:
+            base_link_cracker:
+                translation: [0.4, 0, 0.3]
+                rotation: !Rpy { deg: [90.0, 0.0, 0.0 ]}
+
+  cameras:
+    camera0:
+      name: camera0
+      depth: True
+      X_PB:
+        base_frame: camera0::base
+      width: 1280
+      height: 720
+
+  model_drivers:
+    gen3: !Gen3Driver
+      hand_model_name: 2f_85
+      control_mode: 3
+
+  hardware_interface:
+    gen3: !Gen3InterfaceConfig
+      ip_address: 192.168.1.10
+      port: 10000
+    # camera0: !RealsenseInterfaceConfig
+    #   serial_number: '141722074426'

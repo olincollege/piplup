@@ -2,10 +2,10 @@ py_library(
     name = "kinova_gen3",
     srcs = [
         "__init__.py",
-        "gamepad_diff_ik.py",
         "gen3_constants.py",
         "gen3_control.py",
         "gen3_driver.py",
+        "gen3_interface.py",
         "gen3_sim_driver.py",
     ],
     data = ["//models"],
@@ -16,4 +16,13 @@ py_library(
         "//robotiq_2f_85",
         "@drake//bindings/pydrake",
     ],
+)
+
+load("@drake//tools/skylark:py.bzl", "py_binary")
+
+py_binary(
+    name = "interface_demo",
+    srcs = ["interface_demo.py"],
+    imports = [".."],
+    deps = [":kinova_gen3"],
 )

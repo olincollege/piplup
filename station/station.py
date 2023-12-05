@@ -1,29 +1,26 @@
-import argparse
-from typing import List
-
-import matplotlib.pyplot as plt
-import numpy as np
 from pydrake.all import *
-from pydrake.common import RandomGenerator
-from pydrake.geometry import Meshcat, StartMeshcat
+from pydrake.geometry import Meshcat
 from pydrake.manipulation._manipulation_extra import ApplyDriverConfigs
 from pydrake.multibody.parsing import ModelDirectives, ProcessModelDirectives
 from pydrake.multibody.plant import AddMultibodyPlant
-from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 from pydrake.systems.sensors import ApplyCameraConfig
 from pydrake.visualization import ApplyVisualizationConfig
-from station.scenario import Scenario
-
+from realsensed400 import RealSenseD400, RealsenseInterfaceConfig  # type: ignore
+from kinova_gen3 import Gen3InterfaceConfig, Gen3HardwareInterface, Gen3ControlMode
+from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
-from kinova_gen3 import GamepadDiffIkController
+from station.scenario import Scenario
+from typing import Any, ClassVar, List, Optional
 
 
 def MakeHardwareStation(
     scenario: Scenario,
     meshcat: Meshcat = None,
-    hardware: bool = False,
 ) -> Diagram:
+    if scenario.hardware_interface:
+        return MakeHardwareStationInterface(scenario, meshcat)
+
     builder = DiagramBuilder()
 
     # Create the multibody plant and scene graph.
@@ -91,3 +88,83 @@ def MakeHardwareStation(
     builder.ExportOutput(sim_plant.get_body_poses_output_port(), "body_poses")
 
     return builder.Build()
+
+
+def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
+    builder = DiagramBuilder()
+
+    # This is not currently using a config since we are only using one scale
+    # uss_dbs_system: System = builder.AddNamedSystem(
+    #     "uss_dbs", USSDBSHardwareInterface()
+    # )
+    # builder.ExportOutput(uss_dbs_system.GetOutputPort("mass"), "uss_dbs.mass")
+
+    for model_name, hardware_interface in scenario.hardware_interface.items():
+        interface_subsystem = None
+        if isinstance(hardware_interface, RealsenseInterfaceConfig):
+            hardware_interface: RealsenseInterfaceConfig
+            camera_config = scenario.cameras.get(model_name)
+            if not camera_config:
+                raise RuntimeError(
+                    f"Failed to create hardware interface for camera model: {model_name}, check if camera exists in scenario->camera"
+                )
+
+            interface_subsystem: RealSenseD400 = builder.AddNamedSystem(
+                f"realsense_interface_{model_name}",
+                RealSenseD400(hardware_interface.serial_number, camera_config),
+            )
+        elif isinstance(hardware_interface, Gen3InterfaceConfig):
+            model_driver = scenario.model_drivers[model_name]
+            gen3_model = model_driver
+            controller_plant = MultibodyPlant(0.0)
+            parser = Parser(controller_plant)
+            ConfigureParser(parser)
+            controller_models: List[ModelInstanceIndex] = parser.AddModelsFromUrl(
+                "package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf"
+            )
+            assert len(controller_models) == 1
+            gen3_controller_model_idx = controller_models[0]
+
+            controller_plant.WeldFrames(
+                controller_plant.world_frame(),
+                controller_plant.GetFrameByName("base_link", gen3_controller_model_idx),
+                RigidTransform(),
+            )
+            controller_plant.AddFrame(
+                FixedOffsetFrame(
+                    "tool_frame",
+                    controller_plant.GetFrameByName("end_effector_frame"),
+                    RigidTransform([0, 0, 0.12]),
+                )
+            )
+            controller_plant.Finalize()
+            builder.AddNamedSystem(
+                f"{model_name}_controller_plant", SharedPointerSystem(controller_plant)
+            )
+            interface_subsystem = builder.AddNamedSystem(
+                "gen3_interface",
+                Gen3HardwareInterface(
+                    hardware_interface.ip_address,
+                    hardware_interface.port,
+                    Gen3ControlMode(model_driver.control_mode),
+                ),
+            )
+        else:
+            raise RuntimeError(
+                f"Invalid hardware interface type {hardware_interface} for model {model_name}"
+            )
+
+        for i in range(interface_subsystem.num_input_ports()):
+            port = interface_subsystem.get_input_port(i)
+            if "2f_85" in port.get_name():
+                builder.ExportInput(port, port.get_name())
+            if not builder.IsConnectedOrExported(port):
+                builder.ExportInput(port, f"{model_name}.{port.get_name()}")
+        for i in range(interface_subsystem.num_output_ports()):
+            port = interface_subsystem.get_output_port(i)
+            builder.ExportOutput(port, f"{model_name}.{port.get_name()}")
+
+    # ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
+    diagram: Diagram = builder.Build()
+    diagram.set_name("HardwareStationInterface")
+    return diagram
