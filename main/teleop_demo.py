@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pydrake.all import *
 from pydrake.common import RandomGenerator
-from pydrake.geometry import Meshcat, StartMeshcat
+from pydrake.geometry import Meshcat, StartMeshcat, MeshcatPointCloudVisualizer
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
@@ -14,6 +14,8 @@ from station import (
     GamepadTeleopController,
 )
 
+from perception import MakePointCloudGenerator
+
 
 def run(*, scenario: Scenario, graphviz=None):
     meshcat: Meshcat = StartMeshcat()
@@ -21,6 +23,7 @@ def run(*, scenario: Scenario, graphviz=None):
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
+    
 
     # TODO (krishna) This should be more generic
     # ----------
@@ -34,6 +37,28 @@ def run(*, scenario: Scenario, graphviz=None):
         "gamepad_control",
         GamepadTeleopController(meshcat, controller_plant, gripper_name),
     )
+
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    for camera in cameras:
+        camera_info[camera] = hardware_station.GetSubsystemByName(f"rgbd_sensor_{camera}").depth_camera_info()
+
+    point_cloud_generator: Diagram = builder.AddNamedSystem(
+        "point_cloud_generator", MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat)
+    )
+    
+    for camera in cameras:
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
+            point_cloud_generator.GetInputPort(f"{camera}_pose")
+        )
+
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.depth_image_32f"),
+            point_cloud_generator.GetInputPort(f"{camera}_depth_image")
+        )
+
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),
         hardware_station.GetInputPort("gen3.pose"),
@@ -73,6 +98,19 @@ def run(*, scenario: Scenario, graphviz=None):
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
+
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    # for camera in cameras:
+    img_color = hardware_station.GetOutputPort("camera0.color_image").Eval(hardware_station.CreateDefaultContext()).data
+    f, axarr = plt.subplots(1,2) 
+    axarr[0].imshow(img_color)
+    img_depth = hardware_station.GetOutputPort("camera0.depth_image_32f").Eval(hardware_station.CreateDefaultContext()).data
+    axarr[1].imshow(img_depth)
+    plt.show()
+
+
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)

@@ -17,6 +17,7 @@ py_library(
         "//robotiq_epick",
         "//realsense:realsensed400_py",
         "//uss_dbs",
+        "//perception",
         "@drake//bindings/pydrake",
     ],
 )
