@@ -6,38 +6,38 @@ directives:
 - add_weld:
     parent: world
     child: table::table_body
-    X_PC:
-        translation: [-0.08, 0, -0.02]
+    # X_PC:
+    #     translation: [-0.08, 0, -0.02]
 - add_frame:
     name: camera0_origin
     X_PF:
         base_frame: world
         rotation: !Rpy { deg: [-120.0, 0, 0.0]}
-        translation: [0.5, -.5, 0.75]
+        translation: [0.5, -.483, 0.75]
 - add_frame:
     name: camera1_origin
     X_PF:
         base_frame: world
         rotation: !Rpy { deg: [-120.0, 0, 180.0]}
-        translation: [0.5, .5, 0.75]
+        translation: [0.5, .483, 0.75]
 - add_frame:
     name: camera2_origin
     X_PF:
         base_frame: world
         rotation: !Rpy { deg: [-120.0, 0, 90.0]}
-        translation: [1.0, 0.0, 0.75]
+        translation: [1.081, 0.0, 0.75]
 - add_frame:
     name: camera3_origin
     X_PF:
         base_frame: world
         rotation: !Rpy { deg: [0.0, -90.0, -45.0]}
-        translation: [1.0, -.5, 0.25]
+        translation: [1.081, -.483, 0.25]
 - add_frame:
     name: camera4_origin
     X_PF:
         base_frame: world
         rotation: !Rpy { deg: [0.0, -90.0, 45.0]}
-        translation: [1.0, .5, 0.25]
+        translation: [1.081, .483, 0.25]
 - add_model:
     name: camera0
     file: package://piplup_models/realsense_description/sdf/d435_simple.sdf

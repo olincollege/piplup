@@ -5,6 +5,8 @@ TeleopPlanarGripper:
   - add_weld:
       parent: world
       child: gen3::base_link
+      X_PC:
+          translation: [0.09, 0.04, 0.0]
   - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
   - add_model:
