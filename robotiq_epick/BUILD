@@ -43,3 +43,32 @@ py_library(
         "@drake//bindings/pydrake",
     ],
 )
+
+cc_library(
+    name = "epick_interface",
+    srcs = [
+    ],
+    hdrs = [
+        "epick_interface.h",
+    ],
+    deps = [
+        "@drake//geometry:scene_graph",
+        "@drake//multibody/plant",
+        "@drake//systems/framework:leaf_system",
+    ],
+)
+
+pybind_py_library(
+    name = "epick_interface_py",
+    cc_deps = [
+        ":epick_interface",
+        "@drake//bindings/pydrake/common:cpp_template_pybind",
+        "@drake//bindings/pydrake/common:default_scalars_pybind",
+        "@drake//bindings/pydrake/common:serialize_pybind",
+    ],
+    cc_so_name = "epick_interface",
+    cc_srcs = ["epick_interface_py.cc"],
+    py_deps = ["@drake//bindings/pydrake"],
+    py_imports = ["."],
+    visibility = ["//visibility:public"],
+)

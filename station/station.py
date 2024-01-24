@@ -12,7 +12,7 @@ from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
 from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
-
+from epick_interface import EPickInterfaceConfig
 
 def MakeHardwareStation(
     scenario: Scenario,
@@ -149,6 +149,9 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
                     Gen3ControlMode(model_driver.control_mode),
                 ),
             )
+        elif isinstance(hardware_interface, EPickInterfaceConfig):
+            print(hardware_interface)
+            continue
         else:
             raise RuntimeError(
                 f"Invalid hardware interface type {hardware_interface} for model {model_name}"
@@ -163,6 +166,10 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
         for i in range(interface_subsystem.num_output_ports()):
             port = interface_subsystem.get_output_port(i)
             builder.ExportOutput(port, f"{model_name}.{port.get_name()}")
+
+    if builder.empty():
+        raise RuntimeError("No systems were added to hardware interface")
+
 
     # ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
     diagram: Diagram = builder.Build()

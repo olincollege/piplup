@@ -20,6 +20,7 @@ from robotiq_epick import EPickDriver
 from realsensed400 import RealsenseInterfaceConfig  # type: ignore
 from uss_dbs import USSDBSInterfaceConfig
 
+from epick_interface import EPickInterfaceConfig
 
 @dc.dataclass
 class Scenario:
@@ -54,6 +55,7 @@ class Scenario:
             RealsenseInterfaceConfig,
             Gen3InterfaceConfig,
             USSDBSInterfaceConfig,  # Not currently used
+            EPickInterfaceConfig,
         ],
     ] = dc.field(default_factory=dict)
 
