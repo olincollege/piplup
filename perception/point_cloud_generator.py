@@ -7,23 +7,24 @@ import matplotlib.pyplot as plt
 from pydrake.all import *
 from pydrake.geometry import (
     Meshcat,
-    MeshcatVisualizer,
-    SceneGraph,
     MeshcatPointCloudVisualizer
 )
-import pandas as pd
 
 def MakePointCloudGenerator(
     camera_info: {str: CameraInfo},
     meshcat: Meshcat = None,
     hardware: bool = False,
 ) -> Diagram:
+    
+    # Create diagram
     builder = DiagramBuilder()
 
+    # Add point cloud processor LeafSystem
     point_cloud_processor: PointCloudProcessor = builder.AddNamedSystem(
         "point_cloud_processor", PointCloudProcessor(cameras=list(camera_info.keys()), meshcat=meshcat)
     )
 
+    # Add DepthImageToPointCloud LeafSystem for each camera
     for camera in camera_info.keys():
         image_to_point_cloud: DepthImageToPointCloud = builder.AddNamedSystem(
             f"image_to_point_cloud_{camera}", DepthImageToPointCloud(camera_info=camera_info[camera])
@@ -35,6 +36,7 @@ def MakePointCloudGenerator(
             point_cloud_processor.GetInputPort(f"{camera}_cloud")
         )
     
+    # Add point cloud visualizer
     meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
         "point_cloud_visualizer", MeshcatPointCloudVisualizer(meshcat=meshcat, path="point_cloud", publish_period=0.2)
     )
@@ -53,12 +55,14 @@ class PointCloudProcessor(LeafSystem):
         self._meshcat = meshcat
         self._cloud_inputs: [InputPort] = []
 
+        # Add input port for each camera
         for camera in self.cameras:
             self._cloud_inputs.append(self.DeclareAbstractInputPort(
                 name=f"{camera}_cloud",
                 model_value=AbstractValue.Make(PointCloud())
             ))
         
+        # Periodically publish merged point cloud as state
         self.merged_point_cloud_idx = self.DeclareAbstractState(
             AbstractValue.Make(PointCloud())
         )
@@ -70,11 +74,16 @@ class PointCloudProcessor(LeafSystem):
     def UpdatePointCloud(self, context: Context, discrete_state: DiscreteValues):
         clouds: [PointCloud] = []
 
+        # Evaluate point cloud input ports
         for input in self._cloud_inputs:
             clouds.append(input.Eval(context))
             # clouds[-1].EstimateNormals(radius=0.1, num_closest=30)
         
+        # Merge clouds
         merged_cloud: PointCloud = Concatenate(clouds=clouds)
+
+        # Save point cloud for perception system testing
+        # np.save('/home/ali1/code/piplup/test_data/point_cloud.npy', merged_cloud.xyzs())
 
         # self._meshcat.SetLineSegments(
         #     "normals",
