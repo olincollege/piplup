@@ -9,3 +9,8 @@ alias(
     name = "opencv",
     actual = "@linux_opencv//:opencv",
 )
+
+alias(
+    name = "serial",
+    actual = "@libserial//:serial",
+)

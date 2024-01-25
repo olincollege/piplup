@@ -72,3 +72,13 @@ pybind_py_library(
     py_imports = ["."],
     visibility = ["//visibility:public"],
 )
+
+
+cc_binary(
+    name = "grip",
+    srcs = ["grip.cpp"],
+    copts = ["-Irobotiq_epick"],
+    deps = [
+        "//robotiq_epick/epick_driver_interface"
+    ],
+)
