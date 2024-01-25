@@ -37,5 +37,5 @@ namespace piplup
                 DefCopyAndDeepCopy(&cls);
             }
         }
-    } // namespace realsense
+    } // namespace epick
 } // namespace piplup

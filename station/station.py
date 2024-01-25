@@ -14,6 +14,7 @@ from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
 from epick_interface import EPickInterfaceConfig
 
+
 def MakeHardwareStation(
     scenario: Scenario,
     meshcat: Meshcat = None,
@@ -169,7 +170,6 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
 
     if builder.empty():
         raise RuntimeError("No systems were added to hardware interface")
-
 
     # ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
     diagram: Diagram = builder.Build()

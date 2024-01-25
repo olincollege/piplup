@@ -22,6 +22,7 @@ from uss_dbs import USSDBSInterfaceConfig
 
 from epick_interface import EPickInterfaceConfig
 
+
 @dc.dataclass
 class Scenario:
     random_seed: int = 0
