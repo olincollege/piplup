@@ -82,3 +82,12 @@ cc_binary(
         "//robotiq_epick/epick_driver_interface"
     ],
 )
+
+cc_binary(
+    name = "release",
+    srcs = ["release.cpp"],
+    copts = ["-Irobotiq_epick"],
+    deps = [
+        "//robotiq_epick/epick_driver_interface"
+    ],
+)

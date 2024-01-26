@@ -36,7 +36,7 @@
 #include <epick_driver_interface/default_driver_utils.hpp>
 
 
-// Grip the object.
+// release the object.
 
 using epick_driver::DefaultDriver;
 using epick_driver::DefaultSerial;
@@ -57,10 +57,10 @@ int main(int argc, char* argv[])
 {
 
   std::string port = kComPort;
+
   int baudrate = kBaudRate;
 
-  double timeout = kTimeout;
-
+  int timeout = kTimeout;
 
   int slave_address = kSlaveAddress;
 
@@ -90,9 +90,9 @@ int main(int argc, char* argv[])
     }
 
     std::cout << "The gripper is connected." << std::endl;
-    std::cout << "Grip the object..." << std::endl;
+    std::cout << "Release the object..." << std::endl;
 
-    driver->grip();
+    driver->release();
 
     std::cout << "Reading the gripper status..." << std::endl;
 
