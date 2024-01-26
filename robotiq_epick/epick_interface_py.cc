@@ -27,6 +27,8 @@ namespace piplup
 
             py::module::import("pydrake.systems.framework");
 
+            py::class_<EPickInterface, LeafSystem<double>>(m, "EPickInterface")
+                .def(py::init<const EPickInterfaceConfig &>(), py::arg("epick_config"));
             {
                 using Class = EPickInterfaceConfig;
                 py::class_<Class> cls(

@@ -25,37 +25,37 @@ def run(*, scenario: Scenario, graphviz=None):
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-    # TODO (krishna) This should be more generic
-    # ----------
-    gripper_name = scenario.model_drivers["gen3"].hand_model_name
-    controller_plant: MultibodyPlant = hardware_station.GetSubsystemByName(
-        "gen3_controller_plant"
-    ).get()
-    # ----------
+    # # TODO (krishna) This should be more generic
+    # # ----------
+    # gripper_name = scenario.model_drivers["gen3"].hand_model_name
+    # controller_plant: MultibodyPlant = hardware_station.GetSubsystemByName(
+    #     "gen3_controller_plant"
+    # ).get()
+    # # ----------
 
-    gamepad: System = builder.AddNamedSystem(
-        "gamepad_control",
-        # GamepadTwistTeleopController(meshcat, controller_plant, gripper_name),
-        QuestTwistTeleopController(meshcat, controller_plant, gripper_name),
-    )
-    builder.Connect(
-        gamepad.GetOutputPort("V_WE_desired"),
-        hardware_station.GetInputPort("gen3.twist"),
-    )
-    builder.Connect(
-        gamepad.GetOutputPort(f"gripper_command"),
-        hardware_station.GetInputPort(f"{gripper_name}.command"),
-    )
-
+    # gamepad: System = builder.AddNamedSystem(
+    #     "gamepad_control",
+    #     # GamepadTwistTeleopController(meshcat, controller_plant, gripper_name),
+    #     QuestTwistTeleopController(meshcat, controller_plant, gripper_name),
+    # )
     # builder.Connect(
-    #     hardware_station.GetOutputPort("gen3.state_estimated"),
-    #     gamepad.GetInputPort("robot_state"),
+    #     gamepad.GetOutputPort("V_WE_desired"),
+    #     hardware_station.GetInputPort("gen3.twist"),
+    # )
+    # builder.Connect(
+    #     gamepad.GetOutputPort(f"gripper_command"),
+    #     hardware_station.GetInputPort(f"{gripper_name}.command"),
     # )
 
-    builder.Connect(
-        hardware_station.GetOutputPort("gen3.pose_measured"),
-        gamepad.GetInputPort("pose"),
-    )
+    # # builder.Connect(
+    # #     hardware_station.GetOutputPort("gen3.state_estimated"),
+    # #     gamepad.GetInputPort("robot_state"),
+    # # )
+
+    # builder.Connect(
+    #     hardware_station.GetOutputPort("gen3.pose_measured"),
+    #     gamepad.GetInputPort("pose"),
+    # )
 
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
@@ -84,12 +84,27 @@ def run(*, scenario: Scenario, graphviz=None):
         plot_system_graphviz(diagram, options=options)
         plt.show()
     simulator.Initialize()
+    epick_ctx = hardware_station.GetSubsystemByName("epick").GetMyContextFromRoot(
+        simulator.get_mutable_context()
+    )
     # Simulate.
-    try:
-        simulator.AdvanceTo(scenario.simulation_duration)
-    except KeyboardInterrupt:
-        print(simulator.get_actual_realtime_rate())
-        hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+    cmd = False
+    while True:
+        try:
+            # simulator.AdvanceTo(scenario.simulation_duration)
+            gamepad = meshcat.GetGamepad()
+            if not gamepad.index == None:
+                if gamepad.button_values[5]:
+                    cmd = True
+                elif gamepad.button_values[4]:
+                    cmd = False
+            hardware_station.GetSubsystemByName("epick").GetInputPort(
+                "command"
+            ).FixValue(epick_ctx, Value(cmd))
+            simulator.AdvanceTo(0.01 + simulator.get_context().get_time())
+        except KeyboardInterrupt:
+            print(simulator.get_actual_realtime_rate())
+            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():

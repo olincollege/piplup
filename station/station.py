@@ -12,7 +12,7 @@ from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
 from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
-from epick_interface import EPickInterfaceConfig
+from epick_interface import EPickInterfaceConfig, EPickInterface
 
 
 def MakeHardwareStation(
@@ -151,8 +151,10 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
                 ),
             )
         elif isinstance(hardware_interface, EPickInterfaceConfig):
+            interface_subsystem = builder.AddNamedSystem(
+                "epick", EPickInterface(hardware_interface)
+            )
             print(hardware_interface)
-            continue
         else:
             raise RuntimeError(
                 f"Invalid hardware interface type {hardware_interface} for model {model_name}"
