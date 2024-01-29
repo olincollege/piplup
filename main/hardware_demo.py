@@ -11,11 +11,9 @@ from station import (
     MakeHardwareStation,
     Scenario,
     load_scenario,
-    GamepadTeleopController,
     GamepadTwistTeleopController,
     QuestTwistTeleopController,
 )
-from kinova_gen3 import Gen3HardwareInterface
 
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):

@@ -10,6 +10,7 @@ class QuestTwistTeleopController(LeafSystem):
         self._meshcat = meshcat
         self._time_step = 0.0001
         self.grip_speed = 0.8
+        self.hand_model_name = hand_model_name
 
         self.oculus_reader = OculusReader()
         self.movement_freeze_pose = None
@@ -19,7 +20,12 @@ class QuestTwistTeleopController(LeafSystem):
             AbstractValue.Make(RigidTransform())
         )
 
-        self.gripper_cmd_state_idx = self.DeclareDiscreteState(1)
+        if hand_model_name == "2f_85":
+            self.gripper_cmd_state_idx = self.DeclareDiscreteState(1)
+        elif hand_model_name == "epick":
+            self.gripper_cmd_state_idx = self.DeclareAbstractState(Value(False))
+        else:
+            raise RuntimeError("Invalid hand model name")
 
         self.robot_pose_port = self.DeclareVectorInputPort("pose", 6)
         self.DeclareVectorOutputPort("V_WE_desired", 6, self.CalcTwist)
@@ -63,11 +69,16 @@ class QuestTwistTeleopController(LeafSystem):
             self.movement_freeze_pose = None
             self.ee_freeze_pose = copy(X_WE_desired)
 
-        if "rightTrig" in buttons:
-            discrete_state.set_value(
-                self.gripper_cmd_state_idx,
-                (np.array(buttons["rightTrig"]) - 0.5) * (-self.grip_speed),
-            )
+        if buttons:
+            if self.hand_model_name == "2f_85":
+                discrete_state.set_value(
+                    self.gripper_cmd_state_idx,
+                    (np.array(buttons["rightTrig"]) - 0.5) * (-self.grip_speed),
+                )
+            elif self.hand_model_name == "epick":
+                discrete_state.set_value(
+                    self.gripper_cmd_state_idx, buttons["rightBumper"]
+                )
 
         X_WE_desired.set_rotation(pose_delta.multiply(self.ee_freeze_pose).rotation())
         X_WE_desired.set_translation(
