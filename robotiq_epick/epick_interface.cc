@@ -31,7 +31,6 @@ namespace piplup
             systems::State<double> * state) const
         {
             auto command = get_input_port(0).Eval<bool>(context);
-
             if(command)
             {
                 driver_->grip();

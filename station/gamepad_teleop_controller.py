@@ -5,9 +5,7 @@ from copy import copy
 
 
 class GamepadTwistTeleopController(LeafSystem):
-    def __init__(
-        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
-    ):
+    def __init__(self, meshcat: Meshcat, hand_model_name: str):
         super().__init__()
         self._meshcat = meshcat
         self.linear_speed = 0.1
@@ -22,7 +20,14 @@ class GamepadTwistTeleopController(LeafSystem):
 
         self.robot_pose_port = self.DeclareVectorInputPort("pose", 6)
         self.DeclareVectorOutputPort("V_WE_desired", 6, self.OutputTwist)
-        self.DeclareVectorOutputPort("gripper_command", 1, self.OutputGripper)
+        if hand_model_name == "2f_85":
+            self.DeclareVectorOutputPort("gripper_command", 1, self.OutputGripper)
+        elif hand_model_name == "epick":
+            self.DeclareAbstractOutputPort(
+                "gripper_command", lambda: Value(False), self.OutputGripper
+            )
+        else:
+            raise RuntimeError("Invalid hand model name")
 
     def OutputTwist(self, context: Context, output: BasicVector):
         pose = self.robot_pose_port.Eval(context)
@@ -67,9 +72,10 @@ class GamepadTwistTeleopController(LeafSystem):
                 )
         output.SetFromVector(target_twist)
 
-    def OutputGripper(self, context: Context, output: BasicVector):
+    def OutputGripper(self, context: Context, output):
         gamepad = self._meshcat.GetGamepad()
         if self.hand_model_name == "2f_85":
+            output: BasicVector
             cmd_vel = np.zeros(1)
             if not gamepad.index == None:
                 gripper_close = gamepad.button_values[6] * 3
@@ -78,8 +84,10 @@ class GamepadTwistTeleopController(LeafSystem):
                     np.array([(gripper_close - gripper_open) / 2]) * self.grip_speed
                 )
             output.set_value(cmd_vel)
-        elif self.hand_model_name == "epick_2cup":
-            pass
+        elif self.hand_model_name == "epick":
+            output: AbstractValue
+            if not gamepad.index == None:
+                output.set_value(gamepad.button_values[4])
 
 
 class GamepadTeleopController(LeafSystem):

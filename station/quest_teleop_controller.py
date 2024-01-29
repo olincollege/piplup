@@ -5,9 +5,7 @@ import time
 
 
 class QuestTwistTeleopController(LeafSystem):
-    def __init__(
-        self, meshcat: Meshcat, controller_plant: MultibodyPlant, hand_model_name: str
-    ):
+    def __init__(self, meshcat: Meshcat, hand_model_name: str):
         super().__init__()
         self._meshcat = meshcat
         self._time_step = 0.0001
