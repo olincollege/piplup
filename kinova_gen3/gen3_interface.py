@@ -34,9 +34,10 @@ class Gen3InterfaceConfig:
 
 
 class Gen3HardwareInterface(LeafSystem):
-    def __init__(self, ip_address, port, control_mode):
+    def __init__(self, ip_address, port, control_mode, hand_model_name):
         LeafSystem.__init__(self)
         self.control_mode = control_mode
+        self.hand_model_name = hand_model_name
         if control_mode == Gen3ControlMode.kPosition:
             self.arm_position_input_port = self.DeclareVectorInputPort(
                 "position", kGen3ArmNumJoints
@@ -49,9 +50,11 @@ class Gen3HardwareInterface(LeafSystem):
             self.arm_twist_input_port = self.DeclareVectorInputPort("twist", 6)
         else:
             raise RuntimeError(f"Unsupported control mode {control_mode}")
-        self.gripper_command_input_port = self.DeclareVectorInputPort(
-            "2f_85.command", 1
-        )
+
+        if hand_model_name == "2f_85":
+            self.gripper_command_input_port = self.DeclareVectorInputPort(
+                "2f_85.command", 1
+            )
         # self.DeclareVectorOutputPort(
         #     "position_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmPosition
         # )
@@ -145,14 +148,14 @@ class Gen3HardwareInterface(LeafSystem):
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
         # print("time is: %s" % context.get_time())
+        if self.hand_model_name == "2f_85":
+            gripper_command = Base_pb2.GripperCommand()
+            gripper_command.mode = Base_pb2.GRIPPER_SPEED
 
-        gripper_command = Base_pb2.GripperCommand()
-        gripper_command.mode = Base_pb2.GRIPPER_SPEED
-
-        finger = gripper_command.gripper.finger.add()
-        finger.finger_identifier = 1
-        finger.value = self.gripper_command_input_port.Eval(context)[0]
-        self.base.SendGripperCommand(gripper_command)
+            finger = gripper_command.gripper.finger.add()
+            finger.finger_identifier = 1
+            finger.value = self.gripper_command_input_port.Eval(context)[0]
+            self.base.SendGripperCommand(gripper_command)
 
         if self.control_mode == Gen3ControlMode.kPosition:
             print(self.arm_position_input_port.Eval(context))

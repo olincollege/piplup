@@ -23,6 +23,7 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
+    gripper_name = scenario.model_drivers["gen3"].hand_model_name
     if teleop:
         gamepad: System = builder.AddNamedSystem(
             "gamepad_control",
@@ -36,9 +37,7 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
             hardware_station.GetInputPort(f"{gripper_name}.command"),
         )
 
-    if "gen3" in scenario.model_drivers:
-        gripper_name = scenario.model_drivers["gen3"].hand_model_name
-
+    if "gen3" in scenario.hardware_interface:
         builder.Connect(
             gamepad.GetOutputPort("V_WE_desired"),
             hardware_station.GetInputPort("gen3.twist"),
@@ -80,22 +79,11 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     )
     # Simulate.
     cmd = False
-    while True:
-        try:
-            # simulator.AdvanceTo(scenario.simulation_duration)
-            gamepad = meshcat.GetGamepad()
-            if not gamepad.index == None:
-                if gamepad.button_values[5]:
-                    cmd = True
-                elif gamepad.button_values[4]:
-                    cmd = False
-            hardware_station.GetSubsystemByName("epick").GetInputPort(
-                "command"
-            ).FixValue(epick_ctx, Value(cmd))
-            simulator.AdvanceTo(0.01 + simulator.get_context().get_time())
-        except KeyboardInterrupt:
-            print(simulator.get_actual_realtime_rate())
-            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+    try:
+        simulator.AdvanceTo(scenario.simulation_duration)
+    except KeyboardInterrupt:
+        print(simulator.get_actual_realtime_rate())
+        hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():

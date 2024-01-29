@@ -68,9 +68,9 @@ TeleopSuctionGripper:
       control_mode: 3
 
   hardware_interface:
-    # gen3: !Gen3InterfaceConfig
-    #   ip_address: 192.168.1.10
-    #   port: 10000
+    gen3: !Gen3InterfaceConfig
+      ip_address: 192.168.1.10
+      port: 10000
     # camera0: !RealsenseInterfaceConfig
     #   serial_number: '141722074426'
     epick: !EPickInterfaceConfig

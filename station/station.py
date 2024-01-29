@@ -148,6 +148,7 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
                     hardware_interface.ip_address,
                     hardware_interface.port,
                     Gen3ControlMode(model_driver.control_mode),
+                    gen3_model.hand_model_name,
                 ),
             )
         elif isinstance(hardware_interface, EPickInterfaceConfig):

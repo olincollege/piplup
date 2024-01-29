@@ -23,7 +23,7 @@ namespace piplup
             }
             this->DeclareAbstractInputPort("command", Value<bool>());
             this->DeclarePeriodicUnrestrictedUpdateEvent(
-                0.01, 0.0, &EPickInterface::SendCommandAndReceiveStatus);
+                0.0001, 0.0, &EPickInterface::SendCommandAndReceiveStatus);
         }
 
         void EPickInterface::SendCommandAndReceiveStatus(
