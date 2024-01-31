@@ -7,11 +7,11 @@ cc_library(
     srcs = glob(
         [
             "lib/x86_64-linux-gnu/librealsense2-gl.so",
-            "lib/x86_64-linux-gnu/librealsense2-gl.so.2.40",
-            "lib/x86_64-linux-gnu/librealsense2-gl.so.2.40.0",
+            "lib/x86_64-linux-gnu/librealsense2-gl.so.2.*",
+            "lib/x86_64-linux-gnu/librealsense2-gl.so.2.*.*",
             "lib/x86_64-linux-gnu/librealsense2.so",
-            "lib/x86_64-linux-gnu/librealsense2.so.2.40",
-            "lib/x86_64-linux-gnu/librealsense2.so.2.40.0",
+            "lib/x86_64-linux-gnu/librealsense2.so.2.*",
+            "lib/x86_64-linux-gnu/librealsense2.so.2.*.*",
             "lib/x86_64-linux-gnu/librealsense-file.a",
         ],
     ),
