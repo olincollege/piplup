@@ -66,6 +66,7 @@ pybind_py_library(
     cc_copts = ["-Irobotiq_epick"],
     cc_deps = [
         ":epick_interface",
+        "@drake//bindings/pydrake/common:value_pybind",
         "@drake//bindings/pydrake/common:cpp_template_pybind",
         "@drake//bindings/pydrake/common:default_scalars_pybind",
         "@drake//bindings/pydrake/common:serialize_pybind",

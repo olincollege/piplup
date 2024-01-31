@@ -13,4 +13,3 @@ from pydrake.geometry import (
 class PrimitiveGenerator(LeafSystem):
     def __init__(self, meshcat: Meshcat = None):
         super().__init__()
-        

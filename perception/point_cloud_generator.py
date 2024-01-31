@@ -5,10 +5,7 @@ Systems for processing RealSense RGBD data.
 import numpy as np
 import matplotlib.pyplot as plt
 from pydrake.all import *
-from pydrake.geometry import (
-    Meshcat,
-    MeshcatPointCloudVisualizer
-)
+from pydrake.geometry import Meshcat, MeshcatPointCloudVisualizer
 
 
 def MakePointCloudGenerator(
@@ -16,7 +13,6 @@ def MakePointCloudGenerator(
     meshcat: Meshcat = None,
     hardware: bool = False,
 ) -> Diagram:
-    
     # Create diagram
     builder = DiagramBuilder()
 
@@ -42,7 +38,7 @@ def MakePointCloudGenerator(
             image_to_point_cloud.GetOutputPort("point_cloud"),
             point_cloud_processor.GetInputPort(f"{camera}_cloud"),
         )
-    
+
     # Add point cloud visualizer
     meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
         "point_cloud_visualizer",
@@ -68,11 +64,12 @@ class PointCloudProcessor(LeafSystem):
 
         # Add input port for each camera
         for camera in self.cameras:
-            self._cloud_inputs.append(self.DeclareAbstractInputPort(
-                name=f"{camera}_cloud",
-                model_value=AbstractValue.Make(PointCloud())
-            ))
-        
+            self._cloud_inputs.append(
+                self.DeclareAbstractInputPort(
+                    name=f"{camera}_cloud", model_value=AbstractValue.Make(PointCloud())
+                )
+            )
+
         # Periodically publish merged point cloud as state
         self.merged_point_cloud_idx = self.DeclareAbstractState(
             AbstractValue.Make(PointCloud())
@@ -89,7 +86,7 @@ class PointCloudProcessor(LeafSystem):
         for input in self._cloud_inputs:
             clouds.append(input.Eval(context))
             # clouds[-1].EstimateNormals(radius=0.1, num_closest=30)
-        
+
         # Merge clouds
         merged_cloud: PointCloud = Concatenate(clouds=clouds)
 
