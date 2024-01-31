@@ -15,6 +15,8 @@ from station import (
     QuestTwistTeleopController,
 )
 
+from perception import MakePointCloudGenerator
+
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):
     meshcat: Meshcat = StartMeshcat()
@@ -47,6 +49,30 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
             gamepad.GetInputPort("pose"),
         )
 
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    for camera in cameras:
+        camera_info[camera] = hardware_station.GetSubsystemByName(
+            f"rgbd_sensor_{camera}"
+        ).depth_camera_info()
+
+    point_cloud_generator: Diagram = builder.AddNamedSystem(
+        "point_cloud_generator",
+        MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
+    )
+
+    for camera in cameras:
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
+            point_cloud_generator.GetInputPort(f"{camera}_pose"),
+        )
+
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.depth_image_32f"),
+            point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
+        )
+
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -73,6 +99,26 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
+
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    # for camera in cameras:
+    img_color = (
+        hardware_station.GetOutputPort("camera0.color_image")
+        .Eval(hardware_station.CreateDefaultContext())
+        .data
+    )
+    f, axarr = plt.subplots(1, 2)
+    axarr[0].imshow(img_color)
+    img_depth = (
+        hardware_station.GetOutputPort("camera0.depth_image_32f")
+        .Eval(hardware_station.CreateDefaultContext())
+        .data
+    )
+    axarr[1].imshow(img_depth)
+    plt.show()
+
     simulator.Initialize()
     # Simulate.
     cmd = False
