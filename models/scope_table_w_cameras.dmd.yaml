@@ -12,32 +12,32 @@ directives:
     name: camera0_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [-120.0, 0, 0.0]}
-        translation: [0.5, -.483, 0.75]
+        rotation: !Rpy { deg: [-90, 0, 0.0]}
+        translation: [0.5, -.493, 0.778]
 - add_frame:
     name: camera1_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [-120.0, 0, 180.0]}
-        translation: [0.5, .483, 0.75]
+        rotation: !Rpy { deg: [-90.0, 0, 180.0]}
+        translation: [0.5, .493, 0.778]
 - add_frame:
     name: camera2_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [-120.0, 0, 90.0]}
-        translation: [1.081, 0.0, 0.75]
+        rotation: !Rpy { deg: [-90.0, 0, 90.0]}
+        translation: [1.091, 0.0, 0.778]
 - add_frame:
     name: camera3_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [0.0, -90.0, -45.0]}
-        translation: [1.081, -.483, 0.25]
+        rotation: !Rpy { deg: [0.0, -90.0, 0.0]}
+        translation: [1.091, -.511, 0.25]
 - add_frame:
     name: camera4_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [0.0, -90.0, 45.0]}
-        translation: [1.081, .483, 0.25]
+        rotation: !Rpy { deg: [0.0, 90.0, 180.0]}
+        translation: [1.091, .511, 0.25]
 - add_model:
     name: camera0
     file: package://piplup_models/realsense_description/sdf/d435_simple.sdf
