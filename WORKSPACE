@@ -58,3 +58,9 @@ new_local_repository(
     build_file = "@//third_party:opencv_linux.BUILD",
     path = "/usr",
 )
+
+new_local_repository(
+    name = "libserial",
+    path = "/usr/local",
+    build_file = "@//third_party:libserial.BUILD"
+)

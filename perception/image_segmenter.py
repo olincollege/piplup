@@ -4,22 +4,37 @@ from pydrake.all import *
 import builtins
 import matplotlib.pyplot as plt
 
+
 class ImageSegmenter(LeafSystem):
     def __init__(self, camera: str, hz: int = 60):
         super().__init__()
         self.camera = camera
 
-        self.depth_image_input_port = self.DeclareAbstractInputPort("depth_image", AbstractValue.Make(Image[PixelType.kDepth32F]()))
-        self.color_image_input_port = self.DeclareAbstractInputPort("color_image",   AbstractValue.Make(Image[PixelType.kRgba8U]()))
+        self.depth_image_input_port = self.DeclareAbstractInputPort(
+            "depth_image", AbstractValue.Make(Image[PixelType.kDepth32F]())
+        )
+        self.color_image_input_port = self.DeclareAbstractInputPort(
+            "color_image", AbstractValue.Make(Image[PixelType.kRgba8U]())
+        )
 
-        self.masked_depth_image = self.DeclareAbstractOutputPort(f"{camera}_masked_depth_image", lambda: AbstractValue.Make(Image[PixelType.kDepth32F]()), self.MaskDepthImage)
+        self.masked_depth_image = self.DeclareAbstractOutputPort(
+            f"{camera}_masked_depth_image",
+            lambda: AbstractValue.Make(Image[PixelType.kDepth32F]()),
+            self.MaskDepthImage,
+        )
 
     def MaskDepthImage(self, context: Context, output: AbstractValue):
-        color_image = self.EvalAbstractInput(context, self.color_image_input_port.get_index()).get_value()
-        color_image_matrix = np.array(color_image.data, copy=False).reshape(color_image.height(), color_image.width(), -1)
+        color_image = self.EvalAbstractInput(
+            context, self.color_image_input_port.get_index()
+        ).get_value()
+        color_image_matrix = np.array(color_image.data, copy=False).reshape(
+            color_image.height(), color_image.width(), -1
+        )
 
         x, y, w, h = self.get_mask(color_image_matrix)
-        depth_image = self.EvalAbstractInput(context, self.depth_image_input_port.get_index()).get_value()
+        depth_image = self.EvalAbstractInput(
+            context, self.depth_image_input_port.get_index()
+        ).get_value()
         # Apply the mask to the depth image
         if x and y and w and h:
             # Iterate over the entire image
@@ -27,12 +42,14 @@ class ImageSegmenter(LeafSystem):
                 for j in range(depth_image.width()):
                     # Check if the current pixel is outside the specified box
                     if i < y or i >= y + h or j < x or j >= x + w:
-                        depth_image.at(j, i)[0] = 0  # Set the value to zero outside the box
+                        depth_image.at(j, i)[
+                            0
+                        ] = 0  # Set the value to zero outside the box
 
         output.set_value(depth_image)
 
     def get_mask(self, color_image: np.ndarray) -> np.ndarray:
-        #TODO: Only works with Cheez It box - doesn't create bounding box around entire thing. Replace with better segmentation.
+        # TODO: Only works with Cheez It box - doesn't create bounding box around entire thing. Replace with better segmentation.
         image_hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
 
         # Define the range of red color in HSV

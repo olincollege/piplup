@@ -15,6 +15,7 @@ py_library(
         "//kinova_gen3",
         "//robotiq_2f_85",
         "//robotiq_epick",
+        "//robotiq_epick:epick_interface_py",
         "//realsense:realsensed400_py",
         "//uss_dbs",
         "//perception",

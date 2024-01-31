@@ -10,6 +10,7 @@ from pydrake.geometry import (
     MeshcatPointCloudVisualizer
 )
 
+
 def MakePointCloudGenerator(
     camera_info: {str: CameraInfo},
     meshcat: Meshcat = None,
@@ -21,32 +22,42 @@ def MakePointCloudGenerator(
 
     # Add point cloud processor LeafSystem
     point_cloud_processor: PointCloudProcessor = builder.AddNamedSystem(
-        "point_cloud_processor", PointCloudProcessor(cameras=list(camera_info.keys()), meshcat=meshcat)
+        "point_cloud_processor",
+        PointCloudProcessor(cameras=list(camera_info.keys()), meshcat=meshcat),
     )
 
     # Add DepthImageToPointCloud LeafSystem for each camera
     for camera in camera_info.keys():
         image_to_point_cloud: DepthImageToPointCloud = builder.AddNamedSystem(
-            f"image_to_point_cloud_{camera}", DepthImageToPointCloud(camera_info=camera_info[camera])
-            )
-        builder.ExportInput(image_to_point_cloud.camera_pose_input_port(), f"{camera}_pose")
-        builder.ExportInput(image_to_point_cloud.depth_image_input_port(), f"{camera}_depth_image")
+            f"image_to_point_cloud_{camera}",
+            DepthImageToPointCloud(camera_info=camera_info[camera]),
+        )
+        builder.ExportInput(
+            image_to_point_cloud.camera_pose_input_port(), f"{camera}_pose"
+        )
+        builder.ExportInput(
+            image_to_point_cloud.depth_image_input_port(), f"{camera}_depth_image"
+        )
         builder.Connect(
             image_to_point_cloud.GetOutputPort("point_cloud"),
-            point_cloud_processor.GetInputPort(f"{camera}_cloud")
+            point_cloud_processor.GetInputPort(f"{camera}_cloud"),
         )
     
     # Add point cloud visualizer
     meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
-        "point_cloud_visualizer", MeshcatPointCloudVisualizer(meshcat=meshcat, path="point_cloud", publish_period=0.2)
+        "point_cloud_visualizer",
+        MeshcatPointCloudVisualizer(
+            meshcat=meshcat, path="point_cloud", publish_period=0.2
+        ),
     )
 
     builder.Connect(
         point_cloud_processor.GetOutputPort("merged_point_cloud"),
-        meshcat_point_cloud.GetInputPort("cloud")
+        meshcat_point_cloud.GetInputPort("cloud"),
     )
 
     return builder.Build()
+
 
 class PointCloudProcessor(LeafSystem):
     def __init__(self, cameras: [str], meshcat: Meshcat = None):
@@ -67,7 +78,7 @@ class PointCloudProcessor(LeafSystem):
             AbstractValue.Make(PointCloud())
         )
 
-        self.DeclarePeriodicDiscreteUpdateEvent(1/60.0, 0, self.UpdatePointCloud)
+        self.DeclarePeriodicDiscreteUpdateEvent(1 / 60.0, 0, self.UpdatePointCloud)
 
         self.DeclareStateOutputPort("merged_point_cloud", self.merged_point_cloud_idx)
 
@@ -92,4 +103,3 @@ class PointCloudProcessor(LeafSystem):
         # )
 
         context.SetAbstractState(self.merged_point_cloud_idx, merged_cloud)
-        

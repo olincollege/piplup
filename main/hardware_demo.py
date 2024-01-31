@@ -11,51 +11,41 @@ from station import (
     MakeHardwareStation,
     Scenario,
     load_scenario,
-    GamepadTeleopController,
     GamepadTwistTeleopController,
     QuestTwistTeleopController,
 )
-from kinova_gen3 import Gen3HardwareInterface
 
 
-def run(*, scenario: Scenario, graphviz=None):
+def run(*, scenario: Scenario, graphviz=None, teleop=None):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-    # TODO (krishna) This should be more generic
-    # ----------
     gripper_name = scenario.model_drivers["gen3"].hand_model_name
-    controller_plant: MultibodyPlant = hardware_station.GetSubsystemByName(
-        "gen3_controller_plant"
-    ).get()
-    # ----------
+    if teleop:
+        gamepad: System = builder.AddNamedSystem(
+            "gamepad_control",
+            GamepadTwistTeleopController(meshcat, gripper_name)
+            if teleop == "gamepad"
+            else QuestTwistTeleopController(meshcat, gripper_name),
+        )
 
-    gamepad: System = builder.AddNamedSystem(
-        "gamepad_control",
-        # GamepadTwistTeleopController(meshcat, controller_plant, gripper_name),
-        QuestTwistTeleopController(meshcat, controller_plant, gripper_name),
-    )
-    builder.Connect(
-        gamepad.GetOutputPort("V_WE_desired"),
-        hardware_station.GetInputPort("gen3.twist"),
-    )
-    builder.Connect(
-        gamepad.GetOutputPort(f"gripper_command"),
-        hardware_station.GetInputPort(f"{gripper_name}.command"),
-    )
+        builder.Connect(
+            gamepad.GetOutputPort(f"gripper_command"),
+            hardware_station.GetInputPort(f"{gripper_name}.command"),
+        )
 
-    # builder.Connect(
-    #     hardware_station.GetOutputPort("gen3.state_estimated"),
-    #     gamepad.GetInputPort("robot_state"),
-    # )
-
-    builder.Connect(
-        hardware_station.GetOutputPort("gen3.pose_measured"),
-        gamepad.GetInputPort("pose"),
-    )
+    if "gen3" in scenario.hardware_interface:
+        builder.Connect(
+            gamepad.GetOutputPort("V_WE_desired"),
+            hardware_station.GetInputPort("gen3.twist"),
+        )
+        builder.Connect(
+            hardware_station.GetOutputPort("gen3.pose_measured"),
+            gamepad.GetInputPort("pose"),
+        )
 
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
@@ -84,7 +74,11 @@ def run(*, scenario: Scenario, graphviz=None):
         plot_system_graphviz(diagram, options=options)
         plt.show()
     simulator.Initialize()
+    epick_ctx = hardware_station.GetSubsystemByName("epick").GetMyContextFromRoot(
+        simulator.get_mutable_context()
+    )
     # Simulate.
+    cmd = False
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:
@@ -94,20 +88,35 @@ def run(*, scenario: Scenario, graphviz=None):
 
 def main():
     parser = argparse.ArgumentParser(
-        description="Run teleop demo for simulated hardware station"
+        description="Run teleop demo for real hardware station"
+    )
+    parser.add_argument(
+        "--scenarios_yaml",
+        "-f",
+        help="Scenarios YAML file path.",
+        metavar="FILE",
+        default="models/teleop_scenarios_hardware.yaml",
     )
     parser.add_argument(
         "--scenario_name",
         "-s",
+        help="Specifies the scenario name within the scenario yaml file.",
         choices=["TeleopSuctionGripper", "TeleopPlanarGripper"],
         default="TeleopPlanarGripper",
     )
+    parser.add_argument(
+        "--teleop",
+        "-t",
+        help="If specified a Teleop interface will be enabled.",
+        choices=[None, "gamepad", "quest"],
+        default=None,
+    )
     args = parser.parse_args()
     scenario = load_scenario(
-        filename="models/teleop_scenarios_hardware.yaml",
+        filename=args.scenarios_yaml,
         scenario_name=args.scenario_name,
     )
-    run(scenario=scenario, graphviz=None)
+    run(scenario=scenario, graphviz=None, teleop=args.teleop)
 
 
 if __name__ == "__main__":

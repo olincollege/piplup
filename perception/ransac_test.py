@@ -1,4 +1,3 @@
-
 import matplotlib.pyplot as plt
 import numpy as np
 import open3d as o3d
@@ -100,11 +99,16 @@ def fit_sphere(meshcat, cloud, visuals=False):
         mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2, origin=[0, 0, 0])
         o3d.visualization.draw_geometries([mesh, plane, not_plane])
 
+
 def main():
     point_cloud = np.transpose(np.load('/home/ali1/code/piplup/test_data/box_point_cloud.npy'))
     filtered_cloud = point_cloud[~np.any(np.isinf(point_cloud), axis=1)]
-    filtered_cloud = filtered_cloud[(0.2 < filtered_cloud[:,0]) & (filtered_cloud[:,0] < 0.7)]
-    filtered_cloud = filtered_cloud[(-0.1 < filtered_cloud[:,1]) & (filtered_cloud[:,1] < 0.1)]
+    filtered_cloud = filtered_cloud[
+        (0.2 < filtered_cloud[:, 0]) & (filtered_cloud[:, 0] < 0.7)
+    ]
+    filtered_cloud = filtered_cloud[
+        (-0.1 < filtered_cloud[:, 1]) & (filtered_cloud[:, 1] < 0.1)
+    ]
 
     meshcat: Meshcat = StartMeshcat()
 
@@ -112,6 +116,7 @@ def main():
 
     while(True):
         time.sleep(1)
+
 
 if __name__ == "__main__":
     main()
