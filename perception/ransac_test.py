@@ -15,7 +15,11 @@ def fit_box(meshcat, cloud, visuals=False):
         pcd.points = o3d.utility.Vector3dVector(cloud)
         o3d.visualization.draw_geometries([pcd])
 
-    eqs, inliers = cuboid_fit.fit(cloud, thresh=0.02, maxIteration=1000)
+    print("-----Fitting box-----")
+    eqs, inliers = cuboid_fit.fit(cloud, thresh=0.01, maxIteration=1000)
+    print("-----Fit Complete-----")
+
+    print(len(inliers))
 
     A = eqs[:,:-1]
     b = -eqs[:,-1]
@@ -60,8 +64,10 @@ def fit_cylinder(meshcat, cloud, visuals=False):
         o3d.visualization.draw_geometries([pcd])
 
     print("-----Fitting cylinder-----")
-    center, axis, radius, inliers = cylinder_fit.fit(cloud, thresh=0.05, maxIteration=1000)
+    center, axis, radius, inliers = cylinder_fit.fit(cloud, thresh=0.01, maxIteration=1000)
     print("-------Fit complete-------")
+
+    print(len(inliers))
 
     shifted_pts = cloud[inliers] - center
     dots = np.matmul(axis, np.transpose(shifted_pts))
@@ -87,8 +93,10 @@ def fit_sphere(meshcat, cloud, visuals=False):
         o3d.visualization.draw_geometries([pcd])
 
     print("-----Fitting sphere-----")
-    center, radius, inliers = sphere_fit.fit(cloud, thresh=0.05, maxIteration=1000)
+    center, radius, inliers = sphere_fit.fit(cloud, thresh=0.01, maxIteration=1000)
     print("-------Fit complete-------")
+
+    print(len(inliers))
 
     sphere_mesh = Sphere(radius=radius)
     meshcat.SetObject("sphere_fit", sphere_mesh)
@@ -101,14 +109,16 @@ def fit_sphere(meshcat, cloud, visuals=False):
         o3d.visualization.draw_geometries([mesh, plane, not_plane])
 
 def main():
-    point_cloud = np.transpose(np.load('/home/ali1/code/piplup/test_data/box_point_cloud.npy'))
+    point_cloud = np.transpose(np.load('/home/ali1/code/piplup/test_data/sphere_point_cloud.npy'))
     filtered_cloud = point_cloud[~np.any(np.isinf(point_cloud), axis=1)]
     filtered_cloud = filtered_cloud[(0.2 < filtered_cloud[:,0]) & (filtered_cloud[:,0] < 0.7)]
     filtered_cloud = filtered_cloud[(-0.1 < filtered_cloud[:,1]) & (filtered_cloud[:,1] < 0.1)]
 
     meshcat: Meshcat = StartMeshcat()
 
-    fit_box(meshcat, filtered_cloud, visuals=True)
+    fit_box(meshcat, filtered_cloud, visuals=False)
+    fit_cylinder(meshcat, filtered_cloud, visuals=False)
+    fit_sphere(meshcat, filtered_cloud, visuals=False)
 
     while(True):
         time.sleep(1)
