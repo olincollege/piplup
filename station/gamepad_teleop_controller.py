@@ -56,7 +56,7 @@ class GamepadTwistTeleopController(LeafSystem):
                 context.SetAbstractState(self.linear_mode_state_idx, True)
             if gamepad.button_values[9]:
                 context.SetAbstractState(self.linear_mode_state_idx, False)
-            
+
             linear_speed = self.linear_speed_low
             angular_speed = self.angular_speed_low
             if gamepad.button_values[5]:

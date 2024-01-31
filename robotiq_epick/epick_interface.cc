@@ -21,9 +21,12 @@ namespace piplup
                     fmt::format("Failed to connect to EPick on serial port: {}",
                                 epick_config.serial_port));
             }
+            status_state_idx_ =
+                this->DeclareAbstractState(Value<epick_driver::GripperStatus>());
             this->DeclareAbstractInputPort("command", Value<bool>());
             this->DeclarePeriodicUnrestrictedUpdateEvent(
                 0.0001, 0.0, &EPickInterface::SendCommandAndReceiveStatus);
+            this->DeclareStateOutputPort("status", status_state_idx_);
         }
 
         void EPickInterface::SendCommandAndReceiveStatus(
@@ -39,6 +42,10 @@ namespace piplup
             {
                 driver_->release();
             }
+            auto & status_state =
+                state->get_mutable_abstract_state<epick_driver::GripperStatus>(
+                    status_state_idx_);
+            status_state = driver_->get_status();
         }
     } // namespace epick
 } // namespace piplup

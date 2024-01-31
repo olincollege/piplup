@@ -44,6 +44,7 @@ namespace piplup
         private:
             std::unique_ptr<epick_driver::DefaultDriver> driver_;
             std::unique_ptr<epick_driver::DefaultSerial> serial_;
+            systems::AbstractStateIndex status_state_idx_;
         };
     } // namespace epick
 } // namespace piplup
