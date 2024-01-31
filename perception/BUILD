@@ -9,3 +9,11 @@ py_library(
     visibility = ["//visibility:public"],
     deps = [],
 )
+
+filegroup(
+    name = "perception_config",
+    srcs = glob([
+        "**/*.yaml"
+    ]),
+    visibility = ["//visibility:public"],
+)

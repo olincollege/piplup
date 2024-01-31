@@ -3,11 +3,19 @@ import numpy as np
 from pydrake.all import *
 import builtins
 import matplotlib.pyplot as plt
+from fastsam import FastSAM, FastSAMPrompt
+import torch
 
 
 class ImageSegmenter(LeafSystem):
-    def __init__(self, camera: str, hz: int = 60):
+    def __init__(self, camera: str, focus_coordinates: list[tuple[int, int]] = None, object_coordinates: list[tuple[int, int]] = None, 
+                 background_coordinates: list[tuple[int, int]] = None, hz: int = 60):
         super().__init__()
+
+        self.focus_coordinates = focus_coordinates
+        self.object_coordinates = object_coordinates
+        self.background_coordinates = background_coordinates
+        
         self.camera = camera
 
         self.depth_image_input_port = self.DeclareAbstractInputPort(
@@ -31,45 +39,38 @@ class ImageSegmenter(LeafSystem):
             color_image.height(), color_image.width(), -1
         )
 
-        x, y, w, h = self.get_mask(color_image_matrix)
+        mask = self.get_mask(color_image_matrix)
+        print(mask.shape)
         depth_image = self.EvalAbstractInput(
             context, self.depth_image_input_port.get_index()
         ).get_value()
-        # Apply the mask to the depth image
-        if x and y and w and h:
-            # Iterate over the entire image
-            for i in range(depth_image.height()):
-                for j in range(depth_image.width()):
-                    # Check if the current pixel is outside the specified box
-                    if i < y or i >= y + h or j < x or j >= x + w:
-                        depth_image.at(j, i)[
-                            0
-                        ] = 0  # Set the value to zero outside the box
+        print(depth_image.shape)
+        for i in range(depth_image.height()):
+            for j in range(depth_image.width()):
+                if mask[i][j] == 0:
+                    depth_image.at(j, i)[0] = 0
 
         output.set_value(depth_image)
 
-    def get_mask(self, color_image: np.ndarray) -> np.ndarray:
-        # TODO: Only works with Cheez It box - doesn't create bounding box around entire thing. Replace with better segmentation.
-        image_hsv = cv2.cvtColor(color_image, cv2.COLOR_RGB2HSV)
+    def get_mask(self, color_image: np.ndarray, bounding_box: List[int] = None) -> np.ndarray:
 
-        # Define the range of red color in HSV
-        lower_red = np.array([0, 120, 70])
-        upper_red = np.array([10, 255, 255])
-        lower_red2 = np.array([170, 120, 70])
-        upper_red2 = np.array([180, 255, 255])
+        model = FastSAM('/home/piplup/piplup/perception/weights/FastSAM.pt')
+        DEVICE = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
+        )
+        everything_results = model(
+            cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR),
+            device=DEVICE,
+            retina_masks=True,
+            imgsz=1024,
+            conf=0.4,
+            iou=0.9,
+        )
 
-        # Threshold the HSV image to get only red colors
-        mask1 = cv2.inRange(image_hsv, lower_red, upper_red)
-        mask2 = cv2.inRange(image_hsv, lower_red2, upper_red2)
-        mask = cv2.bitwise_or(mask1, mask2)
-
-        # Find contours from the mask
-        contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        # Assuming we want to create a bounding box around the largest red object
-        if contours:
-            # Find the largest contour based on area
-            largest_contour = builtins.max(contours, key=cv2.contourArea)
-            x, y, w, h = cv2.boundingRect(largest_contour)
-            return x, y, w, h
-        return None, None, None, None
+        prompt_process = FastSAMPrompt(color_image, everything_results, device=DEVICE)
+        ann = prompt_process.point_prompt(points=[[220, 350],[300,190]], pointlabel=[1, 0])
+        return ann.squeeze()

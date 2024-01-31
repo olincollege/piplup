@@ -11,10 +11,10 @@ from station import (
     MakeHardwareStation,
     Scenario,
     load_scenario,
-    GamepadTeleopController,
+    GamepadTeleopController
 )
 
-from perception import MakePointCloudGenerator
+from perception import MakePointCloudGenerator, ImageSegmenter
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -75,6 +75,16 @@ def run(*, scenario: Scenario, graphviz=None):
         gamepad.GetInputPort("robot_state"),
     )
 
+    camera0_segmenter = builder.AddNamedSystem(
+        "camera0_seg", ImageSegmenter("camera0", 10)
+    )
+
+    builder.Connect(hardware_station.GetOutputPort("camera0.color_image"),
+                    camera0_segmenter.GetInputPort("color_image"))
+
+    builder.Connect(hardware_station.GetOutputPort("camera0.depth_image_32f"),
+                    camera0_segmenter.GetInputPort("depth_image"))
+    
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -113,8 +123,8 @@ def run(*, scenario: Scenario, graphviz=None):
     f, axarr = plt.subplots(1, 2)
     axarr[0].imshow(img_color)
     img_depth = (
-        hardware_station.GetOutputPort("camera0.depth_image_32f")
-        .Eval(hardware_station.CreateDefaultContext())
+        camera0_segmenter.GetOutputPort("camera0_masked_depth_image")
+        .Eval(camera0_segmenter.GetMyContextFromRoot(simulator.get_mutable_context()))
         .data
     )
     axarr[1].imshow(img_depth)
