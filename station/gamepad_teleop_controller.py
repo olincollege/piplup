@@ -10,8 +10,8 @@ class GamepadTwistTeleopController(LeafSystem):
         self._meshcat = meshcat
         self.linear_speed_low = 0.1
         self.angular_speed_low = 0.8
-        self.linear_speed_high = 0.3
-        self.angular_speed_high = 1.5
+        self.linear_speed_high = 0.6
+        self.angular_speed_high = 2.0
         self.grip_speed = 0.25
         self.hand_model_name = hand_model_name
 
@@ -57,11 +57,11 @@ class GamepadTwistTeleopController(LeafSystem):
             if gamepad.button_values[9]:
                 context.SetAbstractState(self.linear_mode_state_idx, False)
             
-            linear_speed = self.linear_speed_low
-            angular_speed = self.angular_speed_low
+            linear_speed = self.linear_speed_high
+            angular_speed = self.angular_speed_high
             if gamepad.button_values[5]:
-                linear_speed = self.linear_speed_high
-                angular_speed = self.angular_speed_high
+                linear_speed = self.linear_speed_low
+                angular_speed = self.angular_speed_low
 
             if linear_mode:
                 target_twist[3:] = (
