@@ -73,9 +73,10 @@ class QuestTwistTeleopController(LeafSystem):
 
         if buttons:
             if self.hand_model_name == "2f_85":
+                clipped_vel = np.array(buttons["rightTrig"]) - np.array(buttons["rightGrip"])
                 discrete_state.set_value(
                     self.gripper_cmd_state_idx,
-                    (np.array(buttons["rightTrig"]) - 0.5) * (-self.grip_speed),
+                    clipped_vel * (-self.grip_speed),
                 )
             elif self.hand_model_name == "epick":
                 discrete_state.set_value(

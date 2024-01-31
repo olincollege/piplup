@@ -31,7 +31,7 @@ class GamepadTwistTeleopController(LeafSystem):
 
     def OutputTwist(self, context: Context, output: BasicVector):
         pose = self.robot_pose_port.Eval(context)
-        X_WE_desired = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
+        X_WE = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
         linear_mode = context.get_abstract_state(self.linear_mode_state_idx).get_value()
         target_twist = np.zeros(6)
 
@@ -59,13 +59,13 @@ class GamepadTwistTeleopController(LeafSystem):
                     np.array([left[0], left[1], -right[1]]) * self.linear_speed
                 )
             else:
-                ee_rot = X_WE_desired.rotation()
-                target_twist[:3] = ee_rot.inverse().multiply(
+                ee_rot = X_WE.rotation()
+                target_twist[:3] = ee_rot.multiply(
                     np.array(
                         [
-                            -left[0],
                             left[1],
-                            right[1],
+                            left[0],
+                            right[0],
                         ]
                     )
                     * self.angular_speed
