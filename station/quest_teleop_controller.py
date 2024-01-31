@@ -45,9 +45,11 @@ class QuestTwistTeleopController(LeafSystem):
 
         transforms, buttons = self.oculus_reader.get_transformations_and_buttons()
         enable = False
+        reset = False
         pose_delta = RigidTransform()
         if "A" in buttons:
             enable = buttons["A"]
+            reset = buttons["B"]
         if "r" in transforms:
             controller_pose = RigidTransform(Isometry3(transforms["r"]))
 
@@ -79,11 +81,18 @@ class QuestTwistTeleopController(LeafSystem):
                 discrete_state.set_value(
                     self.gripper_cmd_state_idx, buttons["rightBumper"]
                 )
-
-        X_WE_desired.set_rotation(pose_delta.multiply(self.ee_freeze_pose).rotation())
-        X_WE_desired.set_translation(
-            self.ee_freeze_pose.translation() + pose_delta.translation()
-        )
+        if reset:
+            pose = self.robot_pose_port.Eval(context)
+            X_WE = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
+            X_WE_desired.set_rotation(X_WE.rotation())
+            X_WE_desired.set_translation(X_WE.translation())
+        else:
+            X_WE_desired.set_rotation(
+                pose_delta.multiply(self.ee_freeze_pose).rotation()
+            )
+            X_WE_desired.set_translation(
+                self.ee_freeze_pose.translation() + pose_delta.translation()
+            )
         viz_color = Rgba(0, 0.5, 0, 0.5) if enable else Rgba(0, 0, 0.5, 0.5)
         self._meshcat.SetObject("ee_sphere", Sphere(0.05), viz_color)
         self._meshcat.SetTransform("/drake/ee_sphere", X_WE_desired)

@@ -74,9 +74,6 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         plot_system_graphviz(diagram, options=options)
         plt.show()
     simulator.Initialize()
-    epick_ctx = hardware_station.GetSubsystemByName("epick").GetMyContextFromRoot(
-        simulator.get_mutable_context()
-    )
     # Simulate.
     cmd = False
     try:
