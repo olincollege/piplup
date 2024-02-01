@@ -1,5 +1,6 @@
 
 #include "drake/bindings/pydrake/common/value_pybind.h"
+#include "robotiq_epick/epick_driver_interface/driver.hpp"
 #include "robotiq_epick/epick_interface.h"
 #include <drake/bindings/pydrake/common/cpp_template_pybind.h>
 #include <drake/bindings/pydrake/common/default_scalars_pybind.h>
@@ -40,17 +41,15 @@ namespace piplup
                 DefCopyAndDeepCopy(&cls);
             }
 
-            {
-                using Class = epick_driver::GripperStatus;
-                py::class_<Class> cls(m, "GripperStatus", "EPick Gripper Status");
-                cls.def(ParamInit<Class>());
-                cls.def_readwrite("max_vacuum_pressure",
-                                  &epick_driver::GripperStatus::max_vacuum_pressure);
-                cls.def_readwrite("actual_vacuum_pressure",
-                                  &epick_driver::GripperStatus::actual_vacuum_pressure);
-                DefCopyAndDeepCopy(&cls);
-            }
-            drake::pydrake::AddValueInstantiation<epick_driver::GripperStatus>(m);
+            py::enum_<epick_driver::ObjectDetectionStatus>(m, "ObjectDetectionStatus")
+                .value("ObjectDetectedAtMinPressure",
+                       epick_driver::ObjectDetectionStatus::ObjectDetectedAtMinPressure)
+                .value("ObjectDetectedAtMaxPressure",
+                       epick_driver::ObjectDetectionStatus::ObjectDetectedAtMaxPressure)
+                .value("NoObjectDetected",
+                       epick_driver::ObjectDetectionStatus::NoObjectDetected)
+                .value("Unknown", epick_driver::ObjectDetectionStatus::Unknown)
+                .export_values();
         }
     } // namespace epick
 } // namespace piplup

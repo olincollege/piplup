@@ -12,7 +12,7 @@ from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
 from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
-from epick_interface import EPickInterfaceConfig, EPickInterface, GripperStatus
+from epick_interface import EPickInterfaceConfig, EPickInterface, ObjectDetectionStatus
 
 
 def MakeHardwareStation(
