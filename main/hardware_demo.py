@@ -75,22 +75,12 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         plt.show()
     simulator.Initialize()
     # Simulate.
-    ctx = hardware_station.GetSubsystemByName("epick").GetMyContextFromRoot(
-        simulator.get_mutable_context()
-    )
-    while True:
-        try:
-            # simulator.AdvanceTo(scenario.simulation_duration)
-            simulator.AdvanceTo(simulator.get_context().get_time() + 0.0001)
-            status = (
-                hardware_station.GetSubsystemByName("epick")
-                .GetOutputPort("status")
-                .Eval(ctx)
-            )
-            print(status.actual_vacuum_pressure)
-        except KeyboardInterrupt:
-            print(simulator.get_actual_realtime_rate())
-            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+
+    try:
+        simulator.AdvanceTo(scenario.simulation_duration)
+    except KeyboardInterrupt:
+        print(simulator.get_actual_realtime_rate())
+        hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():
