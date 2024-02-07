@@ -26,7 +26,7 @@ def MakePointCloudGenerator(
     for camera in camera_info.keys():
         image_to_point_cloud: DepthImageToPointCloud = builder.AddNamedSystem(
             f"image_to_point_cloud_{camera}",
-            DepthImageToPointCloud(camera_info=camera_info[camera]),
+            DepthImageToPointCloud(camera_info=camera_info[camera], pixel_type=PixelType.kDepth16U),
         )
         builder.ExportInput(
             image_to_point_cloud.camera_pose_input_port(), f"{camera}_pose"
