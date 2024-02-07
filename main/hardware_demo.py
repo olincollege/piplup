@@ -104,20 +104,20 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     cameras = list(scenario.cameras.keys())
 
     # for camera in cameras:
-    # img_color = (
-    #     hardware_station.GetOutputPort("camera0.color_image")
-    #     .Eval(hardware_station.CreateDefaultContext())
-    #     .data
-    # )
-    # f, axarr = plt.subplots(1, 2)
-    # axarr[0].imshow(img_color)
-    # img_depth = (
-    #     hardware_station.GetOutputPort("camera0.depth_image_16u")
-    #     .Eval(hardware_station.CreateDefaultContext())
-    #     .data
-    # )
-    # axarr[1].imshow(img_depth)
-    # plt.show()
+    img_color = (
+        hardware_station.GetOutputPort("camera0.color_image")
+        .Eval(hardware_station.CreateDefaultContext())
+        .data
+    )
+    f, axarr = plt.subplots(1, 2)
+    axarr[0].imshow(img_color)
+    img_depth = (
+        hardware_station.GetOutputPort("camera0.depth_image_16u")
+        .Eval(hardware_station.CreateDefaultContext())
+        .data
+    )
+    axarr[1].imshow(img_depth)
+    plt.show()
 
     simulator.Initialize()
     # Simulate.

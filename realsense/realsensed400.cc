@@ -12,8 +12,8 @@ namespace piplup
           , pipeline_(*context_)
           , depth_width_(camera_config.width)
           , depth_height_(camera_config.height)
-          , color_width_(camera_config.width)
-          , color_height_(camera_config.height)
+          , color_width_(640)
+          , color_height_(480)
         {
             double polling_rate = 0.001;
 
@@ -59,8 +59,8 @@ namespace piplup
             rs2::config cfg;
             cfg.enable_device(device_serial_number);
             // cfg.enable_stream(RS2_STREAM_COLOR,
-            //                   color_width_,
-            //                   color_height_,
+            //                   640,
+            //                   480,
             //                   RS2_FORMAT_RGBA8,
             //                   camera_config.fps);
             // cfg.enable_stream(RS2_STREAM_DEPTH,
@@ -75,6 +75,9 @@ namespace piplup
             auto i = depth_stream.get_intrinsics();
             depth_camera_info_ = std::make_unique<systems::sensors::CameraInfo>(
                 depth_stream.width(), depth_stream.height(), i.fx, i.fy, i.ppx, i.ppy);
+            std::cout << "w:" << depth_stream.width() << "\n";
+            std::cout << "h:" << depth_stream.height() << "\n";
+            std::cout << depth_stream.fps() << "\n";
         }
         void RealSenseD400::PollForImages(const systems::Context<double> & context,
                                           systems::State<double> * state) const
@@ -93,6 +96,7 @@ namespace piplup
                         depth_state_idx_);
                 color_img_state.resize(color_width_, color_height_);
                 depth_img_state.resize(depth_width_, depth_height_);
+                std::cout << "hi\n";
                 memcpy(
                     depth_img_state.at(0, 0),
                     depth_frame.get_data(),
