@@ -121,7 +121,7 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 
     simulator.Initialize()
     # Simulate.
-    cmd = False
+
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:

@@ -6,6 +6,7 @@ from pydrake.all import *
 from pydrake.geometry import Meshcat, StartMeshcat, Box, Cylinder, Sphere
 import time
 
+
 def fit_box(meshcat, cloud, visuals=False):
     cuboid_fit = pyrsc.Cuboid()
 
@@ -20,8 +21,8 @@ def fit_box(meshcat, cloud, visuals=False):
 
     print(len(inliers))
 
-    A = eqs[:,:-1]
-    b = -eqs[:,-1]
+    A = eqs[:, :-1]
+    b = -eqs[:, -1]
     intersection = np.linalg.solve(A, b)
     shifted_pts = cloud[inliers] - intersection
     dots = np.matmul(A, np.transpose(shifted_pts))
@@ -34,16 +35,23 @@ def fit_box(meshcat, cloud, visuals=False):
     normals = np.transpose(A)
     box_center = intersection
     for i in range(3):
-        box_center = np.add(box_center, A[i,:]/np.linalg.norm(A[i,:]) * dims[i]/2 * normal_signs[i])
+        box_center = np.add(
+            box_center,
+            A[i, :] / np.linalg.norm(A[i, :]) * dims[i] / 2 * normal_signs[i],
+        )
 
     box_fit = Box(dims)
     meshcat.SetObject("box_fit", box_fit)
-    meshcat.SetTransform("box_fit", RigidTransform(R=RotationMatrix(normals), p=box_center))
+    meshcat.SetTransform(
+        "box_fit", RigidTransform(R=RotationMatrix(normals), p=box_center)
+    )
 
     if visuals:
         plane = pcd.select_by_index(inliers).paint_uniform_color([1, 0, 0])
         not_plane = pcd.select_by_index(inliers, invert=True)
-        mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2, origin=[0, 0, 0])
+        mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(
+            size=0.2, origin=[0, 0, 0]
+        )
         o3d.visualization.draw_geometries([mesh, plane, not_plane])
 
         intersection_pcd = o3d.geometry.PointCloud()
@@ -54,6 +62,7 @@ def fit_box(meshcat, cloud, visuals=False):
         fit_pcd = fit_pcd.paint_uniform_color([0, 0, 1])
         o3d.visualization.draw_geometries([mesh, intersection_pcd, fit_pcd])
 
+
 def fit_cylinder(meshcat, cloud, visuals=False):
     cylinder_fit = pyrsc.Cylinder()
 
@@ -63,7 +72,9 @@ def fit_cylinder(meshcat, cloud, visuals=False):
         o3d.visualization.draw_geometries([pcd])
 
     print("-----Fitting cylinder-----")
-    center, axis, radius, inliers = cylinder_fit.fit(cloud, thresh=0.01, maxIteration=1000)
+    center, axis, radius, inliers = cylinder_fit.fit(
+        cloud, thresh=0.05, maxIteration=1000
+    )
     print("-------Fit complete-------")
 
     print(len(inliers))
@@ -75,13 +86,19 @@ def fit_cylinder(meshcat, cloud, visuals=False):
 
     cylinder_mesh = Cylinder(radius=radius, length=cyl_length)
     meshcat.SetObject("cylinder_fit", cylinder_mesh)
-    meshcat.SetTransform("cylinder_fit", RigidTransform(theta_lambda=AngleAxis(angle=0, axis=axis), p=center))
+    meshcat.SetTransform(
+        "cylinder_fit",
+        RigidTransform(theta_lambda=AngleAxis(angle=0, axis=axis), p=center),
+    )
 
     if visuals:
         plane = pcd.select_by_index(inliers).paint_uniform_color([1, 0, 0])
         not_plane = pcd.select_by_index(inliers, invert=True)
-        mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2, origin=[0, 0, 0])
+        mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(
+            size=0.2, origin=[0, 0, 0]
+        )
         o3d.visualization.draw_geometries([mesh, plane, not_plane])
+
 
 def fit_sphere(meshcat, cloud, visuals=False):
     sphere_fit = pyrsc.Sphere()
@@ -99,17 +116,24 @@ def fit_sphere(meshcat, cloud, visuals=False):
 
     sphere_mesh = Sphere(radius=radius)
     meshcat.SetObject("sphere_fit", sphere_mesh)
-    meshcat.SetTransform("sphere_fit", RigidTransform(theta_lambda=AngleAxis(angle=0, axis=[0,0,1]), p=center))
+    meshcat.SetTransform(
+        "sphere_fit",
+        RigidTransform(theta_lambda=AngleAxis(angle=0, axis=[0, 0, 1]), p=center),
+    )
 
     if visuals:
         plane = pcd.select_by_index(inliers).paint_uniform_color([1, 0, 0])
         not_plane = pcd.select_by_index(inliers, invert=True)
-        mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(size=0.2, origin=[0, 0, 0])
+        mesh = o3d.geometry.TriangleMesh.create_coordinate_frame(
+            size=0.2, origin=[0, 0, 0]
+        )
         o3d.visualization.draw_geometries([mesh, plane, not_plane])
 
 
 def main():
-    point_cloud = np.transpose(np.load('/home/ali1/code/piplup/test_data/sphere_point_cloud.npy'))
+    point_cloud = np.transpose(
+        np.load("/home/ali1/code/piplup/test_data/box_point_cloud.npy")
+    )
     filtered_cloud = point_cloud[~np.any(np.isinf(point_cloud), axis=1)]
     filtered_cloud = filtered_cloud[
         (0.2 < filtered_cloud[:, 0]) & (filtered_cloud[:, 0] < 0.7)
@@ -124,7 +148,7 @@ def main():
     fit_cylinder(meshcat, filtered_cloud, visuals=False)
     fit_sphere(meshcat, filtered_cloud, visuals=False)
 
-    while(True):
+    while True:
         time.sleep(1)
 
 

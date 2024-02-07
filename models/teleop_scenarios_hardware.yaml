@@ -49,6 +49,35 @@ TeleopPlanarGripper:
       depth: True
       X_PB:
         base_frame: camera4::image_frame
+        base_frame: camera0::image_frame
+      width: 1280
+      height: 720
+    camera1:
+      name: camera1
+      depth: True
+      X_PB:
+        base_frame: camera1::image_frame
+      width: 1280
+      height: 720
+    camera2:
+      name: camera2
+      depth: True
+      X_PB:
+        base_frame: camera2::image_frame
+      width: 1280
+      height: 720
+    camera3:
+      name: camera3
+      depth: True
+      X_PB:
+        base_frame: camera3::image_frame
+      width: 1280
+      height: 720
+    camera4:
+      name: camera4
+      depth: True
+      X_PB:
+        base_frame: camera4::image_frame
       width: 1280
       height: 720
 
@@ -94,6 +123,35 @@ TeleopSuctionGripper:
       name: camera0
       depth: True
       X_PB:
+        base_frame: camera0::image_frame
+      width: 1280
+      height: 720
+    camera1:
+      name: camera1
+      depth: True
+      X_PB:
+        base_frame: camera1::image_frame
+      width: 1280
+      height: 720
+    camera2:
+      name: camera2
+      depth: True
+      X_PB:
+        base_frame: camera2::image_frame
+      width: 1280
+      height: 720
+    camera3:
+      name: camera3
+      depth: True
+      X_PB:
+        base_frame: camera3::image_frame
+      width: 1280
+      height: 720
+    camera4:
+      name: camera4
+      depth: True
+      X_PB:
+        base_frame: camera4::image_frame
         base_frame: camera0::image_frame
       width: 1280
       height: 720

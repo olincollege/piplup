@@ -1,4 +1,6 @@
 
+#include "drake/bindings/pydrake/common/value_pybind.h"
+#include "robotiq_epick/epick_driver_interface/driver.hpp"
 #include "robotiq_epick/epick_interface.h"
 #include <drake/bindings/pydrake/common/cpp_template_pybind.h>
 #include <drake/bindings/pydrake/common/default_scalars_pybind.h>
@@ -38,6 +40,16 @@ namespace piplup
                 DefReprUsingSerialize(&cls);
                 DefCopyAndDeepCopy(&cls);
             }
+
+            py::enum_<epick_driver::ObjectDetectionStatus>(m, "ObjectDetectionStatus")
+                .value("ObjectDetectedAtMinPressure",
+                       epick_driver::ObjectDetectionStatus::ObjectDetectedAtMinPressure)
+                .value("ObjectDetectedAtMaxPressure",
+                       epick_driver::ObjectDetectionStatus::ObjectDetectedAtMaxPressure)
+                .value("NoObjectDetected",
+                       epick_driver::ObjectDetectionStatus::NoObjectDetected)
+                .value("Unknown", epick_driver::ObjectDetectionStatus::Unknown)
+                .export_values();
         }
     } // namespace epick
 } // namespace piplup
