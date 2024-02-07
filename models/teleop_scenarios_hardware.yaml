@@ -20,7 +20,35 @@ TeleopPlanarGripper:
       name: camera0
       depth: True
       X_PB:
-        base_frame: camera0::base
+        base_frame: camera0::image_frame
+      width: 1280
+      height: 720
+    camera1:
+      name: camera1
+      depth: True
+      X_PB:
+        base_frame: camera1::image_frame
+      width: 1280
+      height: 720
+    camera2:
+      name: camera2
+      depth: True
+      X_PB:
+        base_frame: camera2::image_frame
+      width: 1280
+      height: 720
+    camera3:
+      name: camera3
+      depth: True
+      X_PB:
+        base_frame: camera3::image_frame
+      width: 1280
+      height: 720
+    camera4:
+      name: camera4
+      depth: True
+      X_PB:
+        base_frame: camera4::image_frame
       width: 1280
       height: 720
 
@@ -33,8 +61,17 @@ TeleopPlanarGripper:
     gen3: !Gen3InterfaceConfig
       ip_address: 192.168.1.10
       port: 10000
-    # camera0: !RealsenseInterfaceConfig
-    #   serial_number: '141722074426'
+    camera0: !RealsenseInterfaceConfig
+      serial_number: '239622302159'
+      body_pose_in_world: ''
+    camera1: !RealsenseInterfaceConfig
+      serial_number: '239222300609'
+    camera2: !RealsenseInterfaceConfig
+      serial_number: '141722074426'
+    camera3: !RealsenseInterfaceConfig
+      serial_number: '938422072139'
+    camera4: !RealsenseInterfaceConfig
+      serial_number: '837212070308'
 
 TeleopSuctionGripper:
   directives:
@@ -58,7 +95,35 @@ TeleopSuctionGripper:
       name: camera0
       depth: True
       X_PB:
-        base_frame: camera0::base
+        base_frame: camera0::image_frame
+      width: 1280
+      height: 720
+    camera1:
+      name: camera1
+      depth: True
+      X_PB:
+        base_frame: camera1::image_frame
+      width: 1280
+      height: 720
+    camera2:
+      name: camera2
+      depth: True
+      X_PB:
+        base_frame: camera2::image_frame
+      width: 1280
+      height: 720
+    camera3:
+      name: camera3
+      depth: True
+      X_PB:
+        base_frame: camera3::image_frame
+      width: 1280
+      height: 720
+    camera4:
+      name: camera4
+      depth: True
+      X_PB:
+        base_frame: camera4::image_frame
       width: 1280
       height: 720
 
@@ -68,10 +133,18 @@ TeleopSuctionGripper:
       control_mode: 3
 
   hardware_interface:
-    # gen3: !Gen3InterfaceConfig
-    #   ip_address: 192.168.1.10
-    #   port: 10000
+    gen3: !Gen3InterfaceConfig
+      ip_address: 192.168.1.10
+      port: 10000
     # camera0: !RealsenseInterfaceConfig
+    #   serial_number: '239622302159'
+    # camera1: !RealsenseInterfaceConfig
+    #   serial_number: '239222300609'
+    # camera2: !RealsenseInterfaceConfig
     #   serial_number: '141722074426'
+    # camera3: !RealsenseInterfaceConfig
+    #   serial_number: '938422072139'
+    # camera4: !RealsenseInterfaceConfig
+    #   serial_number: '837212070308'
     epick: !EPickInterfaceConfig
       serial_port: /dev/ttyUSB1

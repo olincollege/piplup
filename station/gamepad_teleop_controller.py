@@ -96,7 +96,7 @@ class GamepadTwistTeleopController(LeafSystem):
         elif self.hand_model_name == "epick":
             output: AbstractValue
             if not gamepad.index == None:
-                output.set_value(gamepad.button_values[5])
+                output.set_value(gamepad.button_values[7] > 0.1)
 
 
 class GamepadTeleopController(LeafSystem):
