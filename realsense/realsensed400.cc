@@ -6,6 +6,7 @@ namespace piplup
     {
         using namespace drake;
         RealSenseD400::RealSenseD400(std::string device_serial_number,
+                                     std::vector<double> body_pose_in_world,
                                      const systems::sensors::CameraConfig & camera_config)
           : context_(drake::GetScopedSingleton<rs2::context>())
           , pipeline_(*context_)
@@ -20,8 +21,20 @@ namespace piplup
                 this->DeclareAbstractState(Value<systems::sensors::ImageRgba8U>());
             depth_state_idx_ =
                 this->DeclareAbstractState(Value<systems::sensors::ImageDepth16U>());
+
+            auto body_pose_idx =
+                this->DeclareAbstractState(Value<drake::math::RigidTransformd>(
+                    drake::math::RollPitchYaw<double>(body_pose_in_world[3],
+                                                      body_pose_in_world[4],
+                                                      body_pose_in_world[5]),
+                    Vector3<double>(body_pose_in_world[0],
+                                    body_pose_in_world[1],
+                                    body_pose_in_world[2])));
+
             this->DeclareStateOutputPort("color_image", color_state_idx_);
             this->DeclareStateOutputPort("depth_image", depth_state_idx_);
+            this->DeclareStateOutputPort("body_pose_in_world", body_pose_idx);
+
             this->DeclarePeriodicUnrestrictedUpdateEvent(
                 polling_rate, 0.0, &RealSenseD400::PollForImages);
 
@@ -55,7 +68,13 @@ namespace piplup
                               depth_height_,
                               RS2_FORMAT_Z16,
                               camera_config.fps);
-            pipeline_.start(cfg);
+
+            rs2::pipeline_profile selection = pipeline_.start(cfg);
+            auto depth_stream =
+                selection.get_stream(RS2_STREAM_DEPTH).as<rs2::video_stream_profile>();
+            auto i = depth_stream.get_intrinsics();
+            depth_camera_info_ = std::make_unique<systems::sensors::CameraInfo>(
+                depth_stream.width(), depth_stream.height(), i.fx, i.fy, i.ppx, i.ppy);
         }
         void RealSenseD400::PollForImages(const systems::Context<double> & context,
                                           systems::State<double> * state) const
@@ -82,6 +101,10 @@ namespace piplup
                        color_frame.get_data(),
                        color_img_state.size());
             }
+        }
+        const systems::sensors::CameraInfo & RealSenseD400::depth_camera_info() const
+        {
+            return *depth_camera_info_;
         }
     } // namespace realsense
 } // namespace piplup
