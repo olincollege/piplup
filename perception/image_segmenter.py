@@ -10,6 +10,10 @@ import torch
 class ImageSegmenter(LeafSystem):
     def __init__(self, camera: str, focus_coordinates: list[tuple[int, int]] = None, object_coordinates: list[tuple[int, int]] = None, 
                  background_coordinates: list[tuple[int, int]] = None, hz: int = 60):
+        '''
+            Focus coordinates are in the format ((top_left_x, top_left_y), (bottom_right_x, bottom_right_y))
+        '''
+
         super().__init__()
 
         self.focus_coordinates = focus_coordinates

@@ -1,49 +1,49 @@
 camera0:
   object_points: 
-    - object_point_1: [100, 100]
-    - object_point_2: [100, 100]
+    - [100, 100]
+    - [100, 100]
   background_points:
-    - background_point_1: [200, 200]
-    - background_point_2: [200, 200]
+    - [200, 200]
+    - [200, 200]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
 
 camera1:
   object_points: 
-    - object_point_1: [100, 100]
-    - object_point_2: [100, 100]
+    - [100, 100]
+    - [100, 100]
   background_points:
-    - background_point_1: [200, 200]
-    - background_point_2: [200, 200]
+    - [200, 200]
+    - [200, 200]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
 
 camera2:
   object_points: 
-    - object_point_1: [100, 100]
-    - object_point_2: [100, 100]
+    - [100, 100]
+    - [100, 100]
   background_points:
-    - background_point_1: [200, 200]
-    - background_point_2: [200, 200]
+    - [200, 200]
+    - [200, 200]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
 
 camera3:
   object_points: 
-    - object_point_1: [100, 100]
-    - object_point_2: [100, 100]
+    - [100, 100]
+    - [100, 100]
   background_points:
-    - background_point_1: [200, 200]
-    - background_point_2: [200, 200]
+    - [200, 200]
+    - [200, 200]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
 
 camera4:
   object_points: 
-    - object_point_1: [100, 100]
-    - object_point_2: [100, 100]
+    - [100, 100]
+    - [100, 100]
   background_points:
-    - background_point_1: [200, 200]
-    - background_point_2: [200, 200]
+    - [200, 200]
+    - [200, 200]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
