@@ -61,17 +61,17 @@ TeleopPlanarGripper:
     gen3: !Gen3InterfaceConfig
       ip_address: 192.168.1.10
       port: 10000
-    camera0: !RealsenseInterfaceConfig
-      serial_number: '239622302159'
-      body_pose_in_world: ''
-    camera1: !RealsenseInterfaceConfig
-      serial_number: '239222300609'
-    camera2: !RealsenseInterfaceConfig
-      serial_number: '141722074426'
-    camera3: !RealsenseInterfaceConfig
-      serial_number: '938422072139'
-    camera4: !RealsenseInterfaceConfig
-      serial_number: '837212070308'
+    # camera0: !RealsenseInterfaceConfig
+    #   serial_number: '239622302159'
+    #   body_pose_in_world: ''
+    # camera1: !RealsenseInterfaceConfig
+    #   serial_number: '239222300609'
+    # camera2: !RealsenseInterfaceConfig
+    #   serial_number: '141722074426'
+    # camera3: !RealsenseInterfaceConfig
+    #   serial_number: '938422072139'
+    # camera4: !RealsenseInterfaceConfig
+    #   serial_number: '837212070308'
 
 TeleopSuctionGripper:
   directives:
