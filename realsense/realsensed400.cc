@@ -25,7 +25,7 @@ namespace piplup
                 this->DeclareAbstractState(Value<systems::sensors::ImageDepth16U>());
 
             this->DeclareStateOutputPort("color_image", color_state_idx_);
-            this->DeclareStateOutputPort("depth_image", depth_state_idx_);
+            this->DeclareStateOutputPort("depth_image_16u", depth_state_idx_);
             this->DeclareAbstractOutputPort("body_pose_in_world",
                                             &RealSenseD400::CalcX_WB);
 
@@ -52,16 +52,16 @@ namespace piplup
 
             rs2::config cfg;
             cfg.enable_device(device_serial_number);
-            cfg.enable_stream(RS2_STREAM_COLOR,
-                              color_width_,
-                              color_height_,
-                              RS2_FORMAT_RGBA8,
-                              camera_config.fps);
-            cfg.enable_stream(RS2_STREAM_DEPTH,
-                              depth_width_,
-                              depth_height_,
-                              RS2_FORMAT_Z16,
-                              camera_config.fps);
+            // cfg.enable_stream(RS2_STREAM_COLOR,
+            //                   color_width_,
+            //                   color_height_,
+            //                   RS2_FORMAT_RGBA8,
+            //                   camera_config.fps);
+            // cfg.enable_stream(RS2_STREAM_DEPTH,
+            //                   depth_width_,
+            //                   depth_height_,
+            //                   RS2_FORMAT_Z16,
+            //                   camera_config.fps);
 
             rs2::pipeline_profile selection = pipeline_.start(cfg);
             auto depth_stream =

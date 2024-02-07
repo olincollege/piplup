@@ -57,7 +57,7 @@ def run(*, scenario: Scenario, graphviz=None):
         )
 
         builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.depth_image_32f"),
+            hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 

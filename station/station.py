@@ -14,6 +14,8 @@ from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
 from epick_interface import EPickInterfaceConfig, EPickInterface, ObjectDetectionStatus
 
+import numpy as np
+
 
 def MakeHardwareStation(
     scenario: Scenario,
@@ -26,6 +28,7 @@ def MakeHardwareStation(
     sim_plant, scene_graph = AddMultibodyPlant(
         config=scenario.plant_config, builder=builder
     )
+
     parser = Parser(sim_plant)
     ConfigureParser(parser)
     # Add model directives.
@@ -38,6 +41,8 @@ def MakeHardwareStation(
 
     if scenario.hardware_interface:
         return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
+    # tf = sim_plant.CalcRelativeTransform(sim_plant.CreateDefaultContext(), sim_plant.world_frame(), sim_plant.GetFrameByName('image_frame', sim_plant.GetModelInstanceByName('camera4')))
+    # print(list(np.concatenate([tf.translation(), RollPitchYaw(tf.rotation()).vector()])))
 
     lcm_buses = None
 
@@ -114,7 +119,7 @@ def MakeHardwareStationInterface(
                 )
 
             interface_subsystem: RealSenseD400 = builder.AddNamedSystem(
-                f"realsense_interface_{model_name}",
+                f"rgbd_sensor_{model_name}",
                 RealSenseD400(
                     hardware_interface.serial_number, camera_config, sim_plant
                 ),
