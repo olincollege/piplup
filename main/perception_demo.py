@@ -80,13 +80,6 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
-    meshcat.SetObject("ee_sphere", Sphere(0.05), Rgba(0, 0.5, 0, 0.5))
-    ee_base = Mesh(
-        "models/robotiq_description/meshes/visual/robotiq_arg2f_85_base_link.obj", 1
-    )
-    meshcat.SetObject("ee_body", ee_base, Rgba(0, 0.5, 0, 0.5))
-    meshcat.SetObject("test_body", ee_base, Rgba(0.5, 0.5, 0, 0.5))
-    meshcat.SetCameraPose(np.array([1, -1, 1]) * 0.75, np.array([0, 0, 0.4]))
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
 
@@ -104,27 +97,8 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         plot_system_graphviz(diagram, options=options)
         plt.show()
 
-    camera_info: {str: CameraInfo} = {}
-    cameras = list(scenario.cameras.keys())
-
-    # for camera in cameras:
-
     simulator.Initialize()
     # Simulate.
-    # img_color = (
-    #     hardware_station.GetOutputPort("camera0.color_image")
-    #     .Eval(hardware_station.GetMyContextFromRoot(simulator.get_context()))
-    #     .data
-    # )
-    # f, axarr = plt.subplots(1, 2)
-    # axarr[0].imshow(img_color)
-    # img_depth = (
-    #     hardware_station.GetOutputPort("camera0.depth_image_16u")
-    #     .Eval(hardware_station.GetMyContextFromRoot(simulator.get_context()))
-    #     .data
-    # )
-    # axarr[1].imshow(img_depth)
-    # plt.show()
 
     while True:
         try:
@@ -162,36 +136,11 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Run teleop demo for real hardware station"
-    )
-    parser.add_argument(
-        "--scenarios_yaml",
-        "-f",
-        help="Scenarios YAML file path.",
-        metavar="FILE",
-        default="models/teleop_scenarios_hardware.yaml",
-    )
-    parser.add_argument(
-        "--scenario_name",
-        "-s",
-        help="Specifies the scenario name within the scenario yaml file.",
-        choices=["TeleopSuctionGripper", "TeleopPlanarGripper"],
-        default="TeleopPlanarGripper",
-    )
-    parser.add_argument(
-        "--teleop",
-        "-t",
-        help="If specified a Teleop interface will be enabled.",
-        choices=[None, "gamepad", "quest"],
-        default=None,
-    )
-    args = parser.parse_args()
     scenario = load_scenario(
-        filename=args.scenarios_yaml,
-        scenario_name=args.scenario_name,
+        filename="models/teleop_scenarios_hardware.yaml",
+        scenario_name="TeleopSuctionGripper",
     )
-    run(scenario=scenario, graphviz=None, teleop=args.teleop)
+    run(scenario=scenario, graphviz=None)
 
 
 if __name__ == "__main__":
