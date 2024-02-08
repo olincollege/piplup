@@ -57,6 +57,7 @@ namespace piplup
             std::unique_ptr<systems::sensors::CameraInfo> depth_camera_info_;
             const multibody::MultibodyPlant<double> & multibody_plant_;
             std::string camera_base_frame_;
+            std::string camera_name_;
         };
     } // namespace realsense
 } // namespace piplup
