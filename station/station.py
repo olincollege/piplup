@@ -118,7 +118,11 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
 
             interface_subsystem: RealSenseD400 = builder.AddNamedSystem(
                 f"rgbd_sensor_{model_name}",
-                RealSenseD400(hardware_interface.serial_number, hardware_interface.body_pose_in_world, camera_config),
+                RealSenseD400(
+                    hardware_interface.serial_number,
+                    hardware_interface.body_pose_in_world,
+                    camera_config,
+                ),
             )
         elif isinstance(hardware_interface, Gen3InterfaceConfig):
             model_driver = scenario.model_drivers[model_name]

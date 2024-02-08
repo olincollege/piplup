@@ -17,6 +17,8 @@ from station import (
 
 from perception import MakePointCloudGenerator
 
+import cv2
+
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):
     meshcat: Meshcat = StartMeshcat()
@@ -49,6 +51,30 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         builder.Connect(
             hardware_station.GetOutputPort("gen3.pose_measured"),
             gamepad.GetInputPort("pose"),
+        )
+
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    for camera in cameras:
+        camera_info[camera] = hardware_station.GetSubsystemByName(
+            f"rgbd_sensor_{camera}"
+        ).depth_camera_info()
+
+    point_cloud_generator: Diagram = builder.AddNamedSystem(
+        "point_cloud_generator",
+        MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
+    )
+
+    for camera in cameras:
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
+            point_cloud_generator.GetInputPort(f"{camera}_pose"),
+        )
+
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+            point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 
     # Build the diagram and its simulator.
@@ -84,13 +110,55 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     # for camera in cameras:
 
     simulator.Initialize()
+    # Simulate.
+    # img_color = (
+    #     hardware_station.GetOutputPort("camera0.color_image")
+    #     .Eval(hardware_station.GetMyContextFromRoot(simulator.get_context()))
+    #     .data
+    # )
+    # f, axarr = plt.subplots(1, 2)
+    # axarr[0].imshow(img_color)
+    # img_depth = (
+    #     hardware_station.GetOutputPort("camera0.depth_image_16u")
+    #     .Eval(hardware_station.GetMyContextFromRoot(simulator.get_context()))
+    #     .data
+    # )
+    # axarr[1].imshow(img_depth)
+    # plt.show()
 
-    try:
-        simulator.AdvanceTo(scenario.simulation_duration)
-    except KeyboardInterrupt:
-        print(simulator.get_actual_realtime_rate())
-        if hardware_station.HasSubsystemNamed("gen3_interface"):
-            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+    while True:
+        try:
+            # simulator.AdvanceTo(scenario.simulation_duration)
+            simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
+
+            for camera in cameras:
+                img_color = (
+                    hardware_station.GetOutputPort(f"{camera}.color_image")
+                    .Eval(
+                        hardware_station.GetMyContextFromRoot(simulator.get_context())
+                    )
+                    .data
+                )
+                img_depth = (
+                    hardware_station.GetOutputPort(f"{camera}.depth_image_16u")
+                    .Eval(
+                        hardware_station.GetMyContextFromRoot(simulator.get_context())
+                    )
+                    .data
+                )
+                if img_color.size > 0 and img_depth.size > 0:
+                    img_color = cv2.cvtColor(img_color, cv2.COLOR_RGB2BGR)
+                    cv2.imshow(f"{camera}_c", img_color)
+                    cv2.imshow(f"{camera}_d", img_depth)
+
+            if cv2.waitKey(1) == ord("q"):
+                break
+        except KeyboardInterrupt:
+            cv2.destroyAllWindows()
+            print(simulator.get_actual_realtime_rate())
+            if hardware_station.HasSubsystemNamed("gen3_interface"):
+                hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+            break
 
 
 def main():

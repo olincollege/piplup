@@ -52,6 +52,7 @@ namespace piplup
             const int color_width_;
             const int color_height_;
             std::unique_ptr<systems::sensors::CameraInfo> depth_camera_info_;
+            std::string camera_name_;
         };
     } // namespace realsense
 } // namespace piplup
