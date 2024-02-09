@@ -27,32 +27,6 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-    gripper_name = scenario.model_drivers["gen3"].hand_model_name
-    if teleop:
-        gamepad: System = builder.AddNamedSystem(
-            "gamepad_control",
-            (
-                GamepadTwistTeleopController(meshcat, gripper_name)
-                if teleop == "gamepad"
-                else QuestTwistTeleopController(meshcat, gripper_name)
-            ),
-        )
-
-        builder.Connect(
-            gamepad.GetOutputPort(f"gripper_command"),
-            hardware_station.GetInputPort(f"{gripper_name}.command"),
-        )
-
-    if "gen3" in scenario.hardware_interface:
-        builder.Connect(
-            gamepad.GetOutputPort("V_WE_desired"),
-            hardware_station.GetInputPort("gen3.twist"),
-        )
-        builder.Connect(
-            hardware_station.GetOutputPort("gen3.pose_measured"),
-            gamepad.GetInputPort("pose"),
-        )
-
     camera_info: {str: CameraInfo} = {}
     cameras = list(scenario.cameras.keys())
 
@@ -138,7 +112,7 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 def main():
     scenario = load_scenario(
         filename="models/teleop_scenarios_hardware.yaml",
-        scenario_name="TeleopSuctionGripper",
+        scenario_name="TeleopPlanarGripper",
     )
     run(scenario=scenario, graphviz=None)
 
