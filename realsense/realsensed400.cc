@@ -88,7 +88,7 @@ namespace piplup
             rs2::frameset frames;
             if(pipeline_.poll_for_frames(&frames))
             {
-                drake::log()->info("[{}] Received Frames", camera_name_);
+                // drake::log()->info("[{}] Received Frames", camera_name_);
                 rs2::frame color_frame = frames.get_color_frame();
                 rs2::depth_frame depth_frame = frames.get_depth_frame();
                 auto & color_img_state =
