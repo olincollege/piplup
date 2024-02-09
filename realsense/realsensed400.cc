@@ -121,7 +121,7 @@ namespace piplup
         void RealSenseD400::CalcX_WB(const systems::Context<double> & context,
                                      math::RigidTransformd * output) const
         {
-            output = &multibody_plant_.CalcRelativeTransform(
+            *output = multibody_plant_.CalcRelativeTransform(
                 context,
                 multibody_plant_.world_frame(),
                 multibody_plant_.GetFrameByName(camera_base_frame_));

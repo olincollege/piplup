@@ -40,10 +40,10 @@ directives:
         translation: [1.091, .511, 0.25]
 - add_model:
     name: camera0
-    file: package://piplup_models/realsense_description/sdf/d435_simple.sdf
+    file: package://piplup_models/realsense_description/sdf/d455_simple.sdf
 - add_model:
     name: camera1
-    file: package://piplup_models/realsense_description/sdf/d435_simple.sdf
+    file: package://piplup_models/realsense_description/sdf/d455_simple.sdf
 - add_model:
     name: camera2
     file: package://piplup_models/realsense_description/sdf/d435_simple.sdf
