@@ -14,17 +14,17 @@
           <izz>1.9e-5</izz>
         </inertia>
       </inertial>
-      <!-- <visual name="base_visual">
-        <pose>0 0 0.0125 0 0 0</pose>
+      <visual name="base_visual">
+        <pose>0 0 0.005 0 0 0</pose>
         <geometry>
           <box>
-            <size>.09 .025 .015</size>
+            <size>.09 .025 .01</size>
           </box>
         </geometry>
         <material>
           <diffuse>.4 .4 .4 1.</diffuse>
         </material>
-      </visual> -->
+      </visual>
       <visual name="mount">
         <pose rotation_format="quat_xyzw">0 0.01485922 -0.04193029 -0.271 -0.653  0.271 0.653</pose>
         <geometry>

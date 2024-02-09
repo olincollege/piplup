@@ -108,6 +108,7 @@ Simulated:
       width: 640
       height: 480
       fps: 30
+      focal: !FovDegrees {y: 87.0}
     camera1:
       name: camera1
       depth: True

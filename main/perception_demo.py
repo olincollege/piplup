@@ -20,7 +20,7 @@ from perception import MakePointCloudGenerator
 import cv2
 
 
-def run(*, scenario: Scenario, graphviz=None, teleop=None):
+def run(*, scenario: Scenario, visualize=False):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
     hardware_station: Diagram = builder.AddNamedSystem(
@@ -56,30 +56,6 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
-
-    # Sample the random elements of the context.
-    random = RandomGenerator(scenario.random_seed)
-    diagram.SetRandomContext(simulator.get_mutable_context(), random)
-
-    # Visualize the diagram, when requested.
-    options = {"plant/split": "I/O"}
-    if graphviz is not None:
-        with open(graphviz, "w", encoding="utf-8") as f:
-            f.write(diagram.GetGraphvizString(options=options))
-
-        plt.figure()
-        plot_system_graphviz(diagram, options=options)
-        plt.show()
-
-    # sim_context = simulator.get_mutable_context()
-    # controller_plant: MultibodyPlant = hardware_station.GetSubsystemByName(
-    #     "gen3_controller_plant"
-    # ).get()
-    # ctx = controller_plant.CreateDefaultContext()
-    # controller_plant.SetPositions(ctx,np.array([0,0.56,0,1.02,0,1.29,0]))
-    # pose = controller_plant.CalcRelativeTransform(ctx, controller_plant.world_frame(), controller_plant.GetFrameByName("end_effector_frame"))
-    # hardware_station.GetInputPort("gen3.pose").FixValue(hardware_station.GetMyMutableContextFromRoot(sim_context), pose)
-    # hardware_station.GetInputPort("2f_85.command").FixValue(hardware_station.GetMyMutableContextFromRoot(sim_context), np.array([0.0]))
 
     simulator.Initialize()
     # Simulate.
@@ -121,12 +97,13 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim", action="store_true")
+    parser.add_argument("-v", action="store_true")
     args = parser.parse_args()
     scenario = load_scenario(
         filename="models/perception_scenarios.yaml",
         scenario_name="Simulated" if args.sim else "Hardware",
     )
-    run(scenario=scenario, graphviz=None)
+    run(scenario=scenario, visualize=args.v)
 
 
 if __name__ == "__main__":
