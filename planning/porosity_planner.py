@@ -1,5 +1,6 @@
 from pydrake.all import *
 from enum import Enum, auto
+from epick_interface import ObjectDetectionStatus
 
 
 class PorosityPlannerState(Enum):
@@ -12,6 +13,18 @@ class PorosityPlanner(LeafSystem):
     def __init__(self):
         LeafSystem.__init__(self)
 
+        # Inputs Ports
+        self.pressure_idx_ = self.DeclareVectorInputPort(
+            "actual_vacuum_pressure", 1
+        ).get_index()
+        self.obj_det_idx_ = self.DeclareAbstractInputPort(
+            "object_detection_status", AbstractValue.Make(ObjectDetectionStatus(0))
+        ).get_index()
+
+        # Output Ports
+        self.DeclareVectorOutputPort("arm_twist_command", 6, self.CalcGen3Twist)
+
+        # States
         self.mode_idx_ = self.DeclareAbstractState(
             AbstractValue.Make(PorosityPlannerState.GO_TO_HOME)
         )
@@ -24,6 +37,7 @@ class PorosityPlanner(LeafSystem):
         print(mode)
         match mode:
             case PorosityPlannerState.GO_TO_HOME:
+
                 state.get_mutable_abstract_state(self.mode_idx_).set_value(
                     PorosityPlannerState.PRE_PICK
                 )
@@ -37,3 +51,6 @@ class PorosityPlanner(LeafSystem):
                 )
             case _:
                 print("Invalid Planner State")
+    
+    def CalcGen3Twist(self, context : Context, output : BasicVector):
+        pass

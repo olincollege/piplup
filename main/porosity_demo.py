@@ -21,13 +21,15 @@ from planning import PorosityPlanner
 def run(*, scenario: Scenario):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
+    
+    porosity_planner: PorosityPlanner = builder.AddNamedSystem(
+        "porosity_planner", PorosityPlanner()
+    )
+
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-    porosity_planner: PorosityPlanner = builder.AddNamedSystem(
-        "porosity_planner", PorosityPlanner()
-    )
 
     # builder.Connect(porosity_planner.GetOutputPort(), hardware_station.GetInputPort())
     # builder.Connect(hardware_station.GetOutputPort(), porosity_planner.GetInputPort())
