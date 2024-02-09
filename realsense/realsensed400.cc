@@ -14,6 +14,7 @@ namespace piplup
           , depth_height_(camera_config.height)
           , color_width_(camera_config.width)
           , color_height_(camera_config.height)
+          , camera_name_(camera_config.name)
         {
             double polling_rate = 0.001;
 
@@ -32,19 +33,23 @@ namespace piplup
                                     body_pose_in_world[2])));
 
             this->DeclareStateOutputPort("color_image", color_state_idx_);
-            this->DeclareStateOutputPort("depth_image", depth_state_idx_);
+            this->DeclareStateOutputPort("depth_image_16u", depth_state_idx_);
             this->DeclareStateOutputPort("body_pose_in_world", body_pose_idx);
 
             this->DeclarePeriodicUnrestrictedUpdateEvent(
                 polling_rate, 0.0, &RealSenseD400::PollForImages);
 
             // Check if device exists
+            drake::log()->info("Searching for device [{}]...", device_serial_number);
             bool found_device = false;
             for(auto && device : context_->query_devices())
             {
-                drake::log()->info(device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
+                drake::log()->info("Listing avalible devices [{}]",
+                                   device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
                 if(device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER) == device_serial_number)
                 {
+                    drake::log()->info("Found device [{}]",
+                                       device.get_info(RS2_CAMERA_INFO_SERIAL_NUMBER));
                     found_device = true;
                     break;
                 }
@@ -75,6 +80,13 @@ namespace piplup
             auto i = depth_stream.get_intrinsics();
             depth_camera_info_ = std::make_unique<systems::sensors::CameraInfo>(
                 depth_stream.width(), depth_stream.height(), i.fx, i.fy, i.ppx, i.ppy);
+
+            drake::log()->info("[{}] Starting Streams", camera_name_);
+            drake::log()->info("[{}] Depth ({}x{}) {} fps",
+                               camera_name_,
+                               depth_stream.width(),
+                               depth_stream.height(),
+                               depth_stream.fps());
         }
         void RealSenseD400::PollForImages(const systems::Context<double> & context,
                                           systems::State<double> * state) const
@@ -82,7 +94,7 @@ namespace piplup
             rs2::frameset frames;
             if(pipeline_.poll_for_frames(&frames))
             {
-                drake::log()->info("Received Frames");
+                // drake::log()->info("[{}] Received Frames", camera_name_);
                 rs2::frame color_frame = frames.get_color_frame();
                 rs2::depth_frame depth_frame = frames.get_depth_frame();
                 auto & color_img_state =
@@ -100,6 +112,10 @@ namespace piplup
                 memcpy(color_img_state.at(0, 0),
                        color_frame.get_data(),
                        color_img_state.size());
+            }
+            else
+            {
+                // drake::log()->info("[{}] No Frames", camera_name_);
             }
         }
         const systems::sensors::CameraInfo & RealSenseD400::depth_camera_info() const

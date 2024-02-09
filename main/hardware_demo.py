@@ -15,6 +15,8 @@ from station import (
     QuestTwistTeleopController,
 )
 
+from perception import MakePointCloudGenerator
+
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):
     meshcat: Meshcat = StartMeshcat()
@@ -27,9 +29,11 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     if teleop:
         gamepad: System = builder.AddNamedSystem(
             "gamepad_control",
-            GamepadTwistTeleopController(meshcat, gripper_name)
-            if teleop == "gamepad"
-            else QuestTwistTeleopController(meshcat, gripper_name),
+            (
+                GamepadTwistTeleopController(meshcat, gripper_name)
+                if teleop == "gamepad"
+                else QuestTwistTeleopController(meshcat, gripper_name)
+            ),
         )
 
         builder.Connect(
@@ -73,14 +77,20 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
+
+    camera_info: {str: CameraInfo} = {}
+    cameras = list(scenario.cameras.keys())
+
+    # for camera in cameras:
+
     simulator.Initialize()
-    # Simulate.
 
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:
         print(simulator.get_actual_realtime_rate())
-        hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+        if hardware_station.HasSubsystemNamed("gen3_interface"):
+            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():

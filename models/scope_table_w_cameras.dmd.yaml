@@ -6,38 +6,38 @@ directives:
 - add_weld:
     parent: world
     child: table::table_body
-    X_PC:
-        translation: [-0.08, 0, -0.02]
+    # X_PC:
+    #     translation: [-0.08, 0, -0.02]
 - add_frame:
     name: camera0_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [-120.0, 0, 0.0]}
-        translation: [0.5, -.5, 0.75]
+        rotation: !Rpy { deg: [-90, 0, 0.0]}
+        translation: [0.5, -.493, 0.778]
 - add_frame:
     name: camera1_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [-120.0, 0, 180.0]}
-        translation: [0.5, .5, 0.75]
+        rotation: !Rpy { deg: [-90.0, 0, 180.0]}
+        translation: [0.5, .493, 0.778]
 - add_frame:
     name: camera2_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [-120.0, 0, 90.0]}
-        translation: [1.0, 0.0, 0.75]
+        rotation: !Rpy { deg: [-90.0, 0, 90.0]}
+        translation: [1.091, 0.0, 0.778]
 - add_frame:
     name: camera3_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [0.0, -90.0, -45.0]}
-        translation: [1.0, -.5, 0.25]
+        rotation: !Rpy { deg: [0.0, -90.0, 0.0]}
+        translation: [1.091, -.511, 0.25]
 - add_frame:
     name: camera4_origin
     X_PF:
         base_frame: world
-        rotation: !Rpy { deg: [0.0, -90.0, 45.0]}
-        translation: [1.0, .5, 0.25]
+        rotation: !Rpy { deg: [0.0, 90.0, 180.0]}
+        translation: [1.091, .511, 0.25]
 - add_model:
     name: camera0
     file: package://piplup_models/realsense_description/sdf/d435_simple.sdf
@@ -56,16 +56,16 @@ directives:
 
 - add_weld:
     parent: camera0_origin
-    child: camera0::base
+    child: camera0::mount_frame
 - add_weld:
     parent: camera1_origin
-    child: camera1::base
+    child: camera1::mount_frame
 - add_weld:
     parent: camera2_origin
-    child: camera2::base
+    child: camera2::mount_frame
 - add_weld:
     parent: camera3_origin
-    child: camera3::base
+    child: camera3::mount_frame
 - add_weld:
     parent: camera4_origin
-    child: camera4::base
+    child: camera4::mount_frame
