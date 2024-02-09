@@ -1,4 +1,5 @@
 #pragma once
+#include "drake/multibody/plant/multibody_plant.h"
 #include <drake/common/drake_copyable.h>
 #include <drake/common/name_value.h>
 #include <drake/common/scoped_singleton.h>
@@ -34,12 +35,14 @@ namespace piplup
         {
         public:
             RealSenseD400(std::string device_serial_number,
-                          std::vector<double> body_pose_in_world,
-                          const systems::sensors::CameraConfig & camera_config);
+                          const systems::sensors::CameraConfig & camera_config,
+                          const multibody::MultibodyPlant<double> & multibody_plant);
 
             void PollForImages(const systems::Context<double> & context,
                                systems::State<double> * state) const;
 
+            void CalcX_WB(const systems::Context<double> & context,
+                          math::RigidTransformd * output) const;
             const systems::sensors::CameraInfo & depth_camera_info() const;
 
         private:
@@ -52,6 +55,8 @@ namespace piplup
             const int color_width_;
             const int color_height_;
             std::unique_ptr<systems::sensors::CameraInfo> depth_camera_info_;
+            const multibody::MultibodyPlant<double> & multibody_plant_;
+            std::string camera_base_frame_;
         };
     } // namespace realsense
 } // namespace piplup

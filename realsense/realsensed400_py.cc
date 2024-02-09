@@ -29,11 +29,11 @@ namespace piplup
 
             py::class_<RealSenseD400, LeafSystem<double>>(m, "RealSenseD400")
                 .def(py::init<std::string,
-                              std::vector<double>,
-                              const systems::sensors::CameraConfig &>(),
+                              const systems::sensors::CameraConfig &,
+                              const multibody::MultibodyPlant<double> &>(),
                      py::arg("device_serial_number"),
-                     py::arg("body_pose_in_world"),
-                     py::arg("camera_config"))
+                     py::arg("camera_config"),
+                     py::arg("sim_plant"))
                 .def("depth_camera_info",
                      &RealSenseD400::depth_camera_info,
                      py::return_value_policy::reference);

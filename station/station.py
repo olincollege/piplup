@@ -19,9 +19,6 @@ def MakeHardwareStation(
     scenario: Scenario,
     meshcat: Meshcat = None,
 ) -> Diagram:
-    if scenario.hardware_interface:
-        return MakeHardwareStationInterface(scenario, meshcat)
-
     builder = DiagramBuilder()
 
     # Create the multibody plant and scene graph.
@@ -38,6 +35,9 @@ def MakeHardwareStation(
 
     # Now the plant is complete.
     sim_plant.Finalize()
+
+    if scenario.hardware_interface:
+        return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
 
     lcm_buses = None
 
@@ -91,9 +91,12 @@ def MakeHardwareStation(
     return builder.Build()
 
 
-def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
-    builder = DiagramBuilder()
-
+def MakeHardwareStationInterface(
+    builder: DiagramBuilder,
+    scenario: Scenario,
+    meshcat: Meshcat,
+    sim_plant: MultibodyPlant,
+):
     # This is not currently using a config since we are only using one scale
     # uss_dbs_system: System = builder.AddNamedSystem(
     #     "uss_dbs", USSDBSHardwareInterface()
@@ -112,7 +115,9 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
 
             interface_subsystem: RealSenseD400 = builder.AddNamedSystem(
                 f"realsense_interface_{model_name}",
-                RealSenseD400(hardware_interface.serial_number, camera_config),
+                RealSenseD400(
+                    hardware_interface.serial_number, camera_config, sim_plant
+                ),
             )
         elif isinstance(hardware_interface, Gen3InterfaceConfig):
             model_driver = scenario.model_drivers[model_name]

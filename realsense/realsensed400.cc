@@ -5,35 +5,29 @@ namespace piplup
     namespace realsense
     {
         using namespace drake;
-        RealSenseD400::RealSenseD400(std::string device_serial_number,
-                                     std::vector<double> body_pose_in_world,
-                                     const systems::sensors::CameraConfig & camera_config)
+        RealSenseD400::RealSenseD400(
+            std::string device_serial_number,
+            const systems::sensors::CameraConfig & camera_config,
+            const multibody::MultibodyPlant<double> & multibody_plant)
           : context_(drake::GetScopedSingleton<rs2::context>())
           , pipeline_(*context_)
           , depth_width_(camera_config.width)
           , depth_height_(camera_config.height)
           , color_width_(camera_config.width)
           , color_height_(camera_config.height)
+          , multibody_plant_(multibody_plant)
+          , camera_base_frame_(camera_config.X_PB.base_frame.value())
         {
             double polling_rate = 0.001;
-
             color_state_idx_ =
                 this->DeclareAbstractState(Value<systems::sensors::ImageRgba8U>());
             depth_state_idx_ =
                 this->DeclareAbstractState(Value<systems::sensors::ImageDepth16U>());
 
-            auto body_pose_idx =
-                this->DeclareAbstractState(Value<drake::math::RigidTransformd>(
-                    drake::math::RollPitchYaw<double>(body_pose_in_world[3],
-                                                      body_pose_in_world[4],
-                                                      body_pose_in_world[5]),
-                    Vector3<double>(body_pose_in_world[0],
-                                    body_pose_in_world[1],
-                                    body_pose_in_world[2])));
-
             this->DeclareStateOutputPort("color_image", color_state_idx_);
             this->DeclareStateOutputPort("depth_image", depth_state_idx_);
-            this->DeclareStateOutputPort("body_pose_in_world", body_pose_idx);
+            this->DeclareAbstractOutputPort("body_pose_in_world",
+                                            &RealSenseD400::CalcX_WB);
 
             this->DeclarePeriodicUnrestrictedUpdateEvent(
                 polling_rate, 0.0, &RealSenseD400::PollForImages);
@@ -102,9 +96,20 @@ namespace piplup
                        color_img_state.size());
             }
         }
+
         const systems::sensors::CameraInfo & RealSenseD400::depth_camera_info() const
         {
             return *depth_camera_info_;
         }
+
+        void RealSenseD400::CalcX_WB(const systems::Context<double> & context,
+                                     math::RigidTransformd * output) const
+        {
+            output = &multibody_plant_.CalcRelativeTransform(
+                context,
+                multibody_plant_.world_frame(),
+                multibody_plant_.GetFrameByName(camera_base_frame_));
+        }
+
     } // namespace realsense
 } // namespace piplup
