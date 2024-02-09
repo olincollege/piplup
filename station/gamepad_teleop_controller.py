@@ -11,7 +11,7 @@ class GamepadTwistTeleopController(LeafSystem):
         self.linear_speed_low = 0.1
         self.angular_speed_low = 0.8
         self.linear_speed_high = 0.6
-        self.angular_speed_high = 2.0
+        self.angular_speed_high = 1.0
         self.grip_speed = 0.25
         self.hand_model_name = hand_model_name
 
