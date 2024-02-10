@@ -22,6 +22,7 @@ from kortex_api.autogen.messages import (
 )
 import sys
 from .gen3_constants import Gen3ControlMode, kGen3ArmNumJoints
+import logging
 
 
 class Gen3InterfaceConfig:
@@ -41,7 +42,7 @@ class Gen3HardwareInterface(LeafSystem):
         self.control_mode = control_mode
         self.hand_model_name = hand_model_name
         self.sim_plant = sim_plant
-        self.sim_plant_ctx = self.sim_plant.CreateDefaultContext()
+        self.root_ctx = None
         if control_mode == Gen3ControlMode.kPosition:
             self.arm_position_input_port = self.DeclareVectorInputPort(
                 "position", kGen3ArmNumJoints
@@ -83,6 +84,7 @@ class Gen3HardwareInterface(LeafSystem):
         self.last_feedback_time = -np.inf
         self.feedback = None
 
+        logging.info("Connecting to gen3 arm...")
         self.transport = TCPTransport()
         self.router = RouterClient(self.transport, RouterClient.basicErrorCallback)
         self.transport.connect(ip_address, int(port))
@@ -151,16 +153,28 @@ class Gen3HardwareInterface(LeafSystem):
 
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-        # t = context.get_time()
-        # if self.last_feedback_time != t:
-        #     self.GetFeedback(t)
 
-        # q = np.zeros(kGen3ArmNumJoints)
-        # for i in range(kGen3ArmNumJoints):
-        #     q[i] = np.radians(self.feedback.actuators[i].position)
-        # self.sim_plant.SetPositions(
-        #     self.sim_plant_ctx, self.sim_plant.GetModelInstanceByName("gen3"), q
-        # )
+        # TODO this is a bad way to do this:
+        ## ------
+        t = context.get_time()
+        if self.last_feedback_time != t:
+            self.GetFeedback(t)
+
+        q = np.zeros(kGen3ArmNumJoints)
+        for i in range(kGen3ArmNumJoints):
+            q[i] = np.radians(self.feedback.actuators[i].position)
+
+        self.sim_plant.SetPositions(
+            self.sim_plant.GetMyMutableContextFromRoot(self.root_ctx),
+            self.sim_plant.GetModelInstanceByName("gen3"),
+            q,
+        )
+        self.sim_plant.SetPositions(
+            self.sim_plant.GetMyMutableContextFromRoot(self.root_ctx),
+            self.sim_plant.GetModelInstanceByName("2f_85"),
+            np.zeros(6),
+        )
+        ## ------
         if self.hand_model_name == "2f_85":
             gripper_command = Base_pb2.GripperCommand()
             gripper_command.mode = Base_pb2.GRIPPER_SPEED

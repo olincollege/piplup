@@ -7,55 +7,6 @@ TeleopPlanarGripper:
         child: gen3::base_link
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
-    - add_model:
-        name: cracker_box
-        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
-        default_free_body_pose:
-          base_link_cracker:
-            translation: [0.4, 0, 0.3]
-            rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
-
-  cameras:
-    camera0:
-      name: camera0
-      depth: True
-      X_PB:
-        base_frame: camera0::base
-      width: 640
-      height: 480
-      fps: 30
-    camera1:
-      name: camera1
-      depth: True
-      X_PB:
-        base_frame: camera1::base
-      width: 640
-      height: 480
-      fps: 30
-    camera2:
-      name: camera2
-      depth: True
-      X_PB:
-        base_frame: camera2::base
-      width: 640
-      height: 480
-      fps: 30
-    camera3:
-      name: camera3
-      depth: True
-      X_PB:
-        base_frame: camera3::base
-      width: 640
-      height: 480
-      fps: 30
-    camera4:
-      name: camera4
-      depth: True
-      X_PB:
-        base_frame: camera4::base
-      width: 640
-      height: 480
-      fps: 30
 
   model_drivers:
     gen3: !Gen3Driver
@@ -63,24 +14,9 @@ TeleopPlanarGripper:
       control_mode: 3
 
   hardware_interface:
-    # gen3: !Gen3InterfaceConfig
-    #   ip_address: 192.168.1.10
-    #   port: 10000
-    camera0: !RealsenseInterfaceConfig
-      serial_number: '239622302159'
-      body_pose_in_world: [0.5, -0.4406740981921955, 0.7525441558772843, -2.356194490192345, -0.0, 0.0]
-    camera1: !RealsenseInterfaceConfig
-      serial_number: '239222300609'
-      body_pose_in_world: [0.5, 0.4406740981921955, 0.7525441558772843, -2.356194490192345, -0.0, 3.141592653589793]
-    camera2: !RealsenseInterfaceConfig
-      serial_number: '141722074426'
-      body_pose_in_world: [1.0386740981921956, 3.204037408071325e-18, 0.7525441558772843, -2.3561944901923453, -0.0, 1.5707963267948968]
-    camera3: !RealsenseInterfaceConfig
-      serial_number: '938422072139'
-      body_pose_in_world: [1.0386740981921956, -0.4855441558772843, 0.25, -0.39269908169872414, -1.5707963267948966, -0.39269908169872414]
-    camera4: !RealsenseInterfaceConfig
-      serial_number: '837212070308'
-      body_pose_in_world: [1.0386740981921956, 0.4855441558772843, 0.25, 1.1780972450961726, 1.5707963267948966, -1.1780972450961726]
+    gen3: !Gen3InterfaceConfig
+      ip_address: 192.168.1.10
+      port: 10000
 
 TeleopSuctionGripper:
   directives:

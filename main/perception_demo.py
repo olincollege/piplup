@@ -27,7 +27,7 @@ def run(*, scenario: Scenario, visualize=False):
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-    camera_info: {str: CameraInfo} = {}
+    camera_info: dict[str, CameraInfo] = {}
     cameras = list(scenario.cameras.keys())
 
     for camera in cameras:
