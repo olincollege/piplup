@@ -151,16 +151,16 @@ class Gen3HardwareInterface(LeafSystem):
 
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-        # t = context.get_time()
-        # if self.last_feedback_time != t:
-        #     self.GetFeedback(t)
+        t = context.get_time()
+        if self.last_feedback_time != t:
+            self.GetFeedback(t)
 
-        # q = np.zeros(kGen3ArmNumJoints)
-        # for i in range(kGen3ArmNumJoints):
-        #     q[i] = np.radians(self.feedback.actuators[i].position)
-        # self.sim_plant.SetPositions(
-        #     self.sim_plant_ctx, self.sim_plant.GetModelInstanceByName("gen3"), q
-        # )
+        q = np.zeros(kGen3ArmNumJoints)
+        for i in range(kGen3ArmNumJoints):
+            q[i] = np.radians(self.feedback.actuators[i].position)
+        self.sim_plant.SetPositions(
+            self.sim_plant_ctx, self.sim_plant.GetModelInstanceByName("gen3"), q
+        )
         if self.hand_model_name == "2f_85":
             gripper_command = Base_pb2.GripperCommand()
             gripper_command.mode = Base_pb2.GRIPPER_SPEED
