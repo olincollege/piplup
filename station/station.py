@@ -159,6 +159,7 @@ def MakeHardwareStationInterface(
                     hardware_interface.port,
                     Gen3ControlMode(model_driver.control_mode),
                     gen3_model.hand_model_name,
+                    sim_plant,
                 ),
             )
         elif isinstance(hardware_interface, EPickInterfaceConfig):

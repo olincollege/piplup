@@ -34,10 +34,14 @@ class Gen3InterfaceConfig:
 
 
 class Gen3HardwareInterface(LeafSystem):
-    def __init__(self, ip_address, port, control_mode, hand_model_name):
+    def __init__(
+        self, ip_address, port, control_mode, hand_model_name, sim_plant: MultibodyPlant
+    ):
         LeafSystem.__init__(self)
         self.control_mode = control_mode
         self.hand_model_name = hand_model_name
+        self.sim_plant = sim_plant
+        self.sim_plant_ctx = self.sim_plant.CreateDefaultContext()
         if control_mode == Gen3ControlMode.kPosition:
             self.arm_position_input_port = self.DeclareVectorInputPort(
                 "position", kGen3ArmNumJoints
@@ -147,7 +151,16 @@ class Gen3HardwareInterface(LeafSystem):
 
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-        # print("time is: %s" % context.get_time())
+        t = context.get_time()
+        if self.last_feedback_time != t:
+            self.GetFeedback(t)
+
+        q = np.zeros(kGen3ArmNumJoints)
+        for i in range(kGen3ArmNumJoints):
+            q[i] = np.radians(self.feedback.actuators[i].position)
+        self.sim_plant.SetPositions(
+            self.sim_plant_ctx, self.sim_plant.GetModelInstanceByName("gen3"), q
+        )
         if self.hand_model_name == "2f_85":
             gripper_command = Base_pb2.GripperCommand()
             gripper_command.mode = Base_pb2.GRIPPER_SPEED
