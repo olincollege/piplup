@@ -63,29 +63,33 @@ def run(*, scenario: Scenario, visualize=False):
     while True:
         try:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
-
-            for camera in cameras:
-                img_color = (
-                    hardware_station.GetOutputPort(f"{camera}.color_image")
-                    .Eval(
-                        hardware_station.GetMyContextFromRoot(simulator.get_context())
+            if visualize:
+                for camera in cameras:
+                    img_color = (
+                        hardware_station.GetOutputPort(f"{camera}.color_image")
+                        .Eval(
+                            hardware_station.GetMyContextFromRoot(
+                                simulator.get_context()
+                            )
+                        )
+                        .data
                     )
-                    .data
-                )
-                img_depth = (
-                    hardware_station.GetOutputPort(f"{camera}.depth_image_16u")
-                    .Eval(
-                        hardware_station.GetMyContextFromRoot(simulator.get_context())
+                    img_depth = (
+                        hardware_station.GetOutputPort(f"{camera}.depth_image_16u")
+                        .Eval(
+                            hardware_station.GetMyContextFromRoot(
+                                simulator.get_context()
+                            )
+                        )
+                        .data
                     )
-                    .data
-                )
-                if img_color.size > 0 and img_depth.size > 0:
-                    img_color = cv2.cvtColor(img_color, cv2.COLOR_RGB2BGR)
-                    cv2.imshow(f"{camera}_c", img_color)
-                    cv2.imshow(f"{camera}_d", img_depth)
+                    if img_color.size > 0 and img_depth.size > 0:
+                        img_color = cv2.cvtColor(img_color, cv2.COLOR_RGB2BGR)
+                        cv2.imshow(f"{camera}_c", img_color)
+                        cv2.imshow(f"{camera}_d", img_depth)
 
-            if cv2.waitKey(1) == ord("q"):
-                break
+                if cv2.waitKey(1) == ord("q"):
+                    break
         except KeyboardInterrupt:
             cv2.destroyAllWindows()
             print(simulator.get_actual_realtime_rate())

@@ -9,7 +9,7 @@ from pydrake.geometry import Meshcat, MeshcatPointCloudVisualizer
 
 
 def MakePointCloudGenerator(
-    camera_info: {str: CameraInfo},
+    camera_info: dict[str, CameraInfo],
     meshcat: Meshcat = None,
     hardware: bool = False,
 ) -> Diagram:
@@ -24,10 +24,19 @@ def MakePointCloudGenerator(
 
     # Add DepthImageToPointCloud LeafSystem for each camera
     for camera in camera_info.keys():
+        # print(camera)
+        # print(camera_info[camera].focal_x())
+        # print(camera_info[camera].focal_y())
+        # print(camera_info[camera].center_x())
+        # print(camera_info[camera].center_y())
+
         image_to_point_cloud: DepthImageToPointCloud = builder.AddNamedSystem(
             f"image_to_point_cloud_{camera}",
             DepthImageToPointCloud(
-                camera_info=camera_info[camera], pixel_type=PixelType.kDepth16U
+                camera_info=camera_info[camera],
+                pixel_type=PixelType.kDepth16U,
+                scale=1.0
+                / 1000.0,  # 16 bit depth is in millimeters not meters :( - Krishna
             ),
         )
         builder.ExportInput(
@@ -88,7 +97,6 @@ class PointCloudProcessor(LeafSystem):
         for input in self._cloud_inputs:
             clouds.append(input.Eval(context))
             # clouds[-1].EstimateNormals(radius=0.1, num_closest=30)
-
         # Merge clouds
         merged_cloud: PointCloud = Concatenate(clouds=clouds)
 

@@ -184,7 +184,7 @@ def MakeHardwareStationInterface(
     if builder.empty():
         raise RuntimeError("No systems were added to hardware interface")
 
-    # ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
+    ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
     diagram: Diagram = builder.Build()
     diagram.set_name("HardwareStationInterface")
     return diagram

@@ -20,10 +20,10 @@ namespace piplup
           , camera_name_(camera_config.name)
         {
             double polling_rate = 0.001;
-            color_state_idx_ =
-                this->DeclareAbstractState(Value<systems::sensors::ImageRgba8U>());
-            depth_state_idx_ =
-                this->DeclareAbstractState(Value<systems::sensors::ImageDepth16U>());
+            color_state_idx_ = this->DeclareAbstractState(
+                Value<systems::sensors::ImageRgba8U>(color_width_, color_height_));
+            depth_state_idx_ = this->DeclareAbstractState(
+                Value<systems::sensors::ImageDepth16U>(depth_width_, depth_height_));
 
             this->DeclareStateOutputPort("color_image", color_state_idx_);
             this->DeclareStateOutputPort("depth_image_16u", depth_state_idx_);
@@ -122,9 +122,10 @@ namespace piplup
                                      math::RigidTransformd * output) const
         {
             *output = multibody_plant_.CalcRelativeTransform(
-                context,
+                *multibody_plant_.CreateDefaultContext(),
                 multibody_plant_.world_frame(),
-                multibody_plant_.GetFrameByName(camera_base_frame_));
+                multibody_plant_.GetFrameByName(
+                    "base", multibody_plant_.GetModelInstanceByName(camera_name_)));
         }
 
     } // namespace realsense

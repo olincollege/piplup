@@ -1,10 +1,10 @@
 Hardware:
   directives:
-    - add_directives:
-        file: package://piplup_models/gen3_2f_85.dmd.yaml
-    - add_weld:
-        parent: world
-        child: gen3::base_link
+    # - add_directives:
+    #     file: package://piplup_models/gen3_2f_85.dmd.yaml
+    # - add_weld:
+    #     parent: world
+    #     child: gen3::base_link
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
     - add_model:
@@ -63,24 +63,19 @@ Hardware:
       control_mode: 3
 
   hardware_interface:
-    gen3: !Gen3InterfaceConfig
-      ip_address: 192.168.1.10
-      port: 10000
+    # gen3: !Gen3InterfaceConfig
+    #   ip_address: 192.168.1.10
+    #   port: 10000
     camera0: !RealsenseInterfaceConfig
       serial_number: '239622302159'
-      body_pose_in_world: [0.5, -0.4406740981921955, 0.7525441558772843, -2.356194490192345, -0.0, 0.0]
     camera1: !RealsenseInterfaceConfig
       serial_number: '239222300609'
-      body_pose_in_world: [0.5, 0.4406740981921955, 0.7525441558772843, -2.356194490192345, -0.0, 3.141592653589793]
     camera2: !RealsenseInterfaceConfig
       serial_number: '141722074426'
-      body_pose_in_world: [1.0386740981921956, 3.204037408071325e-18, 0.7525441558772843, -2.3561944901923453, -0.0, 1.5707963267948968]
     camera3: !RealsenseInterfaceConfig
       serial_number: '938422072139'
-      body_pose_in_world: [1.0386740981921956, -0.4855441558772843, 0.25, -0.39269908169872414, -1.5707963267948966, -0.39269908169872414]
     camera4: !RealsenseInterfaceConfig
       serial_number: '837212070308'
-      body_pose_in_world: [1.0386740981921956, 0.4855441558772843, 0.25, 1.1780972450961726, 1.5707963267948966, -1.1780972450961726]
 
 Simulated:
   directives:
@@ -108,7 +103,9 @@ Simulated:
       width: 640
       height: 480
       fps: 30
-      focal: !FovDegrees {y: 87.0}
+      center_x: 321.65869140625
+      center_y: 245.08485412597656
+      focal: {x: 386.0453186035156, y: 386.0453186035156}
     camera1:
       name: camera1
       depth: True
@@ -117,6 +114,9 @@ Simulated:
       width: 640
       height: 480
       fps: 30
+      center_x: 321.3353576660156
+      center_y: 242.0176544189453
+      focal: {x: 390.5758361816406, y: 390.5758361816406}
     camera2:
       name: camera2
       depth: True
@@ -125,6 +125,9 @@ Simulated:
       width: 640
       height: 480
       fps: 30
+      center_x: 322.87481689453125
+      center_y: 238.08132934570312
+      focal: {x: 388.6526794433594, y: 388.6526794433594}
     camera3:
       name: camera3
       depth: True
@@ -133,6 +136,9 @@ Simulated:
       width: 640
       height: 480
       fps: 30
+      center_x: 320.31787109375
+      center_y: 242.22889709472656
+      focal: {x: 382.69512939453125, y: 382.69512939453125}
     camera4:
       name: camera4
       depth: True
@@ -141,6 +147,9 @@ Simulated:
       width: 640
       height: 480
       fps: 30
+      center_x: 318.038818359375
+      center_y: 235.7093505859375
+      focal: {x: 386.1900939941406, y: 386.1900939941406}
 
   model_drivers: {}
     # gen3: !Gen3Driver
