@@ -14,7 +14,7 @@
           <izz>1.9e-5</izz>
         </inertia>
       </inertial>
-      <!-- <visual name="base_visual">
+      <visual name="base_visual">
         <pose>0 0 0.013 0 0 0</pose>
         <geometry>
           <box>
@@ -24,7 +24,7 @@
         <material>
           <diffuse>.4 .4 .4 1.</diffuse>
         </material>
-      </visual> -->
+      </visual>
       <visual name="mount">
         <pose rotation_format="quat_xyzw">0 0.01485922 -0.04193029 -0.271 -0.653  0.271 0.653</pose>
         <geometry>
@@ -57,12 +57,6 @@
         </material>
       </visual>
     </link>
-    <frame name='color_image_frame' attached_to='base'>
-      <pose>0.0115 0 0.026 0 0 0</pose>
-    </frame>
-    <frame name='depth_image_frame' attached_to='base'>
-      <pose>-0.0475 0 0.026 0 0 0</pose>
-    </frame>
     <frame name='mount_frame' attached_to='base'>
       <pose degrees="True">0 0.01485922 -0.04193029 45 0 0</pose>
     </frame>

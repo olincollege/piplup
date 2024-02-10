@@ -100,6 +100,10 @@ Simulated:
       depth: True
       X_PB:
         base_frame: camera0::base
+      X_BC:
+        translation: [0.0115, 0, 0.026]
+      X_BD:
+        translation: [-0.0475, 0, 0.026]
       width: 640
       height: 480
       fps: 30
@@ -111,6 +115,10 @@ Simulated:
       depth: True
       X_PB:
         base_frame: camera1::base
+      X_BC:
+        translation: [0.0115, 0, 0.026]
+      X_BD:
+        translation: [-0.0475, 0, 0.026]
       width: 640
       height: 480
       fps: 30
@@ -122,6 +130,10 @@ Simulated:
       depth: True
       X_PB:
         base_frame: camera2::base
+      X_BC:
+        translation: [-0.0325, 0, 0.025]
+      X_BD:
+        translation: [-0.0175, 0, 0.025]
       width: 640
       height: 480
       fps: 30
@@ -133,6 +145,10 @@ Simulated:
       depth: True
       X_PB:
         base_frame: camera3::base
+      X_BC:
+        translation: [-0.0325, 0, 0.025]
+      X_BD:
+        translation: [-0.0175, 0, 0.025]
       width: 640
       height: 480
       fps: 30
@@ -144,6 +160,10 @@ Simulated:
       depth: True
       X_PB:
         base_frame: camera4::base
+      X_BC:
+        translation: [-0.0325, 0, 0.025]
+      X_BD:
+        translation: [-0.0175, 0, 0.025]
       width: 640
       height: 480
       fps: 30
