@@ -70,18 +70,18 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 
     # Visualize the diagram, when requested.
     options = {"plant/split": "I/O"}
-    if graphviz is not None:
-        with open(graphviz, "w", encoding="utf-8") as f:
-            f.write(diagram.GetGraphvizString(options=options))
+    if graphviz:
+        if isinstance(graphviz, str):
+            with open(graphviz, "w", encoding="utf-8") as f:
+                f.write(diagram.GetGraphvizString(options=options))
 
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
 
-    camera_info: {str: CameraInfo} = {}
-    cameras = list(scenario.cameras.keys())
-
-    # for camera in cameras:
+    hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
+        simulator.get_mutable_context()
+    )
 
     simulator.Initialize()
 
@@ -118,12 +118,13 @@ def main():
         choices=[None, "gamepad", "quest"],
         default=None,
     )
+    parser.add_argument("--graph_viz", "-g", action="store_true")
     args = parser.parse_args()
     scenario = load_scenario(
         filename=args.scenarios_yaml,
         scenario_name=args.scenario_name,
     )
-    run(scenario=scenario, graphviz=None, teleop=args.teleop)
+    run(scenario=scenario, graphviz=args.graph_viz, teleop=args.teleop)
 
 
 if __name__ == "__main__":

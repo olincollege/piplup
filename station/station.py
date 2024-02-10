@@ -23,6 +23,9 @@ def MakeHardwareStation(
 ) -> Diagram:
     builder = DiagramBuilder()
 
+    if scenario.hardware_interface:
+        scenario.plant_config.time_step = 0.0005
+        scenario.visualization.publish_period = 0.0005
     # Create the multibody plant and scene graph.
     sim_plant: MultibodyPlant
     sim_plant, scene_graph = AddMultibodyPlant(
@@ -40,6 +43,12 @@ def MakeHardwareStation(
     sim_plant.Finalize()
 
     if scenario.hardware_interface:
+        # Set the actuation of the sim plant to 0
+        zero_actuation_sys = builder.AddSystem(ConstantVectorSource(np.zeros(9)))
+        builder.Connect(
+            zero_actuation_sys.get_output_port(0), sim_plant.get_actuation_input_port()
+        )
+
         return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
     # tf = sim_plant.CalcRelativeTransform(sim_plant.CreateDefaultContext(), sim_plant.world_frame(), sim_plant.GetFrameByName('image_frame', sim_plant.GetModelInstanceByName('camera4')))
     # print(list(np.concatenate([tf.translation(), RollPitchYaw(tf.rotation()).vector()])))
@@ -127,31 +136,6 @@ def MakeHardwareStationInterface(
         elif isinstance(hardware_interface, Gen3InterfaceConfig):
             model_driver = scenario.model_drivers[model_name]
             gen3_model = model_driver
-            controller_plant = MultibodyPlant(0.0)
-            parser = Parser(controller_plant)
-            ConfigureParser(parser)
-            controller_models: List[ModelInstanceIndex] = parser.AddModelsFromUrl(
-                "package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf"
-            )
-            assert len(controller_models) == 1
-            gen3_controller_model_idx = controller_models[0]
-
-            controller_plant.WeldFrames(
-                controller_plant.world_frame(),
-                controller_plant.GetFrameByName("base_link", gen3_controller_model_idx),
-                RigidTransform(),
-            )
-            controller_plant.AddFrame(
-                FixedOffsetFrame(
-                    "tool_frame",
-                    controller_plant.GetFrameByName("end_effector_frame"),
-                    RigidTransform([0, 0, 0.12]),
-                )
-            )
-            controller_plant.Finalize()
-            builder.AddNamedSystem(
-                f"{model_name}_controller_plant", SharedPointerSystem(controller_plant)
-            )
             interface_subsystem = builder.AddNamedSystem(
                 "gen3_interface",
                 Gen3HardwareInterface(
