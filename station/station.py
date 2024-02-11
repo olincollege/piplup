@@ -141,7 +141,6 @@ def MakeHardwareStationInterface(
                 Gen3HardwareInterface(
                     hardware_interface.ip_address,
                     hardware_interface.port,
-                    Gen3ControlMode(model_driver.control_mode),
                     gen3_model.hand_model_name,
                     sim_plant,
                 ),

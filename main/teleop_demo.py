@@ -14,7 +14,7 @@ from station import (
     GamepadTeleopController,
 )
 
-from perception import MakePointCloudGenerator
+from graphviz import Source
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -36,30 +36,6 @@ def run(*, scenario: Scenario, graphviz=None):
         "gamepad_control",
         GamepadTeleopController(meshcat, controller_plant, gripper_name),
     )
-
-    camera_info: {str: CameraInfo} = {}
-    cameras = list(scenario.cameras.keys())
-
-    for camera in cameras:
-        camera_info[camera] = hardware_station.GetSubsystemByName(
-            f"rgbd_sensor_{camera}"
-        ).depth_camera_info()
-
-    point_cloud_generator: Diagram = builder.AddNamedSystem(
-        "point_cloud_generator",
-        MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
-    )
-
-    for camera in cameras:
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
-            point_cloud_generator.GetInputPort(f"{camera}_pose"),
-        )
-
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
-            point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
-        )
 
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),
@@ -93,32 +69,20 @@ def run(*, scenario: Scenario, graphviz=None):
 
     # Visualize the diagram, when requested.
     options = {"plant/split": "I/O"}
-    if graphviz is not None:
-        with open(graphviz, "w", encoding="utf-8") as f:
-            f.write(diagram.GetGraphvizString(options=options))
+    if graphviz:
+        if isinstance(graphviz, str):
+            with open(graphviz, "w", encoding="utf-8") as f:
+                f.write(diagram.GetGraphvizString(options=options))
 
-        plt.figure()
-        plot_system_graphviz(diagram, options=options)
-        plt.show()
-
-    camera_info: {str: CameraInfo} = {}
-    cameras = list(scenario.cameras.keys())
-
-    # for camera in cameras:
-    img_color = (
-        hardware_station.GetOutputPort("camera0.color_image")
-        .Eval(hardware_station.CreateDefaultContext())
-        .data
-    )
-    f, axarr = plt.subplots(1, 2)
-    axarr[0].imshow(img_color)
-    img_depth = (
-        hardware_station.GetOutputPort("camera0.depth_image_32f")
-        .Eval(hardware_station.CreateDefaultContext())
-        .data
-    )
-    axarr[1].imshow(img_depth)
-    plt.show()
+        s = Source(
+            hardware_station.GetSubsystemByName("Gen3Driver(gen3)").GetGraphvizString(
+                options=options
+            ),
+            filename="test.gv",
+            format="png",
+        )
+        s.view()
+        # plot_system_graphviz(diagram, options=options)
 
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)
@@ -134,12 +98,17 @@ def main():
         choices=["TeleopSuctionGripper", "TeleopPlanarGripper"],
         default="TeleopPlanarGripper",
     )
+    parser.add_argument(
+        "--graph_viz",
+        "-g",
+        action="store_true",
+    )
     args = parser.parse_args()
     scenario = load_scenario(
         filename="models/teleop_scenarios.yaml",
         scenario_name=args.scenario_name,
     )
-    run(scenario=scenario, graphviz=None)
+    run(scenario=scenario, graphviz=args.graph_viz)
 
 
 if __name__ == "__main__":

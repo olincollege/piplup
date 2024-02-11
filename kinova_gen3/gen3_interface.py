@@ -35,26 +35,21 @@ class Gen3InterfaceConfig:
 
 
 class Gen3HardwareInterface(LeafSystem):
-    def __init__(
-        self, ip_address, port, control_mode, hand_model_name, sim_plant: MultibodyPlant
-    ):
+    def __init__(self, ip_address, port, hand_model_name, sim_plant: MultibodyPlant):
         LeafSystem.__init__(self)
-        self.control_mode = control_mode
         self.hand_model_name = hand_model_name
         self.sim_plant = sim_plant
         self.root_ctx = None
-        if control_mode == Gen3ControlMode.kPosition:
-            self.arm_position_input_port = self.DeclareVectorInputPort(
-                "position", kGen3ArmNumJoints
-            )
-        elif control_mode == Gen3ControlMode.kPose:
-            self.arm_pose_input_port = self.DeclareAbstractInputPort(
-                "pose", Value(RigidTransform())
-            )
-        elif control_mode == Gen3ControlMode.kTwist:
-            self.arm_twist_input_port = self.DeclareVectorInputPort("twist", 6)
-        else:
-            raise RuntimeError(f"Unsupported control mode {control_mode}")
+
+        # 7 values are one of the following:
+        #   joint positions
+        #   joint velocities
+        #   pose (wxyz, xyz)
+        #   twist (rpy, xyz, 0)
+        self.arm_command_input_port = self.DeclareVectorInputPort("command", 7)
+        self.control_mode_input_port = self.DeclareVectorInputPort(
+            "control_mode", AbstractValue.Make(Gen3ControlMode.kPose)
+        )
 
         if hand_model_name == "2f_85":
             self.gripper_command_input_port = self.DeclareVectorInputPort(
@@ -153,7 +148,6 @@ class Gen3HardwareInterface(LeafSystem):
 
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-
         # TODO this is a bad way to do this:
         ## ------
         t = context.get_time()
@@ -184,52 +178,55 @@ class Gen3HardwareInterface(LeafSystem):
             finger.value = self.gripper_command_input_port.Eval(context)[0]
             self.base.SendGripperCommand(gripper_command)
 
-        if self.control_mode == Gen3ControlMode.kPosition:
-            print(self.arm_position_input_port.Eval(context))
-        elif self.control_mode == Gen3ControlMode.kPose:
-            pose: RigidTransform = self.arm_pose_input_port.Eval(context)
-            translation = pose.translation()
-            rpy = RollPitchYaw(pose.rotation())
-            action = Base_pb2.Action()
-            action.name = "End-effector pose command"
-            action.application_data = ""
+        control_mode: Gen3ControlMode = self.control_mode_input_port.Eval(context)
 
-            cartesian_pose = action.reach_pose.target_pose
-            cartesian_pose.theta_x = np.degrees(rpy.roll_angle())
-            cartesian_pose.theta_y = np.degrees(rpy.pitch_angle())
-            cartesian_pose.theta_z = np.degrees(rpy.yaw_angle())
-            cartesian_pose.x = translation[0]
-            cartesian_pose.y = translation[1]
-            cartesian_pose.z = translation[2]
+        match control_mode:
+            case Gen3ControlMode.kPosition:
+                print(self.arm_position_input_port.Eval(context))
+            case Gen3ControlMode.kPose:
+                pose: RigidTransform = self.arm_pose_input_port.Eval(context)
+                translation = pose.translation()
+                rpy = RollPitchYaw(pose.rotation())
+                action = Base_pb2.Action()
+                action.name = "End-effector pose command"
+                action.application_data = ""
 
-            e = threading.Event()
-            notification_handle = self.base.OnNotificationActionTopic(
-                self.check_for_end_or_abort(e), Base_pb2.NotificationOptions()
-            )
+                cartesian_pose = action.reach_pose.target_pose
+                cartesian_pose.theta_x = np.degrees(rpy.roll_angle())
+                cartesian_pose.theta_y = np.degrees(rpy.pitch_angle())
+                cartesian_pose.theta_z = np.degrees(rpy.yaw_angle())
+                cartesian_pose.x = translation[0]
+                cartesian_pose.y = translation[1]
+                cartesian_pose.z = translation[2]
 
-            self.base.ExecuteAction(action)
+                e = threading.Event()
+                notification_handle = self.base.OnNotificationActionTopic(
+                    self.check_for_end_or_abort(e), Base_pb2.NotificationOptions()
+                )
 
-            TIMEOUT_DURATION = 20  # seconds
-            finished = e.wait(TIMEOUT_DURATION)
-            self.base.Unsubscribe(notification_handle)
-        elif self.control_mode == Gen3ControlMode.kTwist:
-            cmd_twist = self.arm_twist_input_port.Eval(context)
-            command = Base_pb2.TwistCommand()
-            command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_BASE
-            command.duration = 0
+                self.base.ExecuteAction(action)
 
-            twist = command.twist
-            twist.angular_x = np.degrees(cmd_twist[0])
-            twist.angular_y = np.degrees(cmd_twist[1])
-            twist.angular_z = np.degrees(cmd_twist[2])
-            twist.linear_x = cmd_twist[3]
-            twist.linear_y = cmd_twist[4]
-            twist.linear_z = cmd_twist[5]
+                TIMEOUT_DURATION = 20  # seconds
+                finished = e.wait(TIMEOUT_DURATION)
+                self.base.Unsubscribe(notification_handle)
+            case Gen3ControlMode.kTwist:
+                cmd_twist = self.arm_twist_input_port.Eval(context)
+                command = Base_pb2.TwistCommand()
+                command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_BASE
+                command.duration = 0
 
-            # Note: this API call takes about 25ms
-            self.base.SendTwistCommand(command)
-        else:
-            raise RuntimeError(f"Unsupported control mode {self.control_mode}")
+                twist = command.twist
+                twist.angular_x = np.degrees(cmd_twist[0])
+                twist.angular_y = np.degrees(cmd_twist[1])
+                twist.angular_z = np.degrees(cmd_twist[2])
+                twist.linear_x = cmd_twist[3]
+                twist.linear_y = cmd_twist[4]
+                twist.linear_z = cmd_twist[5]
+
+                # Note: this API call takes about 25ms
+                self.base.SendTwistCommand(command)
+            case _:
+                raise RuntimeError(f"Unsupported control mode {control_mode}")
 
     def CalcArmPosition(self, context, output):
         """
