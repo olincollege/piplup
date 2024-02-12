@@ -21,7 +21,7 @@ from planning import PorosityPlanner
 def run(*, scenario: Scenario):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
-    
+
     porosity_planner: PorosityPlanner = builder.AddNamedSystem(
         "porosity_planner", PorosityPlanner()
     )
@@ -30,8 +30,14 @@ def run(*, scenario: Scenario):
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
 
-
-    # builder.Connect(porosity_planner.GetOutputPort(), hardware_station.GetInputPort())
+    builder.Connect(
+        porosity_planner.GetOutputPort("control_mode"),
+        hardware_station.GetInputPort("gen3.control_mode"),
+    )
+    builder.Connect(
+        porosity_planner.GetOutputPort("arm_command"),
+        hardware_station.GetInputPort("gen3.command"),
+    )
     # builder.Connect(hardware_station.GetOutputPort(), porosity_planner.GetInputPort())
 
     diagram: Diagram = builder.Build()
@@ -48,8 +54,8 @@ def run(*, scenario: Scenario):
 
 def main():
     scenario = load_scenario(
-        filename="models/teleop_scenarios_hardware.yaml",
-        scenario_name="TeleopSuctionGripper",
+        filename="models/porosity_scenario.yaml",
+        scenario_name="PorosityDemo",
     )
     run(scenario=scenario)
 
