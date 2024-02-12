@@ -2,7 +2,7 @@ from pydrake.all import *
 from enum import Enum, auto
 from epick_interface import ObjectDetectionStatus
 
-from kinova_gen3 import Gen3ControlMode, Gen3NamedPosition
+from kinova_gen3 import Gen3ControlMode, Gen3NamedPosition, kGen3NamedPositions
 
 
 class PorosityPlannerState(Enum):
@@ -36,55 +36,42 @@ class PorosityPlanner(LeafSystem):
         # ).get_index()
 
         # Output Ports
-        self.DeclareVectorOutputPort("arm_command", 7, self.CalcGen3Command)
+        # self.DeclareVectorOutputPort("arm_command", 7, self.CalcGen3Command)
+        self.DeclareStateOutputPort("arm_command", self.command_idx_)
         self.DeclareStateOutputPort("control_mode", self.control_mode_idx_)
 
         # self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
-        self.DeclarePeriodicUnrestrictedUpdateEvent(0.1, 0.0, self.Update)
+        self.DeclarePeriodicUnrestrictedUpdateEvent(0.0001, 0.0, self.Update)
 
     def change_planner_state(self, state: State, new_state: PorosityPlannerState):
         state.get_mutable_abstract_state(self.planner_state_idx_).set_value(new_state)
+
+    def change_command_mode(self, state: State, new_mode: Gen3ControlMode):
+        state.get_mutable_abstract_state(self.control_mode_idx_).set_value(new_mode)
 
     def Update(self, context: Context, state: State):
         planner_state = context.get_abstract_state(self.planner_state_idx_).get_value()
         print(planner_state)
         match planner_state:
             case PorosityPlannerState.INIT:
-                state.get_mutable_discrete_state(self.command_idx_).set_value(
-                    np.zeros(7)
-                )
-
-                # state.get_mutable_abstract_state(self.planner_state_idx_).set_value(
-                #     PorosityPlannerState.MOVE_TO_NEUTRAL
-                # )
+                self.change_planner_state(state, PorosityPlannerState.MOVE_TO_NEUTRAL)
             case PorosityPlannerState.MOVE_TO_NEUTRAL:
-                state.get_mutable_abstract_state(self.control_mode_idx_).set_value(
-                    Gen3ControlMode.kPosition
+                self.change_command_mode(state, Gen3ControlMode.kPosition)
+                state.get_mutable_discrete_state(self.command_idx_).set_value(
+                    kGen3NamedPositions[Gen3NamedPosition.NEUTRAL]
                 )
-                state.get_mutable_abstract_state(self.planner_state_idx_).set_value(
-                    PorosityPlannerState.SCAN_MANIPULAND
-                )
+                self.change_planner_state(state, PorosityPlannerState.SCAN_MANIPULAND)
             case PorosityPlannerState.SCAN_MANIPULAND:
-                # TODO Eval the point cloud port
-                state.get_mutable_abstract_state(self.planner_state_idx_).set_value(
-                    PorosityPlannerState.CALC_PICK_POSE
-                )
-            case PorosityPlannerState.CALC_PICK_POSE:
-                state.get_mutable_abstract_state(self.planner_state_idx_).set_value(
-                    PorosityPlannerState.MOVE_TO_PRE_PICK
-                )
-            case PorosityPlannerState.MOVE_TO_PRE_PICK:
-                state.get_mutable_abstract_state(self.planner_state_idx_).set_value(
-                    PorosityPlannerState.GO_TO_HOME
-                )
-            case PorosityPlannerState.MOVE_TO_PICK:
-                state.get_mutable_abstract_state(self.planner_state_idx_).set_value(
-                    PorosityPlannerState.GO_TO_HOME
-                )
+                print("Scaning Objects...")
+            #     # TODO Eval the point cloud port
+            # case PorosityPlannerState.CALC_PICK_POSE:
+            # case PorosityPlannerState.MOVE_TO_PRE_PICK:
+            # case PorosityPlannerState.MOVE_TO_PICK:
             case _:
                 print("Invalid Planner State")
 
     def CalcGen3Command(self, context: Context, output: BasicVector):
-        cmd = context.get_mutable_abstract_state(self.command_idx_).get_value()
+        cmd = context.get_discrete_state(self.command_idx_)
+        print(self.command_idx_)
 
         output.SetFromVector(cmd)

@@ -52,7 +52,7 @@ class Gen3HardwareInterface(LeafSystem):
         #   pose (wxyz, xyz)
         #   twist (rpy, xyz, 0)
         self.arm_command_input_port = self.DeclareVectorInputPort("command", 7)
-        self.control_mode_input_port = self.DeclareVectorInputPort(
+        self.control_mode_input_port = self.DeclareAbstractInputPort(
             "control_mode", AbstractValue.Make(Gen3ControlMode.kPose)
         )
 
@@ -220,17 +220,14 @@ class Gen3HardwareInterface(LeafSystem):
         for joint_id in range(actuator_count.count):
             joint_angle = action.reach_joint_angles.joint_angles.joint_angles.add()
             joint_angle.joint_identifier = joint_id
-            joint_angle.value = joint_positions[joint_id]
+            joint_angle.value = np.degrees(joint_positions[joint_id])
 
         e = threading.Event()
         notification_handle = self.base.OnNotificationActionTopic(
             self.check_for_end_or_abort(e), Base_pb2.NotificationOptions()
         )
 
-        print("Executing action")
         self.base.ExecuteAction(action)
-
-        print("Waiting for movement to finish ...")
         TIMEOUT_DURATION = 20  # seconds
         finished = e.wait(TIMEOUT_DURATION)
         self.base.Unsubscribe(notification_handle)
