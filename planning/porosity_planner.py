@@ -42,6 +42,9 @@ class PorosityPlanner(LeafSystem):
         # self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
         self.DeclarePeriodicUnrestrictedUpdateEvent(0.1, 0.0, self.Update)
 
+    def change_planner_state(self, state: State, new_state: PorosityPlannerState):
+        state.get_mutable_abstract_state(self.planner_state_idx_).set_value(new_state)
+
     def Update(self, context: Context, state: State):
         planner_state = context.get_abstract_state(self.planner_state_idx_).get_value()
         print(planner_state)
