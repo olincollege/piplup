@@ -22,10 +22,14 @@ class Gen3ControlMode(Enum):
 class Gen3NamedPosition(Enum):
     SLEEP = auto()
     NEUTRAL = auto()
+    CAMCLEAR = auto()
 
 
 kGen3NamedPositions: dict[Gen3NamedPosition, np.ndarray] = {
-    Gen3NamedPosition.NEUTRAL: np.array([0.0, 0.56, 0.0, 1.02, 0.0, 1.29, 0.0]),
+    Gen3NamedPosition.NEUTRAL: np.array([0.0, 0.477, 0.0, 1.32, 0.0, 1.33, 0.0]),
+    Gen3NamedPosition.CAMCLEAR: np.array(
+        [0.0, 5.91667, 0.0, 2.30383, 0.0, 1.13446, 0.0]
+    ),
     Gen3NamedPosition.SLEEP: np.array([]),
 }
 

@@ -8,6 +8,7 @@ from kinova_gen3 import Gen3ControlMode, Gen3NamedPosition, kGen3NamedPositions
 class PorosityPlannerState(Enum):
     INIT = auto()
     MOVE_TO_NEUTRAL = auto()
+    MOVE_TO_PRE_SCAN = auto()
     SCAN_MANIPULAND = auto()
     CALC_PICK_POSE = auto()
     MOVE_TO_PRE_PICK = auto()
@@ -60,12 +61,23 @@ class PorosityPlanner(LeafSystem):
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     kGen3NamedPositions[Gen3NamedPosition.NEUTRAL]
                 )
+                self.change_planner_state(state, PorosityPlannerState.MOVE_TO_PRE_SCAN)
+            case PorosityPlannerState.MOVE_TO_PRE_SCAN:
+                self.change_command_mode(state, Gen3ControlMode.kPosition)
+                state.get_mutable_discrete_state(self.command_idx_).set_value(
+                    kGen3NamedPositions[Gen3NamedPosition.CAMCLEAR]
+                )
                 self.change_planner_state(state, PorosityPlannerState.SCAN_MANIPULAND)
             case PorosityPlannerState.SCAN_MANIPULAND:
                 print("Scaning Objects...")
+                self.change_planner_state(state, PorosityPlannerState.MOVE_TO_PRE_PICK)
             #     # TODO Eval the point cloud port
             # case PorosityPlannerState.CALC_PICK_POSE:
-            # case PorosityPlannerState.MOVE_TO_PRE_PICK:
+            case PorosityPlannerState.MOVE_TO_PRE_PICK:
+                self.change_command_mode(state, Gen3ControlMode.kPose)
+                state.get_mutable_discrete_state(self.command_idx_).set_value(
+                    np.array([0, 3.14, 0, 0.5, 0, 0.3, 0])
+                )
             # case PorosityPlannerState.MOVE_TO_PICK:
             case _:
                 print("Invalid Planner State")

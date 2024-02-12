@@ -287,8 +287,8 @@ class Gen3HardwareInterface(LeafSystem):
             case Gen3ControlMode.kVelocity:
                 self.SendVelocityCommand(command)
             case Gen3ControlMode.kPose:
-                translation = command[4:]
-                rpy = RollPitchYaw(Quaternion(command[:4]))
+                translation = command[3:-1]
+                rpy = RollPitchYaw(command[:3])
                 self.SendPoseCommand(translation, rpy)
             case Gen3ControlMode.kTwist:
                 self.SendTwistCommand(command[:6])
