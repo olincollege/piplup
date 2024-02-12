@@ -79,9 +79,9 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
         plot_system_graphviz(diagram, options=options)
         plt.show()
 
-    hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
-        simulator.get_mutable_context()
-    )
+    hardware_station.GetSubsystemByName(
+        "gen3_interface"
+    ).root_ctx = simulator.get_mutable_context()
 
     hardware_station.GetInputPort(f"gen3.control_mode").FixValue(
         hardware_station.GetMyContextFromRoot(simulator.get_context()),

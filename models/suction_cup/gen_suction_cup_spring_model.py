@@ -136,9 +136,9 @@ for cup_idx in range(kNumCups):
         angle = 2 * np.pi / kNumEdgePtsPerCup * edge_pt_idx
         collision = ET.SubElement(link, "collision")
         collision.set("name", f"cup_{cup_idx}_edge_pt_{edge_pt_idx}_collision")
-        ET.SubElement(collision, "pose").text = (
-            f"{(kCupOuterDiameter / 2) * np.cos(angle)} {(kCupOuterDiameter / 2) * np.sin(angle)} {-kCupEdgeHeight} 0 0 0"
-        )
+        ET.SubElement(
+            collision, "pose"
+        ).text = f"{(kCupOuterDiameter / 2) * np.cos(angle)} {(kCupOuterDiameter / 2) * np.sin(angle)} {-kCupEdgeHeight} 0 0 0"
         geometry = ET.SubElement(collision, "geometry")
         sphere = ET.SubElement(geometry, "sphere")
         ET.SubElement(sphere, "radius").text = str(kCupEdgePtDiameter / 2)
