@@ -18,6 +18,7 @@ namespace piplup
           , multibody_plant_(multibody_plant)
           , camera_base_frame_(camera_config.X_PB.base_frame.value())
           , camera_name_(camera_config.name)
+          , X_BD_(camera_config.X_BD.GetDeterministicValue())
         {
             double polling_rate = 0.001;
             color_state_idx_ = this->DeclareAbstractState(
@@ -121,11 +122,13 @@ namespace piplup
         void RealSenseD400::CalcX_WB(const systems::Context<double> & context,
                                      math::RigidTransformd * output) const
         {
-            *output = multibody_plant_.CalcRelativeTransform(
-                *multibody_plant_.CreateDefaultContext(),
-                multibody_plant_.world_frame(),
-                multibody_plant_.GetFrameByName(
-                    "base", multibody_plant_.GetModelInstanceByName(camera_name_)));
+            *output =
+                multibody_plant_.CalcRelativeTransform(
+                    *multibody_plant_.CreateDefaultContext(),
+                    multibody_plant_.world_frame(),
+                    multibody_plant_.GetFrameByName(
+                        "base", multibody_plant_.GetModelInstanceByName(camera_name_)))
+                * X_BD_;
         }
 
     } // namespace realsense

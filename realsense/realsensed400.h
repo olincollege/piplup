@@ -58,6 +58,7 @@ namespace piplup
             const multibody::MultibodyPlant<double> & multibody_plant_;
             std::string camera_base_frame_;
             std::string camera_name_;
+            math::RigidTransformd X_BD_;
         };
     } // namespace realsense
 } // namespace piplup

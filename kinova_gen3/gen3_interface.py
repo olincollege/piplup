@@ -153,7 +153,6 @@ class Gen3HardwareInterface(LeafSystem):
 
     # def Integrate(self, context: Context, discrete_state: DiscreteValues):
     def DoCalcTimeDerivatives(self, context, continuous_state):
-
         # TODO this is a bad way to do this:
         ## ------
         t = context.get_time()
