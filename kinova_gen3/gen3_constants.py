@@ -12,12 +12,22 @@ class Gen3ControlLevel(Enum):
 
 class Gen3ControlMode(Enum):
     kPosition = auto()
-    # kVelocity = auto()
+    kVelocity = auto()
     # kTorque = auto()
     kPose = auto()
     kTwist = auto()
     # kWrench = auto()
 
+
+class Gen3NamedPosition(Enum):
+    SLEEP = auto()
+    NEUTRAL = auto()
+
+
+kGen3NamedPositions: dict[Gen3NamedPosition, np.ndarray] = {
+    Gen3NamedPosition.NEUTRAL: np.array([0.0, 0.56, 0.0, 1.02, 0.0, 1.29, 0.0]),
+    Gen3NamedPosition.SLEEP: np.array([]),
+}
 
 kGen3ArmNumJoints: int = 7
 kGen3KortexAPIPeriod: float = 0.025  # 40hz
