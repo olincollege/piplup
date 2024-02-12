@@ -44,10 +44,10 @@ def MakeHardwareStation(
 
     if scenario.hardware_interface:
         # Set the actuation of the sim plant to 0
-        zero_actuation_sys = builder.AddSystem(ConstantVectorSource(np.zeros(9)))
-        builder.Connect(
-            zero_actuation_sys.get_output_port(0), sim_plant.get_actuation_input_port()
-        )
+        # zero_actuation_sys = builder.AddSystem(ConstantVectorSource(np.zeros(9)))
+        # builder.Connect(
+        #     zero_actuation_sys.get_output_port(0), sim_plant.get_actuation_input_port()
+        # )
 
         return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
     # tf = sim_plant.CalcRelativeTransform(sim_plant.CreateDefaultContext(), sim_plant.world_frame(), sim_plant.GetFrameByName('image_frame', sim_plant.GetModelInstanceByName('camera4')))
