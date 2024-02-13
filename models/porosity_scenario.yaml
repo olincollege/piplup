@@ -5,6 +5,8 @@ PorosityDemo:
     - add_weld:
         parent: world
         child: gen3::base_link
+        X_PC:
+            translation: [0.09, 0.04, 0.0]
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
 
@@ -18,5 +20,5 @@ PorosityDemo:
     gen3: !Gen3InterfaceConfig
       ip_address: 192.168.1.10
       port: 10000
-    # epick: !EPickInterfaceConfig
-    #   serial_port: /dev/ttyUSB1
+    epick: !EPickInterfaceConfig
+      serial_port: /dev/ttyUSB1

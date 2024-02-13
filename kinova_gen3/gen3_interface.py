@@ -44,6 +44,14 @@ class Gen3HardwareInterface(LeafSystem):
         LeafSystem.__init__(self)
         self.hand_model_name = hand_model_name
         self.sim_plant = sim_plant
+        # World to robot base
+        self.X_WB_inv: RigidTransform = self.sim_plant.CalcRelativeTransform(
+            self.sim_plant.CreateDefaultContext(),
+            self.sim_plant.world_frame(),
+            self.sim_plant.GetFrameByName("base_link"),
+            self.sim_plant.GetModelInstanceByName("gen3"),
+        ).inverse()
+
         self.root_ctx = None
 
         # 7 values are one of the following:
@@ -289,7 +297,11 @@ class Gen3HardwareInterface(LeafSystem):
             case Gen3ControlMode.kPose:
                 translation = command[3:-1]
                 rpy = RollPitchYaw(command[:3])
-                self.SendPoseCommand(translation, rpy)
+                # X_WE = X_WB @ X_BE
+                X_BE = self.X_WB_inv = RigidTransform(rpy.ToQuaternion(), translation)
+                self.SendPoseCommand(
+                    X_BE.translation(), X_BE.rotation().ToRollPitchYaw()
+                )
             case Gen3ControlMode.kTwist:
                 self.SendTwistCommand(command[:6])
             case _:
