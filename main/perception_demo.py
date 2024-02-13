@@ -14,7 +14,6 @@ from station import (
 )
 
 from perception import MakePointCloudGenerator
-
 import cv2
 
 
@@ -66,6 +65,122 @@ class PoseTransform(LeafSystem):
         output.get_mutable_value().set(pose.rotation(), pose.translation())
 
 
+def AddMeshcatTriad(
+    meshcat: Meshcat,
+    path: str,
+    length: float = 0.25,
+    radius: float = 0.01,
+    opacity: float = 1.0,
+    X_PT: RigidTransform = RigidTransform(),
+):
+    """Adds an X-Y-Z triad to the meshcat scene.
+
+    Args:
+        meshcat: A Meshcat instance.
+        path: The Meshcat path on which to attach the triad. Using relative paths will attach the triad to the path's coordinate system.
+        length: The length of the axes in meters.
+        radius: The radius of the axes in meters.
+        opacity: The opacity of the axes in [0, 1].
+        X_PT: The pose of the triad relative to the path.
+    """
+    meshcat.SetTransform(path, X_PT)
+    # x-axis
+    X_TG = RigidTransform(RotationMatrix.MakeYRotation(np.pi / 2), [length / 2.0, 0, 0])
+    meshcat.SetTransform(path + "/x-axis", X_TG)
+    meshcat.SetObject(
+        path + "/x-axis", Cylinder(radius, length), Rgba(1, 0, 0, opacity)
+    )
+
+    # y-axis
+    X_TG = RigidTransform(RotationMatrix.MakeXRotation(np.pi / 2), [0, length / 2.0, 0])
+    meshcat.SetTransform(path + "/y-axis", X_TG)
+    meshcat.SetObject(
+        path + "/y-axis", Cylinder(radius, length), Rgba(0, 1, 0, opacity)
+    )
+
+    # z-axis
+    X_TG = RigidTransform([0, 0, length / 2.0])
+    meshcat.SetTransform(path + "/z-axis", X_TG)
+    meshcat.SetObject(
+        path + "/z-axis", Cylinder(radius, length), Rgba(0, 0, 1, opacity)
+    )
+
+
+class SuctionGraspSelector(LeafSystem):
+    def __init__(self, meshcat):
+        LeafSystem.__init__(self)
+
+        self.point_cloud_port_ = self.DeclareAbstractInputPort(
+            "merged_point_cloud", AbstractValue.Make(PointCloud())
+        )
+        self.meshcat: Meshcat = meshcat
+        self.DeclareAbstractOutputPort(
+            "grasp_selection",
+            lambda: AbstractValue.Make((np.inf, RigidTransform())),
+            self.SelectGrasp,
+        )
+
+        self._rng = np.random.default_rng()
+        self.cup_diam = 0.04
+        self.cup_depth = 0.005
+        self.meshcat.SetObject(
+            "/cropping_box",
+            Cylinder(self.cup_diam / 2, self.cup_depth),
+            rgba=Rgba(0, 1, 0, 0.25),
+        )
+
+    def SelectGrasp(self, context: Context, output: AbstractValue):
+        pc: PointCloud = self.point_cloud_port_.Eval(context)
+
+        candidates = []
+        scores = []
+        crops = []
+        for i in range(100):
+            index = self._rng.integers(0, pc.size() - 1)
+            p_WS = pc.xyz(index)
+            n_WS = pc.normal(index)
+            if np.abs(np.dot(np.array([0.0, 0.0, -1.0]), n_WS)) < 1e-6:
+                continue
+
+            # Crop to surrounding region
+            Gy = np.cross(n_WS, np.array([0, 0, 1]))
+            Gy = Gy / np.linalg.norm(Gy)  # normalize
+            Gx = np.cross(Gy, n_WS)
+            R_WG = RotationMatrix(np.vstack((Gx, Gy, n_WS)).T)
+            lower = R_WG @ (
+                -np.array([self.cup_diam, self.cup_diam, self.cup_depth]) / 2
+            )
+            upper = R_WG @ (
+                np.array([self.cup_diam, self.cup_diam, self.cup_depth]) / 2
+            )
+            p1 = np.minimum(lower, upper)
+            p2 = np.maximum(lower, upper)
+
+            cropped = pc.Crop(p_WS + p1, p_WS + p2)
+
+            if (
+                cropped.size() > 70
+                and np.abs(np.dot(np.array([0.0, 0.0, 1.0]), n_WS)) > 0.8
+            ):
+                score = p_WS[2]
+                scores.append(score)
+                candidates.append(RigidTransform(R_WG, p_WS))
+                crops.append(cropped)
+
+        if scores:
+            i = np.array(scores).argmax()
+            G = candidates[i]
+            AddMeshcatTriad(self.meshcat, "/test", length=0.02, radius=0.001, X_PT=G)
+            cropped = crops[i]
+            self.meshcat.SetObject(
+                "/cropped", cropped, point_size=0.003, rgba=Rgba(0, 1, 0, 1)
+            )
+            self.meshcat.SetTransform("/cropping_box", G)
+            output.set_value((scores[i], G))
+        else:
+            output.set_value((0, RigidTransform()))
+
+
 def run(*, scenario: Scenario, visualize=False):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
@@ -84,6 +199,10 @@ def run(*, scenario: Scenario, visualize=False):
     point_cloud_generator: Diagram = builder.AddNamedSystem(
         "point_cloud_generator",
         MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
+    )
+
+    suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
+        "suction_grasp_selector", SuctionGraspSelector(meshcat)
     )
 
     for camera in cameras:
@@ -118,6 +237,10 @@ def run(*, scenario: Scenario, visualize=False):
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 
+    builder.Connect(
+        point_cloud_generator.GetOutputPort("merged_point_cloud"),
+        suction_grasp.GetInputPort("merged_point_cloud"),
+    )
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -125,15 +248,18 @@ def run(*, scenario: Scenario, visualize=False):
     ApplySimulatorConfig(scenario.simulator_config, simulator)
 
     simulator.Initialize()
-    from graphviz import Source
 
-    s = Source(diagram.GetGraphvizString(), filename="test.gv", format="png")
-    s.view()
+    # from graphviz import Source
+    # s = Source(diagram.GetGraphvizString(), filename="test.gv", format="png")
+    # s.view()
 
     # Simulate.
     while True:
         try:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
+            suction_grasp.GetOutputPort("grasp_selection").Eval(
+                suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            )
             if visualize:
                 for camera in cameras:
                     img_color = (

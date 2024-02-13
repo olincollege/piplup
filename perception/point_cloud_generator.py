@@ -111,7 +111,9 @@ class PointCloudProcessor(LeafSystem):
             X_WC = pose_port.Eval(context)
             clouds[i].FlipNormalsTowardPoint(X_WC.translation())
         # Merge clouds
-        output.set_value(Concatenate(clouds=clouds))
+        output.set_value(
+            Concatenate(clouds=clouds).VoxelizedDownSample(voxel_size=0.005)
+        )
 
         # Save point cloud for perception system testing
         # np.save('/home/ali1/code/piplup/test_data/point_cloud.npy', merged_cloud.xyzs())
