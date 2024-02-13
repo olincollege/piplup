@@ -8,7 +8,7 @@ import torch
 
 
 class ImageSegmenter(LeafSystem):
-    def __init__(self, camera: str, focus_coordinates: list[tuple[int, int]] = None, object_coordinates: list[tuple[int, int]] = None, 
+    def __init__(self, camera: str, top_left_coordinate: tuple[int, int] = None, bottom_right_coordinate: tuple[int, int] = None, object_coordinates: list[tuple[int, int]] = None, 
                  background_coordinates: list[tuple[int, int]] = None, hz: int = 60):
         '''
             Focus coordinates are in the format ((top_left_x, top_left_y), (bottom_right_x, bottom_right_y))
@@ -16,17 +16,19 @@ class ImageSegmenter(LeafSystem):
 
         super().__init__()
 
-        self.focus_coordinates = focus_coordinates
+        self.top_left_coordinate = top_left_coordinate
+        self.bottom_right_coordinate = bottom_right_coordinate
+        self.background_coordinates = background_coordinates
         self.object_coordinates = object_coordinates
         self.background_coordinates = background_coordinates
         
         self.camera = camera
 
         self.depth_image_input_port = self.DeclareAbstractInputPort(
-            "depth_image", AbstractValue.Make(Image[PixelType.kDepth32F]())
+            f"{camera}_depth_image", AbstractValue.Make(Image[PixelType.kDepth32F]())
         )
         self.color_image_input_port = self.DeclareAbstractInputPort(
-            "color_image", AbstractValue.Make(Image[PixelType.kRgba8U]())
+            f"{camera}_color_image", AbstractValue.Make(Image[PixelType.kRgba8U]())
         )
 
         self.masked_depth_image = self.DeclareAbstractOutputPort(
@@ -39,16 +41,32 @@ class ImageSegmenter(LeafSystem):
         color_image = self.EvalAbstractInput(
             context, self.color_image_input_port.get_index()
         ).get_value()
+
+        if self.top_left_coordinate and self.bottom_right_coordinate:
+            top_left_x, top_left_y = self.top_left_coordinate
+            bottom_right_x, bottom_right_y = self.bottom_right_coordinate
+            print(top_left_x, top_left_y, bottom_right_x, bottom_right_y)
+            print(color_image.data.shape)
+            mask = np.zeros((480, 640))
+
+            mask[top_left_y:bottom_right_y+1, top_left_x:bottom_right_x+1] = 1
+
+            for i in range(color_image.height()):
+                for j in range(color_image.width()):
+                    if mask[i][j] == 0:
+                        for c in range(4):
+                            color_image.at(j, i)[c] = 0
+            
         color_image_matrix = np.array(color_image.data, copy=False).reshape(
             color_image.height(), color_image.width(), -1
         )
 
         mask = self.get_mask(color_image_matrix)
-        print(mask.shape)
+
         depth_image = self.EvalAbstractInput(
             context, self.depth_image_input_port.get_index()
         ).get_value()
-        print(depth_image.shape)
+
         for i in range(depth_image.height()):
             for j in range(depth_image.width()):
                 if mask[i][j] == 0:
@@ -56,7 +74,7 @@ class ImageSegmenter(LeafSystem):
 
         output.set_value(depth_image)
 
-    def get_mask(self, color_image: np.ndarray, bounding_box: List[int] = None) -> np.ndarray:
+    def get_mask(self, color_image: np.ndarray) -> np.ndarray:
 
         model = FastSAM('/home/piplup/piplup/perception/weights/FastSAM.pt')
         DEVICE = torch.device(
@@ -71,10 +89,18 @@ class ImageSegmenter(LeafSystem):
             device=DEVICE,
             retina_masks=True,
             imgsz=1024,
-            conf=0.4,
+            conf=0.8,
             iou=0.9,
         )
 
         prompt_process = FastSAMPrompt(color_image, everything_results, device=DEVICE)
-        ann = prompt_process.point_prompt(points=[[220, 350],[300,190]], pointlabel=[1, 0])
+
+        if self.object_coordinates and self.background_coordinates:
+            points = [*self.object_coordinates, *self.background_coordinates]
+            pointlabel = [*[*[1]*len(self.object_coordinates)], *[*[0]*len(self.object_coordinates)]]
+        else:
+            points = [[0, 0], [1, 1]]
+            pointlabel = [0, 1]
+
+        ann = prompt_process.point_prompt(points=points, pointlabel=pointlabel)
         return ann.squeeze()
