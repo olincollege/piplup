@@ -31,6 +31,7 @@ def MakePointCloudGenerator(
                 pixel_type=PixelType.kDepth16U,
                 scale=1.0
                 / 1000.0,  # 16 bit depth is in millimeters not meters :( - Krishna
+                fields=BaseField.kXYZs | BaseField.kNormals,
             ),
         )
         builder.ExportInput(
@@ -42,6 +43,10 @@ def MakePointCloudGenerator(
         builder.Connect(
             image_to_point_cloud.GetOutputPort("point_cloud"),
             point_cloud_processor.GetInputPort(f"{camera}_cloud"),
+        )
+        builder.ConnectInput(
+            f"{camera}_pose",
+            point_cloud_processor.GetInputPort(f"{camera}.pose"),
         )
 
         builder.ExportOutput(
@@ -72,13 +77,19 @@ class PointCloudProcessor(LeafSystem):
         super().__init__()
         self.cameras = cameras
         self._meshcat = meshcat
-        self._cloud_inputs: [InputPort] = []
+        self._cloud_inputs: list[InputPort] = []
+        self._cam_poses: list[InputPort] = []
 
         # Add input port for each camera
         for camera in self.cameras:
             self._cloud_inputs.append(
                 self.DeclareAbstractInputPort(
                     name=f"{camera}_cloud", model_value=AbstractValue.Make(PointCloud())
+                )
+            )
+            self._cam_poses.append(
+                self.DeclareAbstractInputPort(
+                    f"{camera}.pose", AbstractValue.Make(RigidTransform())
                 )
             )
 
@@ -92,12 +103,16 @@ class PointCloudProcessor(LeafSystem):
         self.DeclareStateOutputPort("merged_point_cloud", self.merged_point_cloud_idx)
 
     def UpdatePointCloud(self, context: Context, discrete_state: DiscreteValues):
-        clouds: [PointCloud] = []
+        clouds: list[PointCloud] = []
 
         # Evaluate point cloud input ports
-        for input in self._cloud_inputs:
-            clouds.append(input.Eval(context))
-            # clouds[-1].EstimateNormals(radius=0.1, num_closest=30)
+        for i, (cloud_port, pose_port) in enumerate(
+            zip(self._cloud_inputs, self._cam_poses)
+        ):
+            clouds.append(cloud_port.Eval(context))
+            clouds[i].EstimateNormals(radius=0.1, num_closest=30)
+            X_WC = pose_port.Eval(context)
+            clouds[i].FlipNormalsTowardPoint(X_WC.translation())
         # Merge clouds
         merged_cloud: PointCloud = Concatenate(clouds=clouds)
 
