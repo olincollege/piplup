@@ -3,4 +3,4 @@
 /bazel-*
 *.pcd
 *.pyc
-*.pt
+**.pt

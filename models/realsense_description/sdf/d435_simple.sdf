@@ -14,19 +14,27 @@
           <izz>1.9e-5</izz>
         </inertia>
       </inertial>
-      <visual name="base">
-        <pose>0 0 -0.0075 0 0 0</pose>
+      <visual name="base_visual">
+        <pose>0 0 0.0125 0 0 0</pose>
         <geometry>
           <box>
-            <size>.095 .015 .015</size>
+            <size>.09 .025 .025</size>
           </box>
         </geometry>
         <material>
           <diffuse>.4 .4 .4 1.</diffuse>
         </material>
       </visual>
+      <visual name="mount">
+        <pose rotation_format="quat_xyzw">0 0.01485922 -0.04193029 -0.271 -0.653  0.271 0.653</pose>
+        <geometry>
+          <mesh>
+            <uri>package://piplup_models/realsense_description/meshes/d435_mount.obj</uri>
+          </mesh>
+        </geometry>
+      </visual>
       <visual name="cable">
-        <pose>0.05 0 -0.0125 0 0 0</pose>
+        <pose>0.05 0 0.0025 0 0 0</pose>
         <geometry>
           <box>
             <size>.01 .0075 .002</size>
@@ -37,7 +45,7 @@
         </material>
       </visual>
       <visual name="tripod_mount">
-        <pose>0 0.01 -0.0075 1.57 0 0</pose>
+        <pose>0 0.01 0.01 1.57 0 0</pose>
         <geometry>
           <cylinder>
             <radius>0.005</radius>
@@ -48,14 +56,9 @@
           <diffuse>.4 .4 .4 1.</diffuse>
         </material>
       </visual>
-      <collision name="base">
-        <pose>0 0 -0.0075 0 0 0</pose>
-        <geometry>
-          <box>
-            <size>.095 .015 .015</size>
-          </box>
-        </geometry>
-      </collision>
     </link>
+    <frame name='mount_frame' attached_to='base'>
+      <pose degrees="True">0 0.01485922 -0.04193029 45 0 0</pose>
+    </frame>
   </model>
 </sdf>

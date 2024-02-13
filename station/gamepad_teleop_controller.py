@@ -8,8 +8,10 @@ class GamepadTwistTeleopController(LeafSystem):
     def __init__(self, meshcat: Meshcat, hand_model_name: str):
         super().__init__()
         self._meshcat = meshcat
-        self.linear_speed = 0.1
-        self.angular_speed = 0.8
+        self.linear_speed_low = 0.1
+        self.angular_speed_low = 0.8
+        self.linear_speed_high = 0.6
+        self.angular_speed_high = 1.0
         self.grip_speed = 0.25
         self.hand_model_name = hand_model_name
 
@@ -31,7 +33,7 @@ class GamepadTwistTeleopController(LeafSystem):
 
     def OutputTwist(self, context: Context, output: BasicVector):
         pose = self.robot_pose_port.Eval(context)
-        X_WE_desired = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
+        X_WE = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
         linear_mode = context.get_abstract_state(self.linear_mode_state_idx).get_value()
         target_twist = np.zeros(6)
 
@@ -54,21 +56,28 @@ class GamepadTwistTeleopController(LeafSystem):
                 context.SetAbstractState(self.linear_mode_state_idx, True)
             if gamepad.button_values[9]:
                 context.SetAbstractState(self.linear_mode_state_idx, False)
+
+            linear_speed = self.linear_speed_high
+            angular_speed = self.angular_speed_high
+            if gamepad.button_values[5]:
+                linear_speed = self.linear_speed_low
+                angular_speed = self.angular_speed_low
+
             if linear_mode:
                 target_twist[3:] = (
-                    np.array([left[0], left[1], -right[1]]) * self.linear_speed
+                    np.array([left[0], left[1], -right[1]]) * linear_speed
                 )
             else:
-                ee_rot = X_WE_desired.rotation()
-                target_twist[:3] = ee_rot.inverse().multiply(
+                ee_rot = X_WE.rotation()
+                target_twist[:3] = ee_rot.multiply(
                     np.array(
                         [
-                            -left[0],
                             left[1],
-                            right[1],
+                            left[0],
+                            right[0],
                         ]
                     )
-                    * self.angular_speed
+                    * angular_speed
                 )
         output.SetFromVector(target_twist)
 
@@ -87,7 +96,7 @@ class GamepadTwistTeleopController(LeafSystem):
         elif self.hand_model_name == "epick":
             output: AbstractValue
             if not gamepad.index == None:
-                output.set_value(gamepad.button_values[5])
+                output.set_value(gamepad.button_values[7] > 0.1)
 
 
 class GamepadTeleopController(LeafSystem):

@@ -15,6 +15,8 @@ from station import (
     QuestTwistTeleopController,
 )
 
+from perception import MakePointCloudGenerator
+
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):
     meshcat: Meshcat = StartMeshcat()
@@ -27,9 +29,11 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     if teleop:
         gamepad: System = builder.AddNamedSystem(
             "gamepad_control",
-            GamepadTwistTeleopController(meshcat, gripper_name)
-            if teleop == "gamepad"
-            else QuestTwistTeleopController(meshcat, gripper_name),
+            (
+                GamepadTwistTeleopController(meshcat, gripper_name)
+                if teleop == "gamepad"
+                else QuestTwistTeleopController(meshcat, gripper_name)
+            ),
         )
 
         builder.Connect(
@@ -66,24 +70,27 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
 
     # Visualize the diagram, when requested.
     options = {"plant/split": "I/O"}
-    if graphviz is not None:
-        with open(graphviz, "w", encoding="utf-8") as f:
-            f.write(diagram.GetGraphvizString(options=options))
+    if graphviz:
+        if isinstance(graphviz, str):
+            with open(graphviz, "w", encoding="utf-8") as f:
+                f.write(diagram.GetGraphvizString(options=options))
 
         plt.figure()
         plot_system_graphviz(diagram, options=options)
         plt.show()
+
+    hardware_station.GetSubsystemByName(
+        "gen3_interface"
+    ).root_ctx = simulator.get_mutable_context()
+
     simulator.Initialize()
-    epick_ctx = hardware_station.GetSubsystemByName("epick").GetMyContextFromRoot(
-        simulator.get_mutable_context()
-    )
-    # Simulate.
-    cmd = False
+
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:
         print(simulator.get_actual_realtime_rate())
-        hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+        if hardware_station.HasSubsystemNamed("gen3_interface"):
+            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():
@@ -111,12 +118,13 @@ def main():
         choices=[None, "gamepad", "quest"],
         default=None,
     )
+    parser.add_argument("--graph_viz", "-g", action="store_true")
     args = parser.parse_args()
     scenario = load_scenario(
         filename=args.scenarios_yaml,
         scenario_name=args.scenario_name,
     )
-    run(scenario=scenario, graphviz=None, teleop=args.teleop)
+    run(scenario=scenario, graphviz=args.graph_viz, teleop=args.teleop)
 
 
 if __name__ == "__main__":

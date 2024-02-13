@@ -5,31 +5,39 @@ Systems for processing RealSense RGBD data.
 import numpy as np
 import matplotlib.pyplot as plt
 from pydrake.all import *
-from pydrake.geometry import (
-    Meshcat,
-    MeshcatVisualizer,
-    SceneGraph,
-    MeshcatPointCloudVisualizer,
-)
-import pandas as pd
+from pydrake.geometry import Meshcat, MeshcatPointCloudVisualizer
 
 
 def MakePointCloudGenerator(
-    camera_info: {str: CameraInfo},
+    camera_info: dict[str, CameraInfo],
     meshcat: Meshcat = None,
     hardware: bool = False,
 ) -> Diagram:
+    # Create diagram
     builder = DiagramBuilder()
 
+    # Add point cloud processor LeafSystem
     point_cloud_processor: PointCloudProcessor = builder.AddNamedSystem(
         "point_cloud_processor",
         PointCloudProcessor(cameras=list(camera_info.keys()), meshcat=meshcat),
     )
 
+    # Add DepthImageToPointCloud LeafSystem for each camera
     for camera in camera_info.keys():
+        # print(camera)
+        # print(camera_info[camera].focal_x())
+        # print(camera_info[camera].focal_y())
+        # print(camera_info[camera].center_x())
+        # print(camera_info[camera].center_y())
+
         image_to_point_cloud: DepthImageToPointCloud = builder.AddNamedSystem(
             f"image_to_point_cloud_{camera}",
-            DepthImageToPointCloud(camera_info=camera_info[camera]),
+            DepthImageToPointCloud(
+                camera_info=camera_info[camera],
+                pixel_type=PixelType.kDepth16U,
+                scale=1.0
+                / 1000.0,  # 16 bit depth is in millimeters not meters :( - Krishna
+            ),
         )
         builder.ExportInput(
             image_to_point_cloud.camera_pose_input_port(), f"{camera}_pose"
@@ -42,6 +50,7 @@ def MakePointCloudGenerator(
             point_cloud_processor.GetInputPort(f"{camera}_cloud"),
         )
 
+    # Add point cloud visualizer
     meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
         "point_cloud_visualizer",
         MeshcatPointCloudVisualizer(
@@ -64,6 +73,7 @@ class PointCloudProcessor(LeafSystem):
         self._meshcat = meshcat
         self._cloud_inputs: [InputPort] = []
 
+        # Add input port for each camera
         for camera in self.cameras:
             self._cloud_inputs.append(
                 self.DeclareAbstractInputPort(
@@ -71,6 +81,7 @@ class PointCloudProcessor(LeafSystem):
                 )
             )
 
+        # Periodically publish merged point cloud as state
         self.merged_point_cloud_idx = self.DeclareAbstractState(
             AbstractValue.Make(PointCloud())
         )
@@ -82,11 +93,15 @@ class PointCloudProcessor(LeafSystem):
     def UpdatePointCloud(self, context: Context, discrete_state: DiscreteValues):
         clouds: [PointCloud] = []
 
+        # Evaluate point cloud input ports
         for input in self._cloud_inputs:
             clouds.append(input.Eval(context))
             # clouds[-1].EstimateNormals(radius=0.1, num_closest=30)
-
+        # Merge clouds
         merged_cloud: PointCloud = Concatenate(clouds=clouds)
+
+        # Save point cloud for perception system testing
+        # np.save('/home/ali1/code/piplup/test_data/point_cloud.npy', merged_cloud.xyzs())
 
         # self._meshcat.SetLineSegments(
         #     "normals",

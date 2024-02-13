@@ -28,9 +28,15 @@ namespace piplup
             py::module::import("pydrake.systems.framework");
 
             py::class_<RealSenseD400, LeafSystem<double>>(m, "RealSenseD400")
-                .def(py::init<std::string, const systems::sensors::CameraConfig &>(),
+                .def(py::init<std::string,
+                              const systems::sensors::CameraConfig &,
+                              const multibody::MultibodyPlant<double> &>(),
                      py::arg("device_serial_number"),
-                     py::arg("camera_config"));
+                     py::arg("camera_config"),
+                     py::arg("sim_plant"))
+                .def("depth_camera_info",
+                     &RealSenseD400::depth_camera_info,
+                     py::return_value_policy::reference);
             {
                 using Class = RealsenseInterfaceConfig;
                 py::class_<Class> cls(

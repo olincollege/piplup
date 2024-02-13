@@ -12,23 +12,26 @@ from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
 from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
-from epick_interface import EPickInterfaceConfig, EPickInterface
+from epick_interface import EPickInterfaceConfig, EPickInterface, ObjectDetectionStatus
+
+import numpy as np
 
 
 def MakeHardwareStation(
     scenario: Scenario,
     meshcat: Meshcat = None,
 ) -> Diagram:
-    if scenario.hardware_interface:
-        return MakeHardwareStationInterface(scenario, meshcat)
-
     builder = DiagramBuilder()
 
+    if scenario.hardware_interface:
+        scenario.plant_config.time_step = 0.0005
+        scenario.visualization.publish_period = 0.0005
     # Create the multibody plant and scene graph.
     sim_plant: MultibodyPlant
     sim_plant, scene_graph = AddMultibodyPlant(
         config=scenario.plant_config, builder=builder
     )
+
     parser = Parser(sim_plant)
     ConfigureParser(parser)
     # Add model directives.
@@ -38,6 +41,17 @@ def MakeHardwareStation(
 
     # Now the plant is complete.
     sim_plant.Finalize()
+
+    if scenario.hardware_interface:
+        # Set the actuation of the sim plant to 0
+        # zero_actuation_sys = builder.AddSystem(ConstantVectorSource(np.zeros(9)))
+        # builder.Connect(
+        #     zero_actuation_sys.get_output_port(0), sim_plant.get_actuation_input_port()
+        # )
+
+        return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
+    # tf = sim_plant.CalcRelativeTransform(sim_plant.CreateDefaultContext(), sim_plant.world_frame(), sim_plant.GetFrameByName('image_frame', sim_plant.GetModelInstanceByName('camera4')))
+    # print(list(np.concatenate([tf.translation(), RollPitchYaw(tf.rotation()).vector()])))
 
     lcm_buses = None
 
@@ -91,9 +105,12 @@ def MakeHardwareStation(
     return builder.Build()
 
 
-def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
-    builder = DiagramBuilder()
-
+def MakeHardwareStationInterface(
+    builder: DiagramBuilder,
+    scenario: Scenario,
+    meshcat: Meshcat,
+    sim_plant: MultibodyPlant,
+):
     # This is not currently using a config since we are only using one scale
     # uss_dbs_system: System = builder.AddNamedSystem(
     #     "uss_dbs", USSDBSHardwareInterface()
@@ -111,37 +128,14 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
                 )
 
             interface_subsystem: RealSenseD400 = builder.AddNamedSystem(
-                f"realsense_interface_{model_name}",
-                RealSenseD400(hardware_interface.serial_number, camera_config),
+                f"rgbd_sensor_{model_name}",
+                RealSenseD400(
+                    hardware_interface.serial_number, camera_config, sim_plant
+                ),
             )
         elif isinstance(hardware_interface, Gen3InterfaceConfig):
             model_driver = scenario.model_drivers[model_name]
             gen3_model = model_driver
-            controller_plant = MultibodyPlant(0.0)
-            parser = Parser(controller_plant)
-            ConfigureParser(parser)
-            controller_models: List[ModelInstanceIndex] = parser.AddModelsFromUrl(
-                "package://piplup_models/gen3_description/sdf/gen3_mesh_collision.sdf"
-            )
-            assert len(controller_models) == 1
-            gen3_controller_model_idx = controller_models[0]
-
-            controller_plant.WeldFrames(
-                controller_plant.world_frame(),
-                controller_plant.GetFrameByName("base_link", gen3_controller_model_idx),
-                RigidTransform(),
-            )
-            controller_plant.AddFrame(
-                FixedOffsetFrame(
-                    "tool_frame",
-                    controller_plant.GetFrameByName("end_effector_frame"),
-                    RigidTransform([0, 0, 0.12]),
-                )
-            )
-            controller_plant.Finalize()
-            builder.AddNamedSystem(
-                f"{model_name}_controller_plant", SharedPointerSystem(controller_plant)
-            )
             interface_subsystem = builder.AddNamedSystem(
                 "gen3_interface",
                 Gen3HardwareInterface(
@@ -149,6 +143,7 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
                     hardware_interface.port,
                     Gen3ControlMode(model_driver.control_mode),
                     gen3_model.hand_model_name,
+                    sim_plant,
                 ),
             )
         elif isinstance(hardware_interface, EPickInterfaceConfig):
@@ -174,7 +169,7 @@ def MakeHardwareStationInterface(scenario: Scenario, meshcat: Meshcat):
     if builder.empty():
         raise RuntimeError("No systems were added to hardware interface")
 
-    # ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
+    ApplyVisualizationConfig(scenario.visualization, builder, None, meshcat=meshcat)
     diagram: Diagram = builder.Build()
     diagram.set_name("HardwareStationInterface")
     return diagram

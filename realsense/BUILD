@@ -15,6 +15,7 @@ cc_library(
         "//third_party:realsense",
         "@drake//common:name_value",
         "@drake//common:scoped_singleton",
+        "@drake//multibody/plant",
         "@drake//systems/analysis:simulator",
         "@drake//systems/framework:leaf_system",
         "@drake//systems/sensors:camera_config",
