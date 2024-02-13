@@ -73,7 +73,7 @@ def MakePointCloudGenerator(
 
 
 class PointCloudProcessor(LeafSystem):
-    def __init__(self, cameras: [str], meshcat: Meshcat = None):
+    def __init__(self, cameras: list[str], meshcat: Meshcat = None):
         super().__init__()
         self.cameras = cameras
         self._meshcat = meshcat
