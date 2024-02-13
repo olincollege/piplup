@@ -24,12 +24,6 @@ def MakePointCloudGenerator(
 
     # Add DepthImageToPointCloud LeafSystem for each camera
     for camera in camera_info.keys():
-        # print(camera)
-        # print(camera_info[camera].focal_x())
-        # print(camera_info[camera].focal_y())
-        # print(camera_info[camera].center_x())
-        # print(camera_info[camera].center_y())
-
         image_to_point_cloud: DepthImageToPointCloud = builder.AddNamedSystem(
             f"image_to_point_cloud_{camera}",
             DepthImageToPointCloud(
@@ -50,6 +44,10 @@ def MakePointCloudGenerator(
             point_cloud_processor.GetInputPort(f"{camera}_cloud"),
         )
 
+        builder.ExportOutput(
+            image_to_point_cloud.GetOutputPort("point_cloud"), f"{camera}.point_cloud"
+        )
+
     # Add point cloud visualizer
     meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
         "point_cloud_visualizer",
@@ -61,6 +59,9 @@ def MakePointCloudGenerator(
     builder.Connect(
         point_cloud_processor.GetOutputPort("merged_point_cloud"),
         meshcat_point_cloud.GetInputPort("cloud"),
+    )
+    builder.ExportOutput(
+        point_cloud_processor.GetOutputPort("merged_point_cloud"), "merged_point_cloud"
     )
 
     return builder.Build()

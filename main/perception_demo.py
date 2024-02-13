@@ -11,13 +11,59 @@ from station import (
     MakeHardwareStation,
     Scenario,
     load_scenario,
-    GamepadTwistTeleopController,
-    QuestTwistTeleopController,
 )
 
 from perception import MakePointCloudGenerator
 
 import cv2
+
+
+class ImageSegmentationSystem(LeafSystem):
+    def __init__(self, label):
+        LeafSystem.__init__(self)
+        self.label = label
+
+        self.label_img_port = self.DeclareAbstractInputPort(
+            "label_image", AbstractValue.Make(ImageLabel16I())
+        )
+        self.depth_img_port = self.DeclareAbstractInputPort(
+            "depth_image", AbstractValue.Make(ImageDepth16U())
+        )
+        self.DeclareAbstractOutputPort(
+            "masked_image", lambda: AbstractValue.Make(ImageDepth16U()), self.MaskImage
+        )
+
+    def MaskImage(self, context: Context, output: AbstractValue):
+        label_img = self.label_img_port.Eval(context).data
+        depth_img = self.depth_img_port.Eval(context).data
+
+        mask_img = label_img == self.label
+        depth_img = copy.copy(depth_img)
+        depth_img[~mask_img] = 0
+
+        img: ImageDepth16U = output.get_mutable_value()
+        img.resize(640, 480)
+        img.mutable_data[:] = depth_img
+
+
+class PoseTransform(LeafSystem):
+    def __init__(
+        self,
+        X_BA: RigidTransform = RigidTransform(),
+    ):
+        LeafSystem.__init__(self)
+        self.DeclareAbstractInputPort("pose", AbstractValue.Make(RigidTransform()))
+        self.DeclareAbstractOutputPort(
+            "pose",
+            lambda: AbstractValue.Make(RigidTransform()),
+            self._CalcOutput,
+        )
+        self.X_BA = X_BA
+
+    def _CalcOutput(self, context, output):
+        pose = self.EvalAbstractInput(context, 0).get_value()
+        pose = pose @ self.X_BA
+        output.get_mutable_value().set(pose.rotation(), pose.translation())
 
 
 def run(*, scenario: Scenario, visualize=False):
@@ -41,13 +87,34 @@ def run(*, scenario: Scenario, visualize=False):
     )
 
     for camera in cameras:
+        camera_pose = builder.AddNamedSystem(
+            f"{camera}.pose",
+            PoseTransform(scenario.cameras[camera].X_BD.GetDeterministicValue()),
+        )
         builder.Connect(
             hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
+            camera_pose.GetInputPort("pose"),
+        )
+        builder.Connect(
+            camera_pose.GetOutputPort("pose"),
             point_cloud_generator.GetInputPort(f"{camera}_pose"),
         )
 
+        seg: System = builder.AddNamedSystem(
+            f"{camera}_segmenter", ImageSegmentationSystem(label=8)
+        )
+
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.label_image"),
+            seg.GetInputPort("label_image"),
+        )
         builder.Connect(
             hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+            seg.GetInputPort("depth_image"),
+        )
+
+        builder.Connect(
+            seg.GetOutputPort("masked_image"),
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 
@@ -58,8 +125,12 @@ def run(*, scenario: Scenario, visualize=False):
     ApplySimulatorConfig(scenario.simulator_config, simulator)
 
     simulator.Initialize()
-    # Simulate.
+    from graphviz import Source
 
+    s = Source(diagram.GetGraphvizString(), filename="test.gv", format="png")
+    s.view()
+
+    # Simulate.
     while True:
         try:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
