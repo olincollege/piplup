@@ -93,16 +93,13 @@ class PointCloudProcessor(LeafSystem):
                 )
             )
 
-        # Periodically publish merged point cloud as state
-        self.merged_point_cloud_idx = self.DeclareAbstractState(
-            AbstractValue.Make(PointCloud())
+        self.DeclareAbstractOutputPort(
+            "merged_point_cloud",
+            lambda: AbstractValue.Make(PointCloud()),
+            self.UpdatePointCloud,
         )
 
-        self.DeclarePeriodicDiscreteUpdateEvent(1 / 60.0, 0, self.UpdatePointCloud)
-
-        self.DeclareStateOutputPort("merged_point_cloud", self.merged_point_cloud_idx)
-
-    def UpdatePointCloud(self, context: Context, discrete_state: DiscreteValues):
+    def UpdatePointCloud(self, context: Context, output: AbstractValue):
         clouds: list[PointCloud] = []
 
         # Evaluate point cloud input ports
@@ -114,7 +111,7 @@ class PointCloudProcessor(LeafSystem):
             X_WC = pose_port.Eval(context)
             clouds[i].FlipNormalsTowardPoint(X_WC.translation())
         # Merge clouds
-        merged_cloud: PointCloud = Concatenate(clouds=clouds)
+        output.set_value(Concatenate(clouds=clouds))
 
         # Save point cloud for perception system testing
         # np.save('/home/ali1/code/piplup/test_data/point_cloud.npy', merged_cloud.xyzs())
@@ -124,5 +121,3 @@ class PointCloudProcessor(LeafSystem):
         #     merged_cloud.xyzs(),
         #     merged_cloud.xyzs() + 0.01 * merged_cloud.normals(),
         # )
-
-        context.SetAbstractState(self.merged_point_cloud_idx, merged_cloud)
