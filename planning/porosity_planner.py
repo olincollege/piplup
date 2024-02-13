@@ -13,6 +13,7 @@ class PorosityPlannerState(Enum):
     CALC_PICK_POSE = auto()
     MOVE_TO_PRE_PICK = auto()
     MOVE_TO_PICK = auto()
+    MEASURE_SUCTION = auto()
 
 
 class PorosityPlanner(LeafSystem):
@@ -29,12 +30,12 @@ class PorosityPlanner(LeafSystem):
         self.command_idx_ = self.DeclareDiscreteState(7)
 
         # Inputs Ports
-        # self.pressure_idx_ = self.DeclareVectorInputPort(
-        #     "actual_vacuum_pressure", 1
-        # ).get_index()
-        # self.obj_det_idx_ = self.DeclareAbstractInputPort(
-        #     "object_detection_status", AbstractValue.Make(ObjectDetectionStatus(0))
-        # ).get_index()
+        self.pressure_idx_ = self.DeclareVectorInputPort(
+            "actual_vacuum_pressure", 1
+        ).get_index()
+        self.obj_det_idx_ = self.DeclareAbstractInputPort(
+            "object_detection_status", AbstractValue.Make(ObjectDetectionStatus(0))
+        ).get_index()
 
         # Output Ports
         # self.DeclareVectorOutputPort("arm_command", 7, self.CalcGen3Command)
@@ -53,6 +54,7 @@ class PorosityPlanner(LeafSystem):
     def Update(self, context: Context, state: State):
         planner_state = context.get_abstract_state(self.planner_state_idx_).get_value()
         print(planner_state)
+
         match planner_state:
             case PorosityPlannerState.INIT:
                 self.change_planner_state(state, PorosityPlannerState.MOVE_TO_NEUTRAL)
@@ -69,7 +71,6 @@ class PorosityPlanner(LeafSystem):
                 )
                 self.change_planner_state(state, PorosityPlannerState.SCAN_MANIPULAND)
             case PorosityPlannerState.SCAN_MANIPULAND:
-                print("Scaning Objects...")
                 self.change_planner_state(state, PorosityPlannerState.MOVE_TO_PRE_PICK)
             #     # TODO Eval the point cloud port
             # case PorosityPlannerState.CALC_PICK_POSE:
@@ -78,7 +79,26 @@ class PorosityPlanner(LeafSystem):
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     np.array([0, 3.14, 0, 0.5, 0, 0.3, 0])
                 )
-            # case PorosityPlannerState.MOVE_TO_PICK:
+                self.change_planner_state(state, PorosityPlannerState.MOVE_TO_PICK)
+                self.change_command_mode(state, Gen3ControlMode.kTwist)
+            case PorosityPlannerState.MOVE_TO_PICK:
+                state.get_mutable_discrete_state(self.command_idx_).set_value(
+                    np.array([0, 0.0, 0, 0, 0, -0.1, 0])
+                )
+
+                obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
+
+                if not obj_det_status == ObjectDetectionStatus.NoObjectDetected:
+                    self.change_planner_state(
+                        state, PorosityPlannerState.MEASURE_SUCTION
+                    )
+                    state.get_mutable_discrete_state(self.command_idx_).set_value(
+                        np.zeros(7)
+                    )
+            case PorosityPlannerState.MEASURE_SUCTION:
+                obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
+                pressure = self.get_input_port(self.pressure_idx_).Eval(context)
+                print(f"Pressure: {pressure}kPa \t Object Detection: {obj_det_status} ")
             case _:
                 print("Invalid Planner State")
 

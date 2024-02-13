@@ -1,8 +1,5 @@
 import argparse
-import matplotlib.pyplot as plt
-import numpy as np
 from pydrake.all import *
-from pydrake.common import RandomGenerator
 from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
@@ -11,8 +8,6 @@ from station import (
     MakeHardwareStation,
     Scenario,
     load_scenario,
-    GamepadTwistTeleopController,
-    QuestTwistTeleopController,
 )
 
 from planning import PorosityPlanner
@@ -38,14 +33,21 @@ def run(*, scenario: Scenario):
         porosity_planner.GetOutputPort("arm_command"),
         hardware_station.GetInputPort("gen3.command"),
     )
-    # builder.Connect(hardware_station.GetOutputPort(), porosity_planner.GetInputPort())
+    builder.Connect(
+        hardware_station.GetOutputPort("epick.actual_vacuum_pressure"),
+        porosity_planner.GetInputPort("actual_vacuum_pressure"),
+    )
+    builder.Connect(
+        hardware_station.GetOutputPort("epick.object_detection_status"),
+        porosity_planner.GetInputPort("object_detection_status"),
+    )
 
     diagram: Diagram = builder.Build()
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
-    hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
-        simulator.get_mutable_context()
-    )
+    hardware_station.GetSubsystemByName(
+        "gen3_interface"
+    ).root_ctx = simulator.get_mutable_context()
 
     simulator.Initialize()
 
