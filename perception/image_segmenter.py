@@ -87,9 +87,7 @@ class ImageSegmenter(LeafSystem):
         DEVICE = torch.device(
             "cuda"
             if torch.cuda.is_available()
-            else "mps"
-            if torch.backends.mps.is_available()
-            else "cpu"
+            else "mps" if torch.backends.mps.is_available() else "cpu"
         )
         everything_results = model(
             cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR),

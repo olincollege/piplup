@@ -10,10 +10,12 @@ Hardware:
     - add_model:
         name: box
         file: package://piplup_models/box.sdf
-        default_free_body_pose:
-          base:
-            translation: [0.5, 0, 0.09]
-            rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
+    - add_weld:
+        parent: world
+        child: box::base
+        X_PC:
+          translation: [0.6, 0, 0.09]
+          rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
     # - add_model:
     #     name: cracker_box
     #     file: package://piplup_models/ycb/sdf/003_cracker_box.sdf

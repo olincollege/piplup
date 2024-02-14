@@ -4,7 +4,6 @@ py_library(
         "__init__.py",
         "point_cloud_generator.py",
         "image_segmenter.py",
-        "all_cameras_segmenter.py"
     ],
     imports = [".."],
     visibility = ["//visibility:public"],

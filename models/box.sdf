@@ -20,7 +20,7 @@
           </box>
         </geometry>
         <material>
-          <diffuse>.4 .4 .4 1.</diffuse>
+          <diffuse>.4 .4 .4 0.7</diffuse>
         </material>
       </visual>
       </link>
