@@ -54,17 +54,17 @@ def MakePointCloudGenerator(
         )
 
     # Add point cloud visualizer
-    meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
-        "point_cloud_visualizer",
-        MeshcatPointCloudVisualizer(
-            meshcat=meshcat, path="point_cloud", publish_period=0.2
-        ),
-    )
+    # meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
+    #     "point_cloud_visualizer",
+    #     MeshcatPointCloudVisualizer(
+    #         meshcat=meshcat, path="point_cloud", publish_period=0.2
+    #     ),
+    # )
 
-    builder.Connect(
-        point_cloud_processor.GetOutputPort("merged_point_cloud"),
-        meshcat_point_cloud.GetInputPort("cloud"),
-    )
+    # builder.Connect(
+    #     point_cloud_processor.GetOutputPort("merged_point_cloud"),
+    #     meshcat_point_cloud.GetInputPort("cloud"),
+    # )
     builder.ExportOutput(
         point_cloud_processor.GetOutputPort("merged_point_cloud"), "merged_point_cloud"
     )
@@ -103,10 +103,17 @@ class PointCloudProcessor(LeafSystem):
         clouds: list[PointCloud] = []
 
         # Evaluate point cloud input ports
-        for i, (cloud_port, pose_port) in enumerate(
-            zip(self._cloud_inputs, self._cam_poses)
+        for i, (cloud_port, pose_port, camera) in enumerate(
+            zip(self._cloud_inputs, self._cam_poses, self.cameras)
         ):
-            clouds.append(cloud_port.Eval(context))
+            pc = cloud_port.Eval(context)
+            self._meshcat.SetObject(
+                f"/pointcloud/{camera}",
+                pc,
+                point_size=0.001,
+                rgba=Rgba((i / len(self.cameras)), 0, 0, 1),
+            )
+            clouds.append(pc)
             clouds[i].EstimateNormals(radius=0.1, num_closest=30)
             X_WC = pose_port.Eval(context)
             clouds[i].FlipNormalsTowardPoint(X_WC.translation())

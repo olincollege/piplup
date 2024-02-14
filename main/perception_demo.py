@@ -122,7 +122,7 @@ class SuctionGraspSelector(LeafSystem):
 
         self._rng = np.random.default_rng()
         self.cup_diam = 0.04
-        self.cup_depth = 0.005
+        self.cup_depth = 0.008
         self.meshcat.SetObject(
             "/cropping_box",
             Cylinder(self.cup_diam / 2, self.cup_depth),
@@ -168,8 +168,6 @@ class SuctionGraspSelector(LeafSystem):
             )
             p1 = np.minimum(lower, upper)
             p2 = np.maximum(lower, upper)
-            print(p1)
-            print(p2)
             if np.all(p1 > p2) or np.any(np.isnan(p1)) or np.any(np.isnan(p2)):
                 continue
             cropped = pc.Crop(p_WS + p1, p_WS + p2)
@@ -177,8 +175,9 @@ class SuctionGraspSelector(LeafSystem):
             if (
                 cropped.size() > 70
                 and np.abs(np.dot(np.array([0.0, 0.0, 1.0]), n_WS)) > 0.8
+                and p_WS[2] > 0.02
             ):
-                score = p_WS[2] + 1 / np.linalg.norm(p_WS[:2] - centroid[:2])
+                score = 5 * p_WS[2] + 1 / np.linalg.norm(p_WS[:2] - centroid[:2])
                 scores.append(score)
                 candidates.append(RigidTransform(R_WG, p_WS))
                 crops.append(cropped)
@@ -228,9 +227,9 @@ def run(*, scenario: Scenario, visualize=False):
         MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
     )
 
-    # suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
-    #     "suction_grasp_selector", SuctionGraspSelector(meshcat)
-    # )
+    suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
+        "suction_grasp_selector", SuctionGraspSelector(meshcat)
+    )
 
     for camera in cameras:
         camera_pose = builder.AddNamedSystem(
@@ -265,28 +264,10 @@ def run(*, scenario: Scenario, visualize=False):
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 
-        # seg: System = builder.AddNamedSystem(
-        #     f"{camera}_segmenter", ImageSegmentationSystem(label=8)
-        # )
-
-        # builder.Connect(
-        #     hardware_station.GetOutputPort(f"{camera}.label_image"),
-        #     seg.GetInputPort("label_image"),
-        # )
-        # builder.Connect(
-        #     hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
-        #     seg.GetInputPort("depth_image"),
-        # )
-
-        # builder.Connect(
-        #     seg.GetOutputPort("masked_image"),
-        #     point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
-        # )
-
-    # builder.Connect(
-    #     point_cloud_generator.GetOutputPort("merged_point_cloud"),
-    #     suction_grasp.GetInputPort("merged_point_cloud"),
-    # )
+    builder.Connect(
+        point_cloud_generator.GetOutputPort("merged_point_cloud"),
+        suction_grasp.GetInputPort("merged_point_cloud"),
+    )
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -303,9 +284,9 @@ def run(*, scenario: Scenario, visualize=False):
     while True:
         try:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
-            # suction_grasp.GetOutputPort("grasp_selection").Eval(
-            #     suction_grasp.GetMyContextFromRoot(simulator.get_context())
-            # )
+            suction_grasp.GetOutputPort("grasp_selection").Eval(
+                suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            )
             if visualize:
                 for camera in cameras:
                     img_color = (

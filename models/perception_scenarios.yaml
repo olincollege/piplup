@@ -7,15 +7,15 @@ Hardware:
     #     child: gen3::base_link
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
-    - add_model:
-        name: box
-        file: package://piplup_models/box.sdf
-    - add_weld:
-        parent: world
-        child: box::base
-        X_PC:
-          translation: [0.6, 0, 0.09]
-          rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
+    # - add_model:
+    #     name: box
+    #     file: package://piplup_models/box.sdf
+    # - add_weld:
+    #     parent: world
+    #     child: box::base
+    #     X_PC:
+    #       translation: [0.6, 0, 0.09]
+    #       rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
     # - add_model:
     #     name: cracker_box
     #     file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
@@ -111,14 +111,14 @@ Hardware:
     #   port: 10000
     camera0: !RealsenseInterfaceConfig
       serial_number: '239622302159'
-    # camera1: !RealsenseInterfaceConfig
-    #   serial_number: '239222300609'
-    # camera2: !RealsenseInterfaceConfig
-    #   serial_number: '141722074426'
-    # camera3: !RealsenseInterfaceConfig
-    #   serial_number: '938422072139'
-    # camera4: !RealsenseInterfaceConfig
-    #   serial_number: '837212070308'
+    camera1: !RealsenseInterfaceConfig
+      serial_number: '239222300609'
+    camera2: !RealsenseInterfaceConfig
+      serial_number: '141722074426'
+    camera3: !RealsenseInterfaceConfig
+      serial_number: '938422072139'
+    camera4: !RealsenseInterfaceConfig
+      serial_number: '837212070308'
 
 Simulated:
   directives:
