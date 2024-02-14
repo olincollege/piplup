@@ -8,12 +8,19 @@ Hardware:
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
     - add_model:
-        name: cracker_box
-        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+        name: box
+        file: package://piplup_models/box.sdf
         default_free_body_pose:
-          base_link_cracker:
-            translation: [0.4, 0, 0.3]
-            rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
+          base:
+            translation: [0.5, 0, 0.09]
+            rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
+    # - add_model:
+    #     name: cracker_box
+    #     file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+    #     default_free_body_pose:
+    #       base_link_cracker:
+    #         translation: [0.4, 0, 0.3]
+    #         rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
 
   cameras:
     camera0:
@@ -121,12 +128,21 @@ Simulated:
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
     - add_model:
-        name: cracker_box
-        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
-        default_free_body_pose:
-          base_link_cracker:
-            translation: [0.4, 0, 0.3]
-            rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
+        name: box
+        file: package://piplup_models/box.sdf
+    - add_weld:
+        parent: world
+        child: box::base
+        X_PC:
+          translation: [0.5, 0, 0.09]
+          rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
+    # - add_model:
+    #     name: cracker_box
+    #     file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+    #     default_free_body_pose:
+    #       base_link_cracker:
+    #         translation: [0.4, 0, 0.3]
+    #         rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
 
   cameras:
     camera0:

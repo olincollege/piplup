@@ -3,16 +3,24 @@ import numpy as np
 from pydrake.all import *
 import builtins
 import matplotlib.pyplot as plt
-from fastsam import FastSAM, FastSAMPrompt
-import torch
+
+# from fastsam import FastSAM, FastSAMPrompt
+# import torch
 
 
 class ImageSegmenter(LeafSystem):
-    def __init__(self, camera: str, top_left_coordinate: tuple[int, int] = None, bottom_right_coordinate: tuple[int, int] = None, object_coordinates: list[tuple[int, int]] = None, 
-                 background_coordinates: list[tuple[int, int]] = None, hz: int = 60):
-        '''
-            Focus coordinates are in the format ((top_left_x, top_left_y), (bottom_right_x, bottom_right_y))
-        '''
+    def __init__(
+        self,
+        camera: str,
+        top_left_coordinate: tuple[int, int] = None,
+        bottom_right_coordinate: tuple[int, int] = None,
+        object_coordinates: list[tuple[int, int]] = None,
+        background_coordinates: list[tuple[int, int]] = None,
+        hz: int = 60,
+    ):
+        """
+        Focus coordinates are in the format ((top_left_x, top_left_y), (bottom_right_x, bottom_right_y))
+        """
 
         super().__init__()
 
@@ -21,7 +29,7 @@ class ImageSegmenter(LeafSystem):
         self.background_coordinates = background_coordinates
         self.object_coordinates = object_coordinates
         self.background_coordinates = background_coordinates
-        
+
         self.camera = camera
 
         self.depth_image_input_port = self.DeclareAbstractInputPort(
@@ -49,14 +57,14 @@ class ImageSegmenter(LeafSystem):
             print(color_image.data.shape)
             mask = np.zeros((480, 640))
 
-            mask[top_left_y:bottom_right_y+1, top_left_x:bottom_right_x+1] = 1
+            mask[top_left_y : bottom_right_y + 1, top_left_x : bottom_right_x + 1] = 1
 
             for i in range(color_image.height()):
                 for j in range(color_image.width()):
                     if mask[i][j] == 0:
                         for c in range(4):
                             color_image.at(j, i)[c] = 0
-            
+
         color_image_matrix = np.array(color_image.data, copy=False).reshape(
             color_image.height(), color_image.width(), -1
         )
@@ -75,8 +83,7 @@ class ImageSegmenter(LeafSystem):
         output.set_value(depth_image)
 
     def get_mask(self, color_image: np.ndarray) -> np.ndarray:
-
-        model = FastSAM('/home/piplup/piplup/perception/weights/FastSAM.pt')
+        model = FastSAM("/home/piplup/piplup/perception/weights/FastSAM.pt")
         DEVICE = torch.device(
             "cuda"
             if torch.cuda.is_available()
@@ -97,7 +104,10 @@ class ImageSegmenter(LeafSystem):
 
         if self.object_coordinates and self.background_coordinates:
             points = [*self.object_coordinates, *self.background_coordinates]
-            pointlabel = [*[*[1]*len(self.object_coordinates)], *[*[0]*len(self.object_coordinates)]]
+            pointlabel = [
+                *[*[1] * len(self.object_coordinates)],
+                *[*[0] * len(self.object_coordinates)],
+            ]
         else:
             points = [[0, 0], [1, 1]]
             pointlabel = [0, 1]
