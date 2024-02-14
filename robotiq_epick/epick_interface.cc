@@ -15,15 +15,18 @@ namespace piplup
 
             driver_ = std::make_unique<epick_driver::DefaultDriver>(std::move(serial));
             driver_->set_slave_address(epick_config.slave_address);
+            driver_->set_mode(epick_driver::GripperMode::AdvancedMode);
+            driver_->set_grip_max_vacuum_pressure(-100);
             if(!driver_->connect())
             {
                 throw std::runtime_error(
                     fmt::format("Failed to connect to EPick on serial port: {}",
                                 epick_config.serial_port));
             }
+            driver_->activate();
+
             pressure_state_idx_ = this->DeclareDiscreteState(1);
-            object_det_state_idx_ =
-                this->DeclareAbstractState(Value<epick_driver::ObjectDetectionStatus>());
+            object_det_state_idx_ = this->DeclareAbstractState(Value<bool>());
             this->DeclareAbstractInputPort("command", Value<bool>());
             this->DeclarePeriodicUnrestrictedUpdateEvent(
                 0.0001, 0.0, &EPickInterface::SendCommandAndReceiveStatus);
@@ -50,9 +53,15 @@ namespace piplup
                 state->get_mutable_discrete_state(pressure_state_idx_);
             pressure_state[0] = (double)status.actual_vacuum_pressure;
             auto & obj_det_state =
-                state->get_mutable_abstract_state<epick_driver::ObjectDetectionStatus>(
-                    object_det_state_idx_);
-            obj_det_state = status.object_detection_status;
+                state->get_mutable_abstract_state<bool>(object_det_state_idx_);
+            obj_det_state =
+                status.object_detection_status
+                == epick_driver::ObjectDetectionStatus::ObjectDetectedAtMinPressure;
+        }
+
+        void EPickInterface::release()
+        {
+            driver_->release();
         }
     } // namespace epick
 } // namespace piplup

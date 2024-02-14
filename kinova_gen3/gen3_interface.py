@@ -191,7 +191,6 @@ class Gen3HardwareInterface(LeafSystem):
         command = Base_pb2.TwistCommand()
         command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_BASE
         command.duration = 0
-        print(cmd_twist)
         twist = command.twist
         twist.angular_x = np.degrees(cmd_twist[0])
         twist.angular_y = np.degrees(cmd_twist[1])

@@ -21,7 +21,7 @@ namespace piplup
         {
             std::string serial_port{"/dev/ttyUSB1"};
             int baud_rate = 115200;
-            double timeout = 0.5;
+            double timeout = 5000.0;
             int slave_address = 0x09;
             template<typename Archive>
             void Serialize(Archive * a)
@@ -40,6 +40,8 @@ namespace piplup
 
             void SendCommandAndReceiveStatus(const systems::Context<double> & context,
                                              systems::State<double> * state) const;
+
+            void release();
 
         private:
             std::unique_ptr<epick_driver::DefaultDriver> driver_;

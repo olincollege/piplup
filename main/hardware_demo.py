@@ -44,7 +44,7 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     if "gen3" in scenario.hardware_interface:
         builder.Connect(
             gamepad.GetOutputPort("V_WE_desired"),
-            hardware_station.GetInputPort("gen3.twist"),
+            hardware_station.GetInputPort("gen3.command"),
         )
         builder.Connect(
             hardware_station.GetOutputPort("gen3.pose_measured"),

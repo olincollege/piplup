@@ -41,10 +41,10 @@ def run(*, scenario: Scenario):
         porosity_planner.GetOutputPort("suction_command"),
         hardware_station.GetInputPort("epick.command"),
     )
-    # builder.Connect(
-    #     hardware_station.GetOutputPort("epick.object_detection_status"),
-    #     porosity_planner.GetInputPort("object_detection_status"),
-    # )
+    builder.Connect(
+        hardware_station.GetOutputPort("epick.object_detection_status"),
+        porosity_planner.GetInputPort("object_detection_status"),
+    )
 
     diagram: Diagram = builder.Build()
     simulator = Simulator(diagram)
@@ -60,6 +60,7 @@ def run(*, scenario: Scenario):
     except KeyboardInterrupt:
         print(simulator.get_actual_realtime_rate())
         hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
+        hardware_station.GetSubsystemByName("epick").release()
 
 
 def main():
