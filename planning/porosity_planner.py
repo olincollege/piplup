@@ -42,7 +42,7 @@ class PorosityPlanner(LeafSystem):
             "object_detection_status", AbstractValue.Make(False)
         ).get_index()
 
-        self.arm_pose_port_ = self.DeclareVectorInputPort("pose_measured", 7)
+        self.arm_pose_port_ = self.DeclareVectorInputPort("pose_measured", 6)
 
         # Output Ports
         # self.DeclareVectorOutputPort("arm_command", 7, self.CalcGen3Command)
@@ -134,7 +134,7 @@ class PorosityPlanner(LeafSystem):
                 # TODO update from pick pose measurement
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     # np.array([0, 3.14, 0, 0.55, 0, 0.15, 0])
-                    self.pick_pose
+                    np.append(self.pick_pose, [0])
                 )
                 self.change_planner_state(state, PorosityPlannerState.IDLE)
                 state.get_mutable_abstract_state(self.suction_command_idx_).set_value(

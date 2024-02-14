@@ -84,7 +84,7 @@ class Gen3HardwareInterface(LeafSystem):
         # )
         self.DeclareVectorOutputPort(
             "pose_measured",
-            BasicVector(7),
+            BasicVector(6),
             self.CalcEndEffectorPose,
             {self.time_ticket()},
         )
@@ -379,7 +379,7 @@ class Gen3HardwareInterface(LeafSystem):
         if self.last_feedback_time != t:
             self.GetFeedback(t)
 
-        ee_pose = np.zeros(7)
+        ee_pose = np.zeros(6)
         ee_pose[0] = np.radians(self.feedback.base.tool_pose_theta_x)
         ee_pose[1] = np.radians(self.feedback.base.tool_pose_theta_y)
         ee_pose[2] = np.radians(self.feedback.base.tool_pose_theta_z)
