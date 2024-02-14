@@ -224,12 +224,18 @@ def run(*, scenario: Scenario, visualize=False):
 
     point_cloud_generator: Diagram = builder.AddNamedSystem(
         "point_cloud_generator",
-        MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
+        MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat, color=False),
     )
+    # point_cloud_generator_2: Diagram = builder.AddNamedSystem(
+    #     "point_cloud_generator_2",
+    #     MakePointCloudGenerator(
+    #         camera_info=camera_info, meshcat=meshcat, color=True
+    #     ),
+    # )
 
-    suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
-        "suction_grasp_selector", SuctionGraspSelector(meshcat)
-    )
+    # suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
+    #     "suction_grasp_selector", SuctionGraspSelector(meshcat)
+    # )
 
     for camera in cameras:
         camera_pose = builder.AddNamedSystem(
@@ -244,6 +250,10 @@ def run(*, scenario: Scenario, visualize=False):
             camera_pose.GetOutputPort("pose"),
             point_cloud_generator.GetInputPort(f"{camera}_pose"),
         )
+        # builder.Connect(
+        #     camera_pose.GetOutputPort("pose"),
+        #     point_cloud_generator_2.GetInputPort(f"{camera}_pose"),
+        # )
 
         seg: System = builder.AddNamedSystem(
             f"{camera}_segmenter", ImageSegmenter(camera)
@@ -263,11 +273,15 @@ def run(*, scenario: Scenario, visualize=False):
             seg.GetOutputPort(f"{camera}_masked_depth_image"),
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
+        # builder.Connect(
+        #     hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+        #     point_cloud_generator_2.GetInputPort(f"{camera}_depth_image"),
+        # )
 
-    builder.Connect(
-        point_cloud_generator.GetOutputPort("merged_point_cloud"),
-        suction_grasp.GetInputPort("merged_point_cloud"),
-    )
+    # builder.Connect(
+    #     point_cloud_generator.GetOutputPort("merged_point_cloud"),
+    #     suction_grasp.GetInputPort("merged_point_cloud"),
+    # )
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -283,10 +297,16 @@ def run(*, scenario: Scenario, visualize=False):
     # Simulate.
     while True:
         try:
-            simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
-            suction_grasp.GetOutputPort("grasp_selection").Eval(
-                suction_grasp.GetMyContextFromRoot(simulator.get_context())
-            )
+            simulator.AdvanceTo(simulator.get_context().get_time() + 0.005)
+            # suction_grasp.GetOutputPort("grasp_selection").Eval(
+            #     suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            # )
+            # point_cloud_generator.GetOutputPort("merged_point_cloud").Eval(
+            #     point_cloud_generator.GetMyContextFromRoot(simulator.get_context())
+            # )
+            # point_cloud_generator_2.GetOutputPort("merged_point_cloud").Eval(
+            #     point_cloud_generator_2.GetMyContextFromRoot(simulator.get_context())
+            # )
             if visualize:
                 for camera in cameras:
                     img_color = (
@@ -307,10 +327,57 @@ def run(*, scenario: Scenario, visualize=False):
                         )
                         .data
                     )
-                    if img_color.size > 0 and img_depth.size > 0:
+                    masked_color = (
+                        diagram.GetSubsystemByName(f"{camera}_segmenter")
+                        .GetOutputPort(f"{camera}_masked_color_image")
+                        .Eval(
+                            diagram.GetSubsystemByName(
+                                f"{camera}_segmenter"
+                            ).GetMyContextFromRoot(simulator.get_context())
+                        )
+                        .data
+                    )
+
+                    masked_depth = (
+                        diagram.GetSubsystemByName(f"{camera}_segmenter")
+                        .GetOutputPort(f"{camera}_masked_depth_image")
+                        .Eval(
+                            diagram.GetSubsystemByName(
+                                f"{camera}_segmenter"
+                            ).GetMyContextFromRoot(simulator.get_context())
+                        )
+                        .data
+                    )
+
+                    if (
+                        img_color.size > 0
+                        and img_depth.size > 0
+                        and camera == "camera0"
+                    ):
                         img_color = cv2.cvtColor(img_color, cv2.COLOR_RGB2BGR)
-                        cv2.imshow(f"{camera}_c", img_color)
-                        cv2.imshow(f"{camera}_d", img_depth)
+                        masked_color = cv2.cvtColor(masked_color, cv2.COLOR_RGB2BGR)
+                        brightness = 20
+                        contrast = 5
+                        img_depth = cv2.cvtColor(img_depth, cv2.COLOR_GRAY2BGR)
+                        img_depth = cv2.addWeighted(
+                            img_depth,
+                            contrast,
+                            np.zeros(img_depth.shape, img_depth.dtype),
+                            0,
+                            brightness,
+                        )
+                        masked_depth = cv2.cvtColor(masked_depth, cv2.COLOR_GRAY2BGR)
+                        masked_depth = cv2.addWeighted(
+                            masked_depth,
+                            contrast,
+                            np.zeros(masked_depth.shape, masked_depth.dtype),
+                            0,
+                            brightness,
+                        )
+                        img_comb_c = cv2.hconcat([img_color, masked_color])
+                        img_comb_d = cv2.hconcat([img_depth, masked_depth])
+                        cv2.imshow(f"{camera}_all", img_comb_c)
+                        cv2.imshow(f"{camera}_d", img_comb_d)
 
                 if cv2.waitKey(1) == ord("q"):
                     break

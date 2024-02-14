@@ -39,11 +39,11 @@ class ImageSegmenter(LeafSystem):
             self.MaskDepthImage,
         )
 
-        # self.masked_color_image = self.DeclareAbstractOutputPort(
-        #     f"{camera}_masked_color_image",
-        #     lambda: AbstractValue.Make(Image[PixelType.kRgba8U]()),
-        #     self.MaskColorImage,
-        # )
+        self.masked_color_image = self.DeclareAbstractOutputPort(
+            f"{camera}_masked_color_image",
+            lambda: AbstractValue.Make(Image[PixelType.kRgba8U]()),
+            self.MaskColorImage,
+        )
 
     def get_params(self, camera):
         file_path = "/home/piplup/piplup/perception/perception_configs.yaml"
@@ -73,8 +73,6 @@ class ImageSegmenter(LeafSystem):
 
         mask = self.get_mask(color_image_matrix)
 
-        print("mask: ", mask)
-        print("mask shape: ", mask.shape)
         if mask.shape != (480, 640):
             return
         masked_depth_image = copy.copy(depth_image.data)
@@ -84,22 +82,24 @@ class ImageSegmenter(LeafSystem):
         img.resize(640, 480)
         img.mutable_data[:] = masked_depth_image
 
-    # def MaskColorImage(self, context: Context, output: AbstractValue):
-    #     color_image = self.EvalAbstractInput(
-    #         context, self.color_image_input_port.get_index()
-    #     ).get_value()
+    def MaskColorImage(self, context: Context, output: AbstractValue):
+        color_image = self.EvalAbstractInput(
+            context, self.color_image_input_port.get_index()
+        ).get_value()
 
-    #     color_image_matrix = np.array(color_image.data, copy=False).reshape(
-    #         color_image.height(), color_image.width(), -1
-    #     )
+        color_image_matrix = np.array(color_image.data, copy=False).reshape(
+            color_image.height(), color_image.width(), -1
+        )
 
-    #     mask = self.get_mask(color_image_matrix)
-    #     masked_color_image = copy.copy(color_image.data)
-    #     masked_color_image[~mask] = 0
+        mask = self.get_mask(color_image_matrix)
+        if mask.shape != (480, 640):
+            return
+        masked_color_image = copy.copy(color_image.data)
+        masked_color_image[~mask] = 0
 
-    #     img: ImageDepth16U = output.get_mutable_value()
-    #     img.resize(640, 480)
-    #     img.mutable_data[:] = masked_color_image
+        img: ImageDepth16U = output.get_mutable_value()
+        img.resize(640, 480)
+        img.mutable_data[:] = masked_color_image
 
     def get_mask(self, color_image: np.ndarray) -> np.ndarray:
 
@@ -126,7 +126,6 @@ class ImageSegmenter(LeafSystem):
             *[*[1] * len(self.object_coordinates)],
             *[*[0] * len(self.object_coordinates)],
         ]
-        print("pts: ", points, pointlabel)
         ann = prompt_process.point_prompt(points=points, pointlabel=pointlabel)
         if isinstance(ann, list):
             ann = np.array(ann)

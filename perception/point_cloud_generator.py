@@ -12,6 +12,7 @@ def MakePointCloudGenerator(
     camera_info: dict[str, CameraInfo],
     meshcat: Meshcat = None,
     hardware: bool = False,
+    color=None,
 ) -> Diagram:
     # Create diagram
     builder = DiagramBuilder()
@@ -19,7 +20,9 @@ def MakePointCloudGenerator(
     # Add point cloud processor LeafSystem
     point_cloud_processor: PointCloudProcessor = builder.AddNamedSystem(
         "point_cloud_processor",
-        PointCloudProcessor(cameras=list(camera_info.keys()), meshcat=meshcat),
+        PointCloudProcessor(
+            cameras=list(camera_info.keys()), meshcat=meshcat, color=color
+        ),
     )
 
     # Add DepthImageToPointCloud LeafSystem for each camera
@@ -54,17 +57,18 @@ def MakePointCloudGenerator(
         )
 
     # Add point cloud visualizer
-    # meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
-    #     "point_cloud_visualizer",
-    #     MeshcatPointCloudVisualizer(
-    #         meshcat=meshcat, path="point_cloud", publish_period=0.2
-    #     ),
-    # )
+    meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
+        "point_cloud_visualizer",
+        MeshcatPointCloudVisualizer(
+            meshcat=meshcat, path="point_cloud", publish_period=0.002
+        ),
+    )
+    meshcat_point_cloud.set_point_size(0.005)
 
-    # builder.Connect(
-    #     point_cloud_processor.GetOutputPort("merged_point_cloud"),
-    #     meshcat_point_cloud.GetInputPort("cloud"),
-    # )
+    builder.Connect(
+        point_cloud_processor.GetOutputPort("merged_point_cloud"),
+        meshcat_point_cloud.GetInputPort("cloud"),
+    )
     builder.ExportOutput(
         point_cloud_processor.GetOutputPort("merged_point_cloud"), "merged_point_cloud"
     )
@@ -73,13 +77,13 @@ def MakePointCloudGenerator(
 
 
 class PointCloudProcessor(LeafSystem):
-    def __init__(self, cameras: list[str], meshcat: Meshcat = None):
+    def __init__(self, cameras: list[str], meshcat: Meshcat = None, color=True):
         super().__init__()
         self.cameras = cameras
         self._meshcat = meshcat
         self._cloud_inputs: list[InputPort] = []
         self._cam_poses: list[InputPort] = []
-
+        self.color = color
         # Add input port for each camera
         for camera in self.cameras:
             self._cloud_inputs.append(
@@ -107,12 +111,7 @@ class PointCloudProcessor(LeafSystem):
             zip(self._cloud_inputs, self._cam_poses, self.cameras)
         ):
             pc = cloud_port.Eval(context)
-            self._meshcat.SetObject(
-                f"/pointcloud/{camera}",
-                pc,
-                point_size=0.001,
-                rgba=Rgba((i / len(self.cameras)), 0, 0, 1),
-            )
+
             clouds.append(pc)
             clouds[i].EstimateNormals(radius=0.1, num_closest=30)
             X_WC = pose_port.Eval(context)
@@ -121,7 +120,13 @@ class PointCloudProcessor(LeafSystem):
         output.set_value(
             Concatenate(clouds=clouds).VoxelizedDownSample(voxel_size=0.005)
         )
-
+        # self._meshcat.SetObject(
+        #     f"/pointcloud",
+        #     output,
+        #     point_size=0.003,
+        #     # rgba=Rgba((i / len(self.cameras)), 0, 0, 1),
+        #     # rgba=Rgba(1,0,0,1) if self.color else Rgba(0,1,0,1),
+        # )
         # Save point cloud for perception system testing
         # np.save('/home/ali1/code/piplup/test_data/point_cloud.npy', merged_cloud.xyzs())
 
