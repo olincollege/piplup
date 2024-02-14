@@ -24,38 +24,38 @@ Hardware:
       width: 640
       height: 480
       fps: 30
-    camera1:
-      name: camera1
-      depth: True
-      X_PB:
-        base_frame: camera1::base
-      width: 640
-      height: 480
-      fps: 30
-    camera2:
-      name: camera2
-      depth: True
-      X_PB:
-        base_frame: camera2::base
-      width: 640
-      height: 480
-      fps: 30
-    camera3:
-      name: camera3
-      depth: True
-      X_PB:
-        base_frame: camera3::base
-      width: 640
-      height: 480
-      fps: 30
-    camera4:
-      name: camera4
-      depth: True
-      X_PB:
-        base_frame: camera4::base
-      width: 640
-      height: 480
-      fps: 30
+    # camera1:
+    #   name: camera1
+    #   depth: True
+    #   X_PB:
+    #     base_frame: camera1::base
+    #   width: 640
+    #   height: 480
+    #   fps: 30
+    # camera2:
+    #   name: camera2
+    #   depth: True
+    #   X_PB:
+    #     base_frame: camera2::base
+    #   width: 640
+    #   height: 480
+    #   fps: 30
+    # camera3:
+    #   name: camera3
+    #   depth: True
+    #   X_PB:
+    #     base_frame: camera3::base
+    #   width: 640
+    #   height: 480
+    #   fps: 30
+    # camera4:
+    #   name: camera4
+    #   depth: True
+    #   X_PB:
+    #     base_frame: camera4::base
+    #   width: 640
+    #   height: 480
+    #   fps: 30
 
   model_drivers:
     gen3: !Gen3Driver
@@ -67,14 +67,14 @@ Hardware:
     #   port: 10000
     camera0: !RealsenseInterfaceConfig
       serial_number: '239622302159'
-    camera1: !RealsenseInterfaceConfig
-      serial_number: '239222300609'
-    camera2: !RealsenseInterfaceConfig
-      serial_number: '141722074426'
-    camera3: !RealsenseInterfaceConfig
-      serial_number: '938422072139'
-    camera4: !RealsenseInterfaceConfig
-      serial_number: '837212070308'
+    # camera1: !RealsenseInterfaceConfig
+    #   serial_number: '239222300609'
+    # camera2: !RealsenseInterfaceConfig
+    #   serial_number: '141722074426'
+    # camera3: !RealsenseInterfaceConfig
+    #   serial_number: '938422072139'
+    # camera4: !RealsenseInterfaceConfig
+    #   serial_number: '837212070308'
 
 Simulated:
   directives:

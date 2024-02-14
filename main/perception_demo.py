@@ -13,7 +13,7 @@ from station import (
     load_scenario,
 )
 
-from perception import MakePointCloudGenerator
+from perception import MakePointCloudGenerator, ImageSegmenter
 import cv2
 
 
@@ -228,9 +228,9 @@ def run(*, scenario: Scenario, visualize=False):
         MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
     )
 
-    suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
-        "suction_grasp_selector", SuctionGraspSelector(meshcat)
-    )
+    # suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
+    #     "suction_grasp_selector", SuctionGraspSelector(meshcat)
+    # )
 
     for camera in cameras:
         camera_pose = builder.AddNamedSystem(
@@ -247,27 +247,46 @@ def run(*, scenario: Scenario, visualize=False):
         )
 
         seg: System = builder.AddNamedSystem(
-            f"{camera}_segmenter", ImageSegmentationSystem(label=8)
+            f"{camera}_segmenter", ImageSegmenter(camera)
         )
 
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.label_image"),
-            seg.GetInputPort("label_image"),
-        )
         builder.Connect(
             hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
-            seg.GetInputPort("depth_image"),
+            seg.GetInputPort(f"{camera}_depth_image"),
         )
 
         builder.Connect(
-            seg.GetOutputPort("masked_image"),
+            hardware_station.GetOutputPort(f"{camera}.color_image"),
+            seg.GetInputPort(f"{camera}_color_image"),
+        )
+
+        builder.Connect(
+            seg.GetOutputPort(f"{camera}_masked_depth_image"),
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 
-    builder.Connect(
-        point_cloud_generator.GetOutputPort("merged_point_cloud"),
-        suction_grasp.GetInputPort("merged_point_cloud"),
-    )
+        # seg: System = builder.AddNamedSystem(
+        #     f"{camera}_segmenter", ImageSegmentationSystem(label=8)
+        # )
+
+        # builder.Connect(
+        #     hardware_station.GetOutputPort(f"{camera}.label_image"),
+        #     seg.GetInputPort("label_image"),
+        # )
+        # builder.Connect(
+        #     hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+        #     seg.GetInputPort("depth_image"),
+        # )
+
+        # builder.Connect(
+        #     seg.GetOutputPort("masked_image"),
+        #     point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
+        # )
+
+    # builder.Connect(
+    #     point_cloud_generator.GetOutputPort("merged_point_cloud"),
+    #     suction_grasp.GetInputPort("merged_point_cloud"),
+    # )
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -284,9 +303,9 @@ def run(*, scenario: Scenario, visualize=False):
     while True:
         try:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
-            suction_grasp.GetOutputPort("grasp_selection").Eval(
-                suction_grasp.GetMyContextFromRoot(simulator.get_context())
-            )
+            # suction_grasp.GetOutputPort("grasp_selection").Eval(
+            #     suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            # )
             if visualize:
                 for camera in cameras:
                     img_color = (

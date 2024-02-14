@@ -1,0 +1,47 @@
+camera0:
+  object_points: 
+    - [250, 340]
+  background_points:
+    - [300,350]
+  top_left_coordinate: [340, 220]
+  bottom_right_coordinate: [480, 380]
+
+camera1:
+  object_points: 
+    - [100, 100]
+    - [100, 100]
+  background_points:
+    - [200, 200]
+    - [200, 200]
+  top_left_coordinate: [0, 0]
+  bottom_right_coordinate: [640, 480]
+
+camera2:
+  object_points: 
+    - [100, 100]
+    - [100, 100]
+  background_points:
+    - [200, 200]
+    - [200, 200]
+  top_left_coordinate: [0, 0]
+  bottom_right_coordinate: [640, 480]
+
+camera3:
+  object_points: 
+    - [100, 100]
+    - [100, 100]
+  background_points:
+    - [200, 200]
+    - [200, 200]
+  top_left_coordinate: [0, 0]
+  bottom_right_coordinate: [640, 480]
+
+camera4:
+  object_points: 
+    - [100, 100]
+    - [100, 100]
+  background_points:
+    - [200, 200]
+    - [200, 200]
+  top_left_coordinate: [0, 0]
+  bottom_right_coordinate: [640, 480]

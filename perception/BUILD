@@ -1,3 +1,11 @@
+filegroup(
+    name = "perception_configs",
+    srcs = glob([
+        "*.yaml"
+    ]),
+    visibility = ["//visibility:public"],
+)
+
 py_library(
     name = "perception",
     srcs = [
@@ -7,5 +15,5 @@ py_library(
     ],
     imports = [".."],
     visibility = ["//visibility:public"],
-    deps = [],
+    data = [":perception_configs"],
 )
