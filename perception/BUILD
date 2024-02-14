@@ -11,7 +11,7 @@ py_library(
     srcs = [
         "__init__.py",
         "point_cloud_generator.py",
-        "image_segmenter.py"
+        "image_segmenter.py",
     ],
     imports = [".."],
     visibility = ["//visibility:public"],

@@ -1,0 +1,28 @@
+<?xml version="1.0"?>
+<sdf version="1.7">
+  <model name="box">
+    <link name="base">
+      <inertial>
+        <mass>0.028</mass>
+        <inertia>
+          <ixx>1.17e-5</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>1.9e-5</iyy>
+          <iyz>0</iyz>
+          <izz>1.9e-5</izz>
+        </inertia>
+      </inertial>
+      <visual name="base_visual">
+        <geometry>
+          <box>
+            <size>.36 .32 .18</size>
+          </box>
+        </geometry>
+        <material>
+          <diffuse>.4 .4 .4 0.7</diffuse>
+        </material>
+      </visual>
+      </link>
+  </model>
+</sdf>

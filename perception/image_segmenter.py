@@ -5,6 +5,9 @@ from fastsam import FastSAM, FastSAMPrompt
 import torch
 import yaml
 
+# from fastsam import FastSAM, FastSAMPrompt
+# import torch
+
 
 class ImageSegmenter(LeafSystem):
     def __init__(self, camera: str):
