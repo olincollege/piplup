@@ -42,6 +42,8 @@ class PorosityPlanner(LeafSystem):
             "object_detection_status", AbstractValue.Make(False)
         ).get_index()
 
+        self.arm_pose_port_ = self.DeclareVectorInputPort("pose_measured", 7)
+
         # Output Ports
         # self.DeclareVectorOutputPort("arm_command", 7, self.CalcGen3Command)
         self.DeclareStateOutputPort("arm_command", self.command_idx_)
@@ -102,6 +104,7 @@ class PorosityPlanner(LeafSystem):
                 obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
 
                 if obj_det_status:
+                    self.pick_pose = self.arm_pose_port_.Eval(context)
                     self.change_planner_state(
                         state, PorosityPlannerState.WAIT_FOR_SUCTION
                     )
@@ -114,7 +117,6 @@ class PorosityPlanner(LeafSystem):
                 self.last_time = context.get_time()
             case PorosityPlannerState.MEASURE_SUCTION:
                 obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
-
                 pressure = self.get_input_port(self.pressure_idx_).Eval(context)
                 print(f"Pressure: {pressure}kPa \t Object Detection: {obj_det_status} ")
                 self.change_command_mode(state, Gen3ControlMode.kTwist)
@@ -131,7 +133,8 @@ class PorosityPlanner(LeafSystem):
                 self.change_command_mode(state, Gen3ControlMode.kPose)
                 # TODO update from pick pose measurement
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
-                    np.array([0, 3.14, 0, 0.55, 0, 0.15, 0])
+                    # np.array([0, 3.14, 0, 0.55, 0, 0.15, 0])
+                    self.pick_pose
                 )
                 self.change_planner_state(state, PorosityPlannerState.IDLE)
                 state.get_mutable_abstract_state(self.suction_command_idx_).set_value(

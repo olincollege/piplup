@@ -45,6 +45,10 @@ def run(*, scenario: Scenario):
         hardware_station.GetOutputPort("epick.object_detection_status"),
         porosity_planner.GetInputPort("object_detection_status"),
     )
+    builder.Connect(
+        hardware_station.GetOutputPort("gen3.pose_measured"),
+        porosity_planner.GetInputPort("pose_measured"),
+    )
 
     diagram: Diagram = builder.Build()
     simulator = Simulator(diagram)

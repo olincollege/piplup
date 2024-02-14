@@ -45,13 +45,14 @@ class Gen3HardwareInterface(LeafSystem):
         self.hand_model_name = hand_model_name
         self.sim_plant = sim_plant
         # World to robot base
-        self.X_WB_inv: RigidTransform = self.sim_plant.CalcRelativeTransform(
+        self.X_WB: RigidTransform = self.sim_plant.CalcRelativeTransform(
             self.sim_plant.CreateDefaultContext(),
             self.sim_plant.world_frame(),
             self.sim_plant.GetFrameByName(
                 "base_link", self.sim_plant.GetModelInstanceByName("gen3")
             ),
-        ).inverse()
+        )
+        self.X_WB_inv: RigidTransform = self.X_WB.inverse()
 
         self.root_ctx = None
 
@@ -83,7 +84,7 @@ class Gen3HardwareInterface(LeafSystem):
         # )
         self.DeclareVectorOutputPort(
             "pose_measured",
-            BasicVector(6),
+            BasicVector(7),
             self.CalcEndEffectorPose,
             {self.time_ticket()},
         )
@@ -378,7 +379,7 @@ class Gen3HardwareInterface(LeafSystem):
         if self.last_feedback_time != t:
             self.GetFeedback(t)
 
-        ee_pose = np.zeros(6)
+        ee_pose = np.zeros(7)
         ee_pose[0] = np.radians(self.feedback.base.tool_pose_theta_x)
         ee_pose[1] = np.radians(self.feedback.base.tool_pose_theta_y)
         ee_pose[2] = np.radians(self.feedback.base.tool_pose_theta_z)
@@ -386,7 +387,9 @@ class Gen3HardwareInterface(LeafSystem):
         ee_pose[4] = self.feedback.base.tool_pose_y
         ee_pose[5] = self.feedback.base.tool_pose_z
 
-        # Store the end-effector pose so we can use it to compute the camera pose
-        self.ee_pose = ee_pose
-
+        # pose : RigidTransform = self.X_WB @ RigidTransform(RollPitchYaw(ee_pose[:3]).ToQuaternion(), ee_pose[3:])
+        # o = np.zeros(7)
+        # # o[:4] = pose.rotation().ToQuaternion().wxyz()
+        # o[:3] = np.array([0, 3.14, 0])
+        # o[3:-1] = pose.translation()
         output.SetFromVector(ee_pose)
