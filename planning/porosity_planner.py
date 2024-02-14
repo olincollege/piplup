@@ -3,6 +3,7 @@ from enum import Enum, auto
 from epick_interface import ObjectDetectionStatus
 
 from kinova_gen3 import Gen3ControlMode, Gen3NamedPosition, kGen3NamedPositions
+import time
 
 
 class PorosityPlannerState(Enum):
@@ -28,19 +29,21 @@ class PorosityPlanner(LeafSystem):
             AbstractValue.Make(Gen3ControlMode.kTwist)
         )
         self.command_idx_ = self.DeclareDiscreteState(7)
+        self.suction_command_idx_ = self.DeclareAbstractState(AbstractValue.Make(False))
 
         # Inputs Ports
         self.pressure_idx_ = self.DeclareVectorInputPort(
             "actual_vacuum_pressure", 1
         ).get_index()
-        self.obj_det_idx_ = self.DeclareAbstractInputPort(
-            "object_detection_status", AbstractValue.Make(ObjectDetectionStatus(0))
-        ).get_index()
+        # self.obj_det_idx_ = self.DeclareAbstractInputPort(
+        #     "object_detection_status", AbstractValue.Make(ObjectDetectionStatus(0))
+        # ).get_index()
 
         # Output Ports
         # self.DeclareVectorOutputPort("arm_command", 7, self.CalcGen3Command)
         self.DeclareStateOutputPort("arm_command", self.command_idx_)
         self.DeclareStateOutputPort("control_mode", self.control_mode_idx_)
+        self.DeclareStateOutputPort("suction_command", self.suction_command_idx_)
 
         # self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
         self.DeclarePeriodicUnrestrictedUpdateEvent(0.0001, 0.0, self.Update)
@@ -58,6 +61,9 @@ class PorosityPlanner(LeafSystem):
         match planner_state:
             case PorosityPlannerState.INIT:
                 self.change_planner_state(state, PorosityPlannerState.MOVE_TO_NEUTRAL)
+                state.get_mutable_abstract_state(self.suction_command_idx_).set_value(
+                    False
+                )
             case PorosityPlannerState.MOVE_TO_NEUTRAL:
                 self.change_command_mode(state, Gen3ControlMode.kPosition)
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
@@ -80,23 +86,30 @@ class PorosityPlanner(LeafSystem):
                     np.array([0, 3.14, 0, 0.5, 0, 0.3, 0])
                 )
                 self.change_planner_state(state, PorosityPlannerState.MOVE_TO_PICK)
-                self.change_command_mode(state, Gen3ControlMode.kTwist)
             case PorosityPlannerState.MOVE_TO_PICK:
+                state.get_mutable_abstract_state(self.suction_command_idx_).set_value(
+                    True
+                )
+                self.change_command_mode(state, Gen3ControlMode.kTwist)
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     np.array([0, 0.0, 0, 0, 0, -0.1, 0])
                 )
 
-                obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
+                obj_det_status = (
+                    False  # self.get_input_port(self.obj_det_idx_).Eval(context)
+                )
 
-                if not obj_det_status == ObjectDetectionStatus.NoObjectDetected:
-                    self.change_planner_state(
-                        state, PorosityPlannerState.MEASURE_SUCTION
-                    )
-                    state.get_mutable_discrete_state(self.command_idx_).set_value(
-                        np.zeros(7)
-                    )
+                # if not obj_det_status == ObjectDetectionStatus.NoObjectDetected:
+                #     self.change_planner_state(
+                #         state, PorosityPlannerState.MEASURE_SUCTION
+                #     )
+                #     state.get_mutable_discrete_state(self.command_idx_).set_value(
+                #         np.zeros(7)
+                #     )
             case PorosityPlannerState.MEASURE_SUCTION:
-                obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
+                obj_det_status = (
+                    False  # self.get_input_port(self.obj_det_idx_).Eval(context)
+                )
                 pressure = self.get_input_port(self.pressure_idx_).Eval(context)
                 print(f"Pressure: {pressure}kPa \t Object Detection: {obj_det_status} ")
             case _:

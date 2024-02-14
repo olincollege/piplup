@@ -38,16 +38,20 @@ def run(*, scenario: Scenario):
         porosity_planner.GetInputPort("actual_vacuum_pressure"),
     )
     builder.Connect(
-        hardware_station.GetOutputPort("epick.object_detection_status"),
-        porosity_planner.GetInputPort("object_detection_status"),
+        porosity_planner.GetOutputPort("suction_command"),
+        hardware_station.GetInputPort("epick.command"),
     )
+    # builder.Connect(
+    #     hardware_station.GetOutputPort("epick.object_detection_status"),
+    #     porosity_planner.GetInputPort("object_detection_status"),
+    # )
 
     diagram: Diagram = builder.Build()
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
-    hardware_station.GetSubsystemByName(
-        "gen3_interface"
-    ).root_ctx = simulator.get_mutable_context()
+    hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
+        simulator.get_mutable_context()
+    )
 
     simulator.Initialize()
 

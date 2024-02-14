@@ -48,8 +48,9 @@ class Gen3HardwareInterface(LeafSystem):
         self.X_WB_inv: RigidTransform = self.sim_plant.CalcRelativeTransform(
             self.sim_plant.CreateDefaultContext(),
             self.sim_plant.world_frame(),
-            self.sim_plant.GetFrameByName("base_link"),
-            self.sim_plant.GetModelInstanceByName("gen3"),
+            self.sim_plant.GetFrameByName(
+                "base_link", self.sim_plant.GetModelInstanceByName("gen3")
+            ),
         ).inverse()
 
         self.root_ctx = None
@@ -190,7 +191,7 @@ class Gen3HardwareInterface(LeafSystem):
         command = Base_pb2.TwistCommand()
         command.reference_frame = Base_pb2.CARTESIAN_REFERENCE_FRAME_BASE
         command.duration = 0
-
+        print(cmd_twist)
         twist = command.twist
         twist.angular_x = np.degrees(cmd_twist[0])
         twist.angular_y = np.degrees(cmd_twist[1])
