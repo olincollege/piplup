@@ -20,7 +20,6 @@ from piplup.utils import PoseTransform
 from planning import SuctionGraspSelector
 
 
-
 def run(*, scenario: Scenario, visualize=False):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
