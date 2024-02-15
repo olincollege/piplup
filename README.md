@@ -1,7 +1,45 @@
 # piplup
 
-# TODO
-* copy command_sequence_controller to make gamepad controller
-* In CalcEndEffectorCommand: modify twist_err to use gamepad
-* Modify gripper command to use controller input
-* Copy point cloud demo, make gripepr controller & make station & connect & run 
+# Setup and Build Instructions
+## Drake
+Install drake using apt by following this: https://drake.mit.edu/apt.html#stable-releases 
+Install bazel by following: https://bazel.build/install/ubuntu  and ensure that the bazel major version is 6 with bazel --version 
+
+## Kortex
+
+Download the kortex .whl file from https://artifactory.kinovaapps.com/ui/repos/tree/General/generic-public/kortex/API/2.6.0/kortex_api-2.6.0.post3-py3-none-any.whl  by right-clicking the 2.6.0 .whl file.
+
+Install the .whl file by navigating to the downloaded location in terminal and running: pip install [name of .whl file]
+
+Then when running the teleop_demo, go into all of the collections.MutableMap errors and insert an abcto make it collections.abc.MutableMap
+
+## Oculus Reader
+Follow the git lfs config instructions on the README and then clone this repo: https://github.com/rail-berkeley/oculus_reader/tree/main 
+navigate into the repo and run pip install -e .
+
+## ROS2 Humble Install
+https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html 
+
+## Serial Library
+
+`git clone https://github.com/tylerjw/serial `
+```
+git clone https://github.com/tylerjw/serial
+cd serial
+git checkout ros2
+source /opt/ros/humble/setup.bash
+[change the /tmp/usr/local to /usr/local in 3rd line of the Makefile]
+make
+sudo make install
+```
+
+## Troubleshooting
+
+No such package “@@environ//” or related
+
+Check Bazel version and install 6.1.1 if the version is too new.
+
+sudo apt install bazel-6.1.1
+sudo rm /usr/bin/bazel
+sudo ln -s /usr/bin/bazel-6.1.1 /usr/bin/bazel
+bazel --version
