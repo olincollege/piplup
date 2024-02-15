@@ -15,7 +15,7 @@ from station import (
     QuestTwistTeleopController,
 )
 
-from perception import MakePointCloudGenerator
+from kinova_gen3 import Gen3ControlMode
 
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):
@@ -44,7 +44,7 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     if "gen3" in scenario.hardware_interface:
         builder.Connect(
             gamepad.GetOutputPort("V_WE_desired"),
-            hardware_station.GetInputPort("gen3.twist"),
+            hardware_station.GetInputPort("gen3.command"),
         )
         builder.Connect(
             hardware_station.GetOutputPort("gen3.pose_measured"),
@@ -82,6 +82,11 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
         simulator.get_mutable_context()
     )
+
+    hardware_station.GetInputPort(f"gen3.control_mode").FixValue(
+        hardware_station.GetMyContextFromRoot(simulator.get_context()),
+        Gen3ControlMode.kTwist,
+    ),
 
     simulator.Initialize()
 

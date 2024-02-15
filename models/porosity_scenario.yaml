@@ -1,0 +1,24 @@
+PorosityDemo:
+  directives:
+    - add_directives:
+        file: package://piplup_models/gen3_2f_85.dmd.yaml
+    - add_weld:
+        parent: world
+        child: gen3::base_link
+        X_PC:
+            translation: [0.09, 0.037, 0.0]
+    - add_directives:
+        file: package://piplup_models/scope_table_w_cameras.dmd.yaml
+
+  cameras: {}
+
+  model_drivers:
+    gen3: !Gen3Driver
+      hand_model_name: epick
+
+  hardware_interface:
+    gen3: !Gen3InterfaceConfig
+      ip_address: 192.168.1.10
+      port: 10000
+    epick: !EPickInterfaceConfig
+      serial_port: /dev/ttyUSB1

@@ -21,7 +21,7 @@ class GamepadTwistTeleopController(LeafSystem):
         # This can be used to specific arbitrary gripper commands
 
         self.robot_pose_port = self.DeclareVectorInputPort("pose", 6)
-        self.DeclareVectorOutputPort("V_WE_desired", 6, self.OutputTwist)
+        self.DeclareVectorOutputPort("V_WE_desired", 7, self.OutputTwist)
         if hand_model_name == "2f_85":
             self.DeclareVectorOutputPort("gripper_command", 1, self.OutputGripper)
         elif hand_model_name == "epick":
@@ -35,7 +35,7 @@ class GamepadTwistTeleopController(LeafSystem):
         pose = self.robot_pose_port.Eval(context)
         X_WE = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(), pose[3:])
         linear_mode = context.get_abstract_state(self.linear_mode_state_idx).get_value()
-        target_twist = np.zeros(6)
+        target_twist = np.zeros(7)
 
         gamepad = self._meshcat.GetGamepad()
         if not gamepad.index == None:
@@ -64,7 +64,7 @@ class GamepadTwistTeleopController(LeafSystem):
                 angular_speed = self.angular_speed_low
 
             if linear_mode:
-                target_twist[3:] = (
+                target_twist[3:-1] = (
                     np.array([left[0], left[1], -right[1]]) * linear_speed
                 )
             else:

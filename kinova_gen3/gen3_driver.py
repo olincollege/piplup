@@ -13,11 +13,9 @@ class Gen3Driver:
     __fields__: ClassVar[tuple] = (
         SimpleNamespace(name="hand_model_name", type=str),
         SimpleNamespace(name="control_level", type=Gen3ControlLevel),
-        SimpleNamespace(name="control_mode", type=int),
     )
     hand_model_name: str
     control_level: Gen3ControlLevel = Gen3ControlLevel.kHighLevel
-    control_mode: Gen3ControlMode = Gen3ControlMode.kPosition
 
 
 # Driver Functions
@@ -117,7 +115,6 @@ def ApplyDriverConfig(
         gen3_model.model_instance,
         controller_plant,
         builder,
-        Gen3ControlMode(driver_config.control_mode),
     )
 
     if driver_config.hand_model_name == "2f_85":
