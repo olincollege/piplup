@@ -1,4 +1,4 @@
-TeleopPlanarGripper:
+Planar:
   directives:
     - add_directives:
         file: package://piplup_models/gen3_2f_85.dmd.yaml
@@ -17,7 +17,7 @@ TeleopPlanarGripper:
       ip_address: 192.168.1.10
       port: 10000
 
-TeleopSuctionGripper:
+Suction:
   directives:
     - add_directives:
         file: package://piplup_models/gen3_2f_85.dmd.yaml

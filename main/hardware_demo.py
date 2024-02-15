@@ -113,15 +113,15 @@ def main():
         "--scenario_name",
         "-s",
         help="Specifies the scenario name within the scenario yaml file.",
-        choices=["TeleopSuctionGripper", "TeleopPlanarGripper"],
-        default="TeleopPlanarGripper",
+        choices=["Suction", "Planar"],
+        default="Planar",
     )
     parser.add_argument(
         "--teleop",
         "-t",
         help="If specified a Teleop interface will be enabled.",
         choices=[None, "gamepad", "quest"],
-        default=None,
+        default="gamepad",
     )
     parser.add_argument("--graph_viz", "-g", action="store_true")
     args = parser.parse_args()
