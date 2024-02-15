@@ -1,4 +1,6 @@
 # piplup
+Repo for code and documentation related to the 2023-2024 Amazon Robotics SCOPE team at Olin College of Engineering.
+
 
 # Setup and Build Instructions
 ## Drake
