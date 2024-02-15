@@ -59,6 +59,7 @@ namespace piplup
             std::string camera_base_frame_;
             std::string camera_name_;
             math::RigidTransformd X_BD_;
+            rs2::align align_to_depth_;
         };
     } // namespace realsense
 } // namespace piplup
