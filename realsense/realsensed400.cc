@@ -58,7 +58,7 @@ namespace piplup
             }
 
             rs2::config cfg;
-            
+
             cfg.enable_device(device_serial_number);
             cfg.enable_stream(RS2_STREAM_COLOR,
                               color_width_,

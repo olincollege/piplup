@@ -60,7 +60,7 @@ def MakePointCloudGenerator(
             meshcat=meshcat, path="point_cloud", publish_period=1.0
         ),
     )
-    meshcat_point_cloud.set_point_size(0.005)
+    meshcat_point_cloud.set_point_size(0.002)
 
     builder.Connect(
         point_cloud_processor.GetOutputPort("merged_point_cloud"),
@@ -100,6 +100,9 @@ class PointCloudProcessor(LeafSystem):
             self.UpdatePointCloud,
         )
 
+        self.crop_lower = np.array([0.1, -0.3, 0])
+        self.crop_upper = np.array([0.75, 0.3, 1.0])
+
     def UpdatePointCloud(self, context: Context, output: AbstractValue):
         clouds: list[PointCloud] = []
 
@@ -115,7 +118,9 @@ class PointCloudProcessor(LeafSystem):
             clouds[i].FlipNormalsTowardPoint(X_WC.translation())
         # Merge clouds
         output.set_value(
-            Concatenate(clouds=clouds).VoxelizedDownSample(voxel_size=0.005)
+            Concatenate(clouds=clouds)
+            .VoxelizedDownSample(voxel_size=0.005)
+            .Crop(self.crop_lower, self.crop_upper)
         )
         # self._meshcat.SetObject(
         #     f"/pointcloud",
