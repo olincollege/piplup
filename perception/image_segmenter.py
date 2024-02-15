@@ -5,9 +5,6 @@ from fastsam import FastSAM, FastSAMPrompt
 import torch
 import yaml
 
-# from fastsam import FastSAM, FastSAMPrompt
-# import torch
-
 
 class ImageSegmenter(LeafSystem):
     def __init__(self, camera: str):
@@ -130,3 +127,31 @@ class ImageSegmenter(LeafSystem):
         if isinstance(ann, list):
             ann = np.array(ann)
         return ann.squeeze()
+
+
+class LabelImageSegmentationSystem(LeafSystem):
+    def __init__(self, label):
+        LeafSystem.__init__(self)
+        self.label = label
+
+        self.label_img_port = self.DeclareAbstractInputPort(
+            "label_image", AbstractValue.Make(ImageLabel16I())
+        )
+        self.depth_img_port = self.DeclareAbstractInputPort(
+            "depth_image", AbstractValue.Make(ImageDepth16U())
+        )
+        self.DeclareAbstractOutputPort(
+            "masked_image", lambda: AbstractValue.Make(ImageDepth16U()), self.MaskImage
+        )
+
+    def MaskImage(self, context: Context, output: AbstractValue):
+        label_img = self.label_img_port.Eval(context).data
+        depth_img = self.depth_img_port.Eval(context).data
+
+        mask_img = label_img == self.label
+        depth_img = copy.copy(depth_img)
+        depth_img[~mask_img] = 0
+
+        img: ImageDepth16U = output.get_mutable_value()
+        img.resize(640, 480)
+        img.mutable_data[:] = depth_img

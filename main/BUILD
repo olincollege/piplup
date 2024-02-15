@@ -18,7 +18,7 @@ py_binary(
     name = "perception_demo",
     srcs = ["perception_demo.py"],
     imports = [".."],
-    deps = ["//station:station"],
+    deps = ["//station:station","//planning:planning", "//utils:utils"],
 )
 
 py_binary(
