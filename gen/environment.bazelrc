@@ -1,0 +1,2 @@
+import %workspace%/tools/ubuntu.bazelrc
+import %workspace%/tools/ubuntu-jammy.bazelrc

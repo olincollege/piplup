@@ -19,8 +19,9 @@ namespace piplup
           , camera_base_frame_(camera_config.X_PB.base_frame.value())
           , camera_name_(camera_config.name)
           , X_BD_(camera_config.X_BD.GetDeterministicValue())
+          , align_to_depth_(RS2_STREAM_DEPTH)
         {
-            double polling_rate = 0.001;
+            double polling_rate = 0.01;
             color_state_idx_ = this->DeclareAbstractState(
                 Value<systems::sensors::ImageRgba8U>(color_width_, color_height_));
             depth_state_idx_ = this->DeclareAbstractState(
@@ -57,6 +58,7 @@ namespace piplup
             }
 
             rs2::config cfg;
+
             cfg.enable_device(device_serial_number);
             cfg.enable_stream(RS2_STREAM_COLOR,
                               color_width_,
@@ -89,6 +91,7 @@ namespace piplup
             rs2::frameset frames;
             if(pipeline_.poll_for_frames(&frames))
             {
+                frames = align_to_depth_.process(frames);
                 // drake::log()->info("[{}] Received Frames", camera_name_);
                 rs2::frame color_frame = frames.get_color_frame();
                 rs2::depth_frame depth_frame = frames.get_depth_frame();

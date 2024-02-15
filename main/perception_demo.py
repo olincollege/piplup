@@ -11,13 +11,13 @@ from station import (
     MakeHardwareStation,
     Scenario,
     load_scenario,
-    GamepadTwistTeleopController,
-    QuestTwistTeleopController,
 )
 
-from perception import MakePointCloudGenerator
-
+from perception import MakePointCloudGenerator, ImageSegmenter
 import cv2
+
+from piplup.utils import PoseTransform
+from planning import SuctionGraspSelector
 
 
 def run(*, scenario: Scenario, visualize=False):
@@ -40,17 +40,47 @@ def run(*, scenario: Scenario, visualize=False):
         MakePointCloudGenerator(camera_info=camera_info, meshcat=meshcat),
     )
 
+    suction_grasp: SuctionGraspSelector = builder.AddNamedSystem(
+        "suction_grasp_selector", SuctionGraspSelector(meshcat)
+    )
+
     for camera in cameras:
+        camera_pose: PoseTransform = builder.AddNamedSystem(
+            f"{camera}.pose",
+            PoseTransform(scenario.cameras[camera].X_BD.GetDeterministicValue()),
+        )
         builder.Connect(
             hardware_station.GetOutputPort(f"{camera}.body_pose_in_world"),
-            point_cloud_generator.GetInputPort(f"{camera}_pose"),
+            camera_pose.GetInputPort("pose"),
+        )
+
+        seg: System = builder.AddNamedSystem(
+            f"{camera}_segmenter", ImageSegmenter(camera)
         )
 
         builder.Connect(
             hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+            seg.GetInputPort(f"{camera}_depth_image"),
+        )
+
+        builder.Connect(
+            hardware_station.GetOutputPort(f"{camera}.color_image"),
+            seg.GetInputPort(f"{camera}_color_image"),
+        )
+
+        builder.Connect(
+            camera_pose.GetOutputPort("pose"),
+            point_cloud_generator.GetInputPort(f"{camera}_pose"),
+        )
+        builder.Connect(
+            seg.GetOutputPort(f"{camera}_masked_depth_image"),
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
         )
 
+    builder.Connect(
+        point_cloud_generator.GetOutputPort("merged_point_cloud"),
+        suction_grasp.GetInputPort("merged_point_cloud"),
+    )
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -58,44 +88,96 @@ def run(*, scenario: Scenario, visualize=False):
     ApplySimulatorConfig(scenario.simulator_config, simulator)
 
     simulator.Initialize()
-    # Simulate.
 
-    while True:
-        try:
-            simulator.AdvanceTo(simulator.get_context().get_time() + 0.05)
+    # from graphviz import Source
+    # s = Source(diagram.GetGraphvizString(), filename="test.gv", format="png")
+    # s.view()
+
+    # Simulate.
+    try:
+        while True:
+            simulator.AdvanceTo(simulator.get_context().get_time() + 0.5)
+            suction_grasp.GetOutputPort("grasp_selection").Eval(
+                suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            )
             if visualize:
                 for camera in cameras:
-                    img_color = (
-                        hardware_station.GetOutputPort(f"{camera}.color_image")
-                        .Eval(
-                            hardware_station.GetMyContextFromRoot(
-                                simulator.get_context()
+                    if camera == "camera4":
+                        img_color = (
+                            hardware_station.GetOutputPort(f"{camera}.color_image")
+                            .Eval(
+                                hardware_station.GetMyContextFromRoot(
+                                    simulator.get_context()
+                                )
                             )
+                            .data
                         )
-                        .data
-                    )
-                    img_depth = (
-                        hardware_station.GetOutputPort(f"{camera}.depth_image_16u")
-                        .Eval(
-                            hardware_station.GetMyContextFromRoot(
-                                simulator.get_context()
+                        img_depth = (
+                            hardware_station.GetOutputPort(f"{camera}.depth_image_16u")
+                            .Eval(
+                                hardware_station.GetMyContextFromRoot(
+                                    simulator.get_context()
+                                )
                             )
+                            .data
                         )
-                        .data
-                    )
-                    if img_color.size > 0 and img_depth.size > 0:
-                        img_color = cv2.cvtColor(img_color, cv2.COLOR_RGB2BGR)
-                        cv2.imshow(f"{camera}_c", img_color)
-                        cv2.imshow(f"{camera}_d", img_depth)
+                        masked_color = (
+                            diagram.GetSubsystemByName(f"{camera}_segmenter")
+                            .GetOutputPort(f"{camera}_masked_color_image")
+                            .Eval(
+                                diagram.GetSubsystemByName(
+                                    f"{camera}_segmenter"
+                                ).GetMyContextFromRoot(simulator.get_context())
+                            )
+                            .data
+                        )
+
+                        masked_depth = (
+                            diagram.GetSubsystemByName(f"{camera}_segmenter")
+                            .GetOutputPort(f"{camera}_masked_depth_image")
+                            .Eval(
+                                diagram.GetSubsystemByName(
+                                    f"{camera}_segmenter"
+                                ).GetMyContextFromRoot(simulator.get_context())
+                            )
+                            .data
+                        )
+
+                        if img_color.size > 0 and img_depth.size > 0:
+                            img_color = cv2.cvtColor(img_color, cv2.COLOR_RGB2BGR)
+                            masked_color = cv2.cvtColor(masked_color, cv2.COLOR_RGB2BGR)
+                            brightness = 20
+                            contrast = 5
+                            img_depth = cv2.cvtColor(img_depth, cv2.COLOR_GRAY2BGR)
+                            img_depth = cv2.addWeighted(
+                                img_depth,
+                                contrast,
+                                np.zeros(img_depth.shape, img_depth.dtype),
+                                0,
+                                brightness,
+                            )
+                            masked_depth = cv2.cvtColor(
+                                masked_depth, cv2.COLOR_GRAY2BGR
+                            )
+                            masked_depth = cv2.addWeighted(
+                                masked_depth,
+                                contrast,
+                                np.zeros(masked_depth.shape, masked_depth.dtype),
+                                0,
+                                brightness,
+                            )
+                            img_comb_c = cv2.hconcat([img_color, masked_color])
+                            img_comb_d = cv2.hconcat([img_depth, masked_depth])
+                            cv2.imshow(f"{camera}_all", img_comb_c)
+                            cv2.imshow(f"{camera}_d", img_comb_d)
 
                 if cv2.waitKey(1) == ord("q"):
                     break
-        except KeyboardInterrupt:
-            cv2.destroyAllWindows()
-            print(simulator.get_actual_realtime_rate())
-            if hardware_station.HasSubsystemNamed("gen3_interface"):
-                hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
-            break
+    except KeyboardInterrupt:
+        cv2.destroyAllWindows()
+        print(simulator.get_actual_realtime_rate())
+        if hardware_station.HasSubsystemNamed("gen3_interface"):
+            hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():

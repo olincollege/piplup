@@ -7,13 +7,22 @@ Hardware:
     #     child: gen3::base_link
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
-    - add_model:
-        name: cracker_box
-        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
-        default_free_body_pose:
-          base_link_cracker:
-            translation: [0.4, 0, 0.3]
-            rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
+    # - add_model:
+    #     name: box
+    #     file: package://piplup_models/box.sdf
+    # - add_weld:
+    #     parent: world
+    #     child: box::base
+    #     X_PC:
+    #       translation: [0.6, 0, 0.09]
+    #       rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
+    # - add_model:
+    #     name: cracker_box
+    #     file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+    #     default_free_body_pose:
+    #       base_link_cracker:
+    #         translation: [0.4, 0, 0.3]
+    #         rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
 
   cameras:
     camera0:
@@ -21,41 +30,76 @@ Hardware:
       depth: True
       X_PB:
         base_frame: camera0::base
+      X_BC:
+        translation: [0.0115, 0, 0.026]
+      X_BD:
+        translation: [-0.0475, 0, 0.026]
       width: 640
       height: 480
       fps: 30
+      center_x: 321.65869140625
+      center_y: 245.08485412597656
+      focal: {x: 386.0453186035156, y: 386.0453186035156}
     camera1:
       name: camera1
       depth: True
       X_PB:
         base_frame: camera1::base
+      X_BC:
+        translation: [0.0115, 0, 0.026]
+      X_BD:
+        translation: [-0.0475, 0, 0.026]
       width: 640
       height: 480
       fps: 30
+      center_x: 321.3353576660156
+      center_y: 242.0176544189453
+      focal: {x: 390.5758361816406, y: 390.5758361816406}
     camera2:
       name: camera2
       depth: True
       X_PB:
         base_frame: camera2::base
+      X_BC:
+        translation: [-0.0325, 0, 0.025]
+      X_BD:
+        translation: [-0.0175, 0, 0.025]
       width: 640
       height: 480
       fps: 30
+      center_x: 322.87481689453125
+      center_y: 238.08132934570312
+      focal: {x: 388.6526794433594, y: 388.6526794433594}
     camera3:
       name: camera3
       depth: True
       X_PB:
         base_frame: camera3::base
+      X_BC:
+        translation: [-0.0325, 0, 0.025]
+      X_BD:
+        translation: [-0.0175, 0, 0.025]
       width: 640
       height: 480
       fps: 30
+      center_x: 320.31787109375
+      center_y: 242.22889709472656
+      focal: {x: 382.69512939453125, y: 382.69512939453125}
     camera4:
       name: camera4
       depth: True
       X_PB:
         base_frame: camera4::base
+      X_BC:
+        translation: [-0.0325, 0, 0.025]
+      X_BD:
+        translation: [-0.0175, 0, 0.025]
       width: 640
       height: 480
       fps: 30
+      center_x: 318.038818359375
+      center_y: 235.7093505859375
+      focal: {x: 386.1900939941406, y: 386.1900939941406}
 
   model_drivers:
     gen3: !Gen3Driver
@@ -86,12 +130,21 @@ Simulated:
     - add_directives:
         file: package://piplup_models/scope_table_w_cameras.dmd.yaml
     - add_model:
-        name: cracker_box
-        file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
-        default_free_body_pose:
-          base_link_cracker:
-            translation: [0.4, 0, 0.3]
-            rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
+        name: box
+        file: package://piplup_models/box.sdf
+    - add_weld:
+        parent: world
+        child: box::base
+        X_PC:
+          translation: [0.5, 0, 0.09]
+          rotation: !Rpy { deg: [0.0, 0.0, 0.0] }
+    # - add_model:
+    #     name: cracker_box
+    #     file: package://piplup_models/ycb/sdf/003_cracker_box.sdf
+    #     default_free_body_pose:
+    #       base_link_cracker:
+    #         translation: [0.4, 0, 0.3]
+    #         rotation: !Rpy { deg: [90.0, 0.0, 0.0] }
 
   cameras:
     camera0:
