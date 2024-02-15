@@ -4,6 +4,7 @@ from pydrake.all import *
 from fastsam import FastSAM, FastSAMPrompt
 import torch
 import yaml
+import time
 
 
 class ImageSegmenter(LeafSystem):
@@ -41,6 +42,12 @@ class ImageSegmenter(LeafSystem):
             lambda: AbstractValue.Make(Image[PixelType.kRgba8U]()),
             self.MaskColorImage,
         )
+        self.model = FastSAM("/home/piplup/piplup/perception/weights/FastSAM.pt")
+        self.DEVICE = torch.device(
+            "cuda"
+            if torch.cuda.is_available()
+            else "mps" if torch.backends.mps.is_available() else "cpu"
+        )
 
     def get_params(self, camera):
         file_path = "/home/piplup/piplup/perception/perception_configs.yaml"
@@ -67,9 +74,7 @@ class ImageSegmenter(LeafSystem):
         color_image_matrix = np.array(color_image.data, copy=False).reshape(
             color_image.height(), color_image.width(), -1
         )
-
         mask = self.get_mask(color_image_matrix)
-
         if mask.shape != (480, 640):
             return
         masked_depth_image = copy.copy(depth_image.data)
@@ -99,24 +104,18 @@ class ImageSegmenter(LeafSystem):
         img.mutable_data[:] = masked_color_image
 
     def get_mask(self, color_image: np.ndarray) -> np.ndarray:
-
-        model = FastSAM("/home/piplup/piplup/perception/weights/FastSAM.pt")
-        DEVICE = torch.device(
-            "cuda"
-            if torch.cuda.is_available()
-            else "mps" if torch.backends.mps.is_available() else "cpu"
-        )
-
-        everything_results = model(
+        everything_results = self.model(
             cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR),
-            device=DEVICE,
+            device=self.DEVICE,
             retina_masks=True,
             imgsz=1024,
             conf=0.8,
             iou=0.9,
         )
 
-        prompt_process = FastSAMPrompt(color_image, everything_results, device=DEVICE)
+        prompt_process = FastSAMPrompt(
+            color_image, everything_results, device=self.DEVICE
+        )
 
         points = [*self.object_coordinates, *self.background_coordinates]
         pointlabel = [

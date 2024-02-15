@@ -12,7 +12,6 @@ def MakePointCloudGenerator(
     camera_info: dict[str, CameraInfo],
     meshcat: Meshcat = None,
     hardware: bool = False,
-    color=None,
 ) -> Diagram:
     # Create diagram
     builder = DiagramBuilder()
@@ -20,9 +19,7 @@ def MakePointCloudGenerator(
     # Add point cloud processor LeafSystem
     point_cloud_processor: PointCloudProcessor = builder.AddNamedSystem(
         "point_cloud_processor",
-        PointCloudProcessor(
-            cameras=list(camera_info.keys()), meshcat=meshcat, color=color
-        ),
+        PointCloudProcessor(cameras=list(camera_info.keys()), meshcat=meshcat),
     )
 
     # Add DepthImageToPointCloud LeafSystem for each camera
@@ -60,7 +57,7 @@ def MakePointCloudGenerator(
     meshcat_point_cloud: MeshcatPointCloudVisualizer = builder.AddNamedSystem(
         "point_cloud_visualizer",
         MeshcatPointCloudVisualizer(
-            meshcat=meshcat, path="point_cloud", publish_period=0.002
+            meshcat=meshcat, path="point_cloud", publish_period=1.0
         ),
     )
     meshcat_point_cloud.set_point_size(0.005)

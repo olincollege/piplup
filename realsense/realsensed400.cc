@@ -20,7 +20,7 @@ namespace piplup
           , camera_name_(camera_config.name)
           , X_BD_(camera_config.X_BD.GetDeterministicValue())
         {
-            double polling_rate = 0.001;
+            double polling_rate = 0.01;
             color_state_idx_ = this->DeclareAbstractState(
                 Value<systems::sensors::ImageRgba8U>(color_width_, color_height_));
             depth_state_idx_ = this->DeclareAbstractState(
