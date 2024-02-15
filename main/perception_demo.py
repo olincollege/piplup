@@ -102,7 +102,7 @@ def run(*, scenario: Scenario, visualize=False):
             )
             if visualize:
                 for camera in cameras:
-                    if camera == "camera4":
+                    if camera == "camera3":
                         img_color = (
                             hardware_station.GetOutputPort(f"{camera}.color_image")
                             .Eval(

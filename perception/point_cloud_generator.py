@@ -101,7 +101,7 @@ class PointCloudProcessor(LeafSystem):
         )
 
         self.crop_lower = np.array([0.1, -0.3, 0])
-        self.crop_upper = np.array([0.75, 0.3, 1.0])
+        self.crop_upper = np.array([1.0, 0.3, 1.0])
 
     def UpdatePointCloud(self, context: Context, output: AbstractValue):
         clouds: list[PointCloud] = []
