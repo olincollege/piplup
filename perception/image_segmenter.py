@@ -46,7 +46,9 @@ class ImageSegmenter(LeafSystem):
         self.DEVICE = torch.device(
             "cuda"
             if torch.cuda.is_available()
-            else "mps" if torch.backends.mps.is_available() else "cpu"
+            else "mps"
+            if torch.backends.mps.is_available()
+            else "cpu"
         )
 
     def get_params(self, camera):
@@ -62,7 +64,6 @@ class ImageSegmenter(LeafSystem):
             )
 
     def MaskDepthImage(self, context: Context, output: AbstractValue):
-
         color_image = self.EvalAbstractInput(
             context, self.color_image_input_port.get_index()
         ).get_value()

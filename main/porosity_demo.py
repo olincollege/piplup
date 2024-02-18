@@ -53,9 +53,9 @@ def run(*, scenario: Scenario):
     diagram: Diagram = builder.Build()
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
-    hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
-        simulator.get_mutable_context()
-    )
+    hardware_station.GetSubsystemByName(
+        "gen3_interface"
+    ).root_ctx = simulator.get_mutable_context()
 
     simulator.Initialize()
 
