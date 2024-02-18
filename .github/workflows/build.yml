@@ -1,0 +1,10 @@
+name: Build Piplup
+run-name: ${{ github.actor }} is running
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Drake
+        run: ./scripts/setup/install_prereqs.sh
