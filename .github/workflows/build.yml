@@ -8,16 +8,16 @@ jobs:
     steps:
       - name: Install librealsense
         run: |
-          sudo mkdir -p /etc/apt/keyrings
-          curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | sudo tee /etc/apt/keyrings/librealsense.pgp > /dev/null
-          sudo apt-get install apt-transport-https
+          mkdir -p /etc/apt/keyrings
+          curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | tee /etc/apt/keyrings/librealsense.pgp > /dev/null
+          apt-get install apt-transport-https
           echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] https://librealsense.intel.com/Debian/apt-repo `lsb_release -cs` main" | \
-          sudo tee /etc/apt/sources.list.d/librealsense.list
-          sudo apt-get update
-          sudo apt-get install librealsense2-dkms
-          sudo apt-get install librealsense2-utils
-          sudo apt-get install librealsense2-dev
-          sudo apt-get install librealsense2-dbg
+          tee /etc/apt/sources.list.d/librealsense.list
+          apt-get update
+          apt-get install librealsense2-dkms
+          apt-get install librealsense2-utils
+          apt-get install librealsense2-dev
+          apt-get install librealsense2-dbg
       - uses: actions/checkout@v4
       - uses: bazelbuild/setup-bazelisk@v3
         with:
