@@ -6,19 +6,12 @@ jobs:
     runs-on: ubuntu-latest
     container: krishsuresh/piplup
     steps:
-      # - name: Install librealsense
-      #   run: |
-      #     mkdir -p /etc/apt/keyrings
-      #     curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | tee /etc/apt/keyrings/librealsense.pgp > /dev/null
-      #     apt-get install -y apt-transport-https
-      #     echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] https://librealsense.intel.com/Debian/apt-repo `lsb_release -cs` main" | \
-      #     tee /etc/apt/sources.list.d/librealsense.list
-      #     apt-get update
-      #     apt-get install -y librealsense2-dkms
-      #     apt-get install -y librealsense2-utils
-      #     apt-get install -y librealsense2-dev
-      #     apt-get install -y librealsense2-dbg
-      # - run: apt-get install -y python3-opencv
+      - name: libserial
+        run: |
+          git clone https://github.com/krish-suresh/serial.git
+          cd serial
+          make
+          make install
       - uses: actions/checkout@v4
       - uses: bazelbuild/setup-bazelisk@v3
         with:
@@ -28,4 +21,4 @@ jobs:
         with:
           path: "~/.cache/bazel"
           key: bazel
-      - run: bazel build //kinova_gen3:kinova_gen3
+      - run: bazel build //station:station
