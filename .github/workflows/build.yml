@@ -8,7 +8,7 @@ jobs:
     steps:
       - name: libserial
         run: |
-          git clone https://github.com/krish-suresh/serial.git
+          git clone -b ros2 https://github.com/krish-suresh/serial.git
           cd serial
           make
           make install
