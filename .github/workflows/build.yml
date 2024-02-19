@@ -4,9 +4,8 @@ on: [push]
 jobs:
   build:
     runs-on: ubuntu-latest
+    container: krishsuresh/piplup
     steps:
       - uses: actions/checkout@v4
-      - run: groups
-      - run: id
       - name: Setup Drake
         run: sudo ./scripts/setup/install_prereqs.sh
