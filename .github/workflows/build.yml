@@ -10,14 +10,14 @@ jobs:
         run: |
           mkdir -p /etc/apt/keyrings
           curl -sSf https://librealsense.intel.com/Debian/librealsense.pgp | tee /etc/apt/keyrings/librealsense.pgp > /dev/null
-          apt-get install apt-transport-https
+          apt-get install -y apt-transport-https
           echo "deb [signed-by=/etc/apt/keyrings/librealsense.pgp] https://librealsense.intel.com/Debian/apt-repo `lsb_release -cs` main" | \
           tee /etc/apt/sources.list.d/librealsense.list
           apt-get update
-          apt-get install librealsense2-dkms
-          apt-get install librealsense2-utils
-          apt-get install librealsense2-dev
-          apt-get install librealsense2-dbg
+          apt-get install -y librealsense2-dkms
+          apt-get install -y librealsense2-utils
+          apt-get install -y librealsense2-dev
+          apt-get install -y librealsense2-dbg
       - uses: actions/checkout@v4
       - uses: bazelbuild/setup-bazelisk@v3
         with:
