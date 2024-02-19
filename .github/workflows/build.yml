@@ -7,5 +7,10 @@ jobs:
     container: krishsuresh/piplup
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Drake
-        run: sudo ./scripts/setup/install_prereqs.sh
+      - uses: bazelbuild/setup-bazelisk@v3
+      - name: Mount bazel cache  # Optional
+        uses: actions/cache@v4
+        with:
+          path: "~/.cache/bazel"
+          key: bazel
+      - run: bazel build //...
