@@ -9,4 +9,4 @@ jobs:
       - run: groups
       - run: id
       - name: Setup Drake
-        run: ./scripts/setup/install_prereqs.sh
+        run: sudo ./scripts/setup/install_prereqs.sh
