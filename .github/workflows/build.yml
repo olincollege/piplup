@@ -1,0 +1,26 @@
+name: Build Piplup
+run-name: ${{ github.actor }} is running
+on: [pull_request]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    container: krishsuresh/piplup
+    steps:
+      - name: libserial
+        shell: bash
+        run: |
+          git clone -b ros2 https://github.com/krish-suresh/serial.git
+          cd serial
+          source /opt/ros/humble/setup.bash
+          make
+          make install
+      - uses: actions/checkout@v4
+      - uses: bazelbuild/setup-bazelisk@v3
+        with:
+          bazelisk-version: v1.18.0
+      - name: Mount bazel cache  # Optional
+        uses: actions/cache@v4
+        with:
+          path: "~/.cache/bazel"
+          key: bazel
+      - run: bazel build //station:station
