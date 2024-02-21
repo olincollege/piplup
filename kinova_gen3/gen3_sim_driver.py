@@ -5,21 +5,7 @@ from .gen3_constants import *
 import numpy as np
 
 
-class TwistIntegrator(LeafSystem):
-    def __init__(self):
-        LeafSystem.__init__(self)
-
-        self.twist_idx = self.DeclareVectorInputPort("twist", 6)
-        self.DeclareAbstractOutputPort(
-            "pose", AbstractValue.Make(RigidTransform()), self.CalcPose
-        )
-
-        self.DeclareContinuousState()
-
-    def CalcPose(self, context: Context, output: RigidTransform):
-        self.twist_idx.Eval(context)
-
-
+# TODO move these systems to C++
 class Gen3ControlModeToIndex(LeafSystem):
     def __init__(self):
         LeafSystem.__init__(self)
@@ -41,8 +27,8 @@ class Gen3ControlModeToIndex(LeafSystem):
         match control_mode:
             case Gen3ControlMode.kPosition:
                 output.set_value(InputPortIndex(1))
-            case Gen3ControlMode.kVelocity:
-                output.set_value(InputPortIndex(2))
+            # case Gen3ControlMode.kVelocity:
+            #     output.set_value(InputPortIndex(2))
             case Gen3ControlMode.kPose:
                 output.set_value(InputPortIndex(3))
             case _:
