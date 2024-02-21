@@ -2,7 +2,7 @@ name: Build Piplup
 run-name: ${{ github.actor }} is running
 on:
   pull_request:
-    types: [opened, labeled]
+    types: [opened, edited]
   push:
     branches:
       - main
