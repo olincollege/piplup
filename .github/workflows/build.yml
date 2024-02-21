@@ -1,6 +1,10 @@
 name: Build Piplup
 run-name: ${{ github.actor }} is running
-on: [push]
+on:
+  pull_request:
+    types: [opened, labeled]
+  label:
+    types: [created]
 jobs:
   build:
     runs-on: ubuntu-latest
