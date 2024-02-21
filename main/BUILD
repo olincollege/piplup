@@ -37,3 +37,13 @@ py_binary(
         "//station",
     ],
 )
+
+py_binary(
+    name = "planar_grasp_demo",
+    srcs = ["planar_grasp_demo.py"],
+    imports = [".."],
+    deps = [
+        "//planning",
+        "//station",
+    ],
+)

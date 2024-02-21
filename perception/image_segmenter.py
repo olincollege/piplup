@@ -42,7 +42,7 @@ class ImageSegmenter(LeafSystem):
             lambda: AbstractValue.Make(Image[PixelType.kRgba8U]()),
             self.MaskColorImage,
         )
-        self.model = FastSAM("/home/piplup/piplup/perception/weights/FastSAM.pt")
+        self.model = FastSAM("/home/ali1/code/piplup/perception/weights/FastSAM.pt")
         self.DEVICE = torch.device(
             "cuda"
             if torch.cuda.is_available()
@@ -52,7 +52,7 @@ class ImageSegmenter(LeafSystem):
         )
 
     def get_params(self, camera):
-        file_path = "/home/piplup/piplup/perception/perception_configs.yaml"
+        file_path = "/home/ali1/code/piplup/perception/perception_configs.yaml"
         with open(file_path, "r") as file:
             parsed_yaml = yaml.safe_load(file)
 
