@@ -15,7 +15,7 @@ from station import (
 )
 
 from graphviz import Source
-from perception import MakePointCloudGenerator, ImageSegmenter
+from kinova_gen3 import Gen3ControlMode
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -40,7 +40,7 @@ def run(*, scenario: Scenario, graphviz=None):
 
     builder.Connect(
         gamepad.GetOutputPort("X_WE_desired"),
-        hardware_station.GetInputPort("gen3.pose"),
+        hardware_station.GetInputPort("gen3.command"),
     )
     builder.Connect(
         gamepad.GetOutputPort("gripper_command"),
@@ -50,20 +50,6 @@ def run(*, scenario: Scenario, graphviz=None):
     builder.Connect(
         hardware_station.GetOutputPort("gen3.state_estimated"),
         gamepad.GetInputPort("robot_state"),
-    )
-
-    camera0_segmenter = builder.AddNamedSystem(
-        "camera0_seg", ImageSegmenter("camera0", 10)
-    )
-
-    builder.Connect(
-        hardware_station.GetOutputPort("camera0.color_image"),
-        camera0_segmenter.GetInputPort("color_image"),
-    )
-
-    builder.Connect(
-        hardware_station.GetOutputPort("camera0.depth_image_32f"),
-        camera0_segmenter.GetInputPort("depth_image"),
     )
 
     # Build the diagram and its simulator.
@@ -90,14 +76,17 @@ def run(*, scenario: Scenario, graphviz=None):
                 f.write(diagram.GetGraphvizString(options=options))
 
         s = Source(
-            hardware_station.GetSubsystemByName("Gen3Driver(gen3)").GetGraphvizString(
-                options=options
-            ),
+            # .GetSubsystemByName("Gen3Driver(gen3)")
+            diagram.GetGraphvizString(options=options),
             filename="test.gv",
             format="png",
         )
         s.view()
 
+    hardware_station.GetInputPort(f"gen3.control_mode").FixValue(
+        hardware_station.GetMyContextFromRoot(simulator.get_context()),
+        Gen3ControlMode.kPose,
+    )
     # Simulate.
     simulator.AdvanceTo(scenario.simulation_duration)
 
@@ -109,8 +98,8 @@ def main():
     parser.add_argument(
         "--scenario_name",
         "-s",
-        choices=["TeleopSuctionGripper", "TeleopPlanarGripper"],
-        default="TeleopPlanarGripper",
+        choices=["Suction", "Planar"],
+        default="Planar",
     )
     parser.add_argument(
         "--graph_viz",

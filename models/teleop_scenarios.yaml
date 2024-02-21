@@ -1,4 +1,4 @@
-TeleopPlanarGripper:
+Planar:
   directives:
   - add_directives:
       file: package://piplup_models/gen3_2f_85.dmd.yaml
@@ -21,9 +21,8 @@ TeleopPlanarGripper:
   model_drivers:
     gen3: !Gen3Driver
       hand_model_name: 2f_85
-      control_mode: 2
 
-TeleopSuctionGripper:
+Suction:
   plant_config:
     time_step: 0.002
     discrete_contact_solver: sap
@@ -42,32 +41,6 @@ TeleopSuctionGripper:
             base_link_cracker:
                 translation: [0.4, 0, 0.3]
                 rotation: !Rpy { deg: [0.0, 0.0, 0.0 ]}
-  cameras:
-    camera0:
-      name: camera0
-      depth: True
-      X_PB:
-        base_frame: camera0::image_frame
-    camera1:
-      name: camera1
-      depth: True
-      X_PB:
-        base_frame: camera1::image_frame
-    camera2:
-      name: camera2
-      depth: True
-      X_PB:
-        base_frame: camera2::image_frame
-    camera3:
-      name: camera3
-      depth: True
-      X_PB:
-        base_frame: camera3::image_frame
-    camera4:
-      name: camera4
-      depth: True
-      X_PB:
-        base_frame: camera4::image_frame
   model_drivers:
     gen3: !Gen3Driver
       hand_model_name: epick_2cup
