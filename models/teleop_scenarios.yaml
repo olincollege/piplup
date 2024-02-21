@@ -21,7 +21,6 @@ TeleopPlanarGripper:
   model_drivers:
     gen3: !Gen3Driver
       hand_model_name: 2f_85
-      control_mode: 2
 
 TeleopSuctionGripper:
   plant_config:

@@ -7,7 +7,7 @@ import numpy as np
 
 # Sim Gen3 Driver
 class SimGen3Driver(Diagram):
-    def __init__(self, controller_plant: MultibodyPlant, control_mode: Gen3ControlMode):
+    def __init__(self, controller_plant: MultibodyPlant):
         Diagram.__init__(self)
         builder = DiagramBuilder()
         num_positions = controller_plant.num_positions()

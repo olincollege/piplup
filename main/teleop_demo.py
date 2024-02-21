@@ -15,7 +15,6 @@ from station import (
 )
 
 from graphviz import Source
-from perception import MakePointCloudGenerator, ImageSegmenter
 
 
 def run(*, scenario: Scenario, graphviz=None):
@@ -50,20 +49,6 @@ def run(*, scenario: Scenario, graphviz=None):
     builder.Connect(
         hardware_station.GetOutputPort("gen3.state_estimated"),
         gamepad.GetInputPort("robot_state"),
-    )
-
-    camera0_segmenter = builder.AddNamedSystem(
-        "camera0_seg", ImageSegmenter("camera0", 10)
-    )
-
-    builder.Connect(
-        hardware_station.GetOutputPort("camera0.color_image"),
-        camera0_segmenter.GetInputPort("color_image"),
-    )
-
-    builder.Connect(
-        hardware_station.GetOutputPort("camera0.depth_image_32f"),
-        camera0_segmenter.GetInputPort("depth_image"),
     )
 
     # Build the diagram and its simulator.
