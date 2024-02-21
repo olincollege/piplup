@@ -22,8 +22,10 @@ navigate into the repo and run pip install -e .
 - https://docs.ros.org/en/humble/Installation/Ubuntu-Install-Debians.html 
 
 ## Serial Library
+`pip install pyserial`
 
 https://github.com/tylerjw/serial
+
 ```
 git clone https://github.com/tylerjw/serial
 cd serial
@@ -35,7 +37,8 @@ sudo make install
 ```
 
 ## FASTSam
-TODO 
+`pip install segment-anything-fast`
+`pip install PyYAML`
 
 
 ## Troubleshooting

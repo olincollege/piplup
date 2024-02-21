@@ -3,8 +3,9 @@ run-name: ${{ github.actor }} is running
 on:
   pull_request:
     types: [opened, labeled]
-  label:
-    types: [created]
+  push:
+    branches:
+      - main
 jobs:
   build:
     runs-on: ubuntu-latest
