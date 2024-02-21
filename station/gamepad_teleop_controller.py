@@ -225,20 +225,6 @@ class GamepadTeleopController(LeafSystem):
         self._meshcat.SetTransform("/drake/ee_sphere", X_WE)
         self._meshcat.SetTransform("/drake/ee_body", X_WE)
 
-        # robot_state = self.robot_state_port.Eval(context)
-        # self.controller_plant.SetPositions(self.plant_context, robot_state[:7])
-        # ee_pose: RigidTransform = self.controller_plant.CalcRelativeTransform(
-        #     self.plant_context, self.world_frame, self.ee_frame
-        # )
-        # self._meshcat.SetObject("ee_sphere_target", Sphere(0.05), Rgba(0.5, 0, 0, 0.5))
-        # self._meshcat.SetTransform("/drake/ee_sphere_target", ee_pose)
-
-        # pose = self.robot_pose_port.Eval(context)
-        # test_pose = RigidTransform(RollPitchYaw(pose[:3]).ToQuaternion(),pose[3:])
-        # self._meshcat.SetObject("test", Sphere(0.05), Rgba(0.5, 0.5, 0, 0.5))
-        # self._meshcat.SetTransform("/drake/test", test_pose)
-        # self._meshcat.SetTransform("/drake/test_body", test_pose)
-
     def CalcXWE(self, context: Context, output: BasicVector):
         X_WE_desired: RigidTransform = context.get_abstract_state(
             self.X_WE_desired_state_idx
