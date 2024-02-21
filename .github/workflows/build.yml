@@ -28,4 +28,4 @@ jobs:
         with:
           path: "~/.cache/bazel"
           key: bazel
-      - run: bazel build //station:station
+      - run: bazel build //main:teleop_demo
