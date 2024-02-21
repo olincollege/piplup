@@ -25,7 +25,6 @@ navigate into the repo and run pip install -e .
 `pip install pyserial`
 
 https://github.com/tylerjw/serial
-
 ```
 git clone https://github.com/tylerjw/serial
 cd serial
