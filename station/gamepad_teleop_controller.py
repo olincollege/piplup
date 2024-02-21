@@ -133,7 +133,7 @@ class GamepadTeleopController(LeafSystem):
         )
         # self.robot_pose_port = self.DeclareAbstractInputPort("pose", Value(RigidTransform()))
         # self.robot_pose_port = self.DeclareVectorInputPort("pose", 6)
-        self.DeclareStateOutputPort("X_WE_desired", self.X_WE_desired_state_idx)
+        self.DeclareVectorOutputPort("X_WE_desired", 7, self.CalcXWE)
         self.DeclareStateOutputPort("gripper_command", self.gripper_cmd_state_idx)
         self.DeclarePeriodicDiscreteUpdateEvent(self._time_step, 0, self.Integrate)
         self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
@@ -144,6 +144,7 @@ class GamepadTeleopController(LeafSystem):
         ee_pose: RigidTransform = self.controller_plant.CalcRelativeTransform(
             self.plant_context, self.world_frame, self.ee_frame
         )
+
         context.SetAbstractState(self.X_WE_desired_state_idx, ee_pose)
 
     def Integrate(self, context: Context, discrete_state: DiscreteValues):
@@ -237,3 +238,12 @@ class GamepadTeleopController(LeafSystem):
         # self._meshcat.SetObject("test", Sphere(0.05), Rgba(0.5, 0.5, 0, 0.5))
         # self._meshcat.SetTransform("/drake/test", test_pose)
         # self._meshcat.SetTransform("/drake/test_body", test_pose)
+
+    def CalcXWE(self, context: Context, output: BasicVector):
+        X_WE_desired: RigidTransform = context.get_abstract_state(
+            self.X_WE_desired_state_idx
+        ).get_value()
+        pose = np.zeros(7)
+        pose[:3] = X_WE_desired.rotation().ToRollPitchYaw().vector()
+        pose[3:-1] = X_WE_desired.translation()
+        output.SetFromVector(pose)
