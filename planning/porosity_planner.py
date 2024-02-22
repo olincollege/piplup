@@ -1,6 +1,6 @@
 from pydrake.all import *
 from enum import Enum, auto
-from epick_interface import ObjectDetectionStatus
+from epick_interface import ObjectDetectionStatus # type: ignore
 
 from kinova_gen3 import Gen3ControlMode, Gen3NamedPosition, kGen3NamedPositions
 import time
