@@ -56,8 +56,6 @@ def MakeHardwareStation(
         # )
 
         return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
-    # tf = sim_plant.CalcRelativeTransform(sim_plant.CreateDefaultContext(), sim_plant.world_frame(), sim_plant.GetFrameByName('image_frame', sim_plant.GetModelInstanceByName('camera4')))
-    # print(list(np.concatenate([tf.translation(), RollPitchYaw(tf.rotation()).vector()])))
 
     lcm_buses = None
 
@@ -158,7 +156,6 @@ def MakeHardwareStationInterface(
             interface_subsystem = builder.AddNamedSystem(
                 "epick", EPickInterface(hardware_interface)
             )
-            print(hardware_interface)
         else:
             raise RuntimeError(
                 f"Invalid hardware interface type {hardware_interface} for model {model_name}"
