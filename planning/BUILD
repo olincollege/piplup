@@ -3,9 +3,9 @@ py_library(
     srcs = [
         "__init__.py",
         "porosity_planner.py",
-        "suction_grasp.py"
+        "suction_grasp.py",
     ],
     imports = [".."],
     visibility = ["//visibility:public"],
-    deps = ["//utils",],
+    deps = ["//common"],
 )

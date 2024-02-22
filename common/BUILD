@@ -4,6 +4,7 @@ py_library(
     srcs = [
         "__init__.py",
         "utils.py",
+        "logging.py",
     ],
     visibility = ["//visibility:public"],
 )

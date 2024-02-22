@@ -16,6 +16,7 @@ from station import (
 )
 
 from kinova_gen3 import Gen3ControlMode
+from common.logging import *
 
 
 def run(*, scenario: Scenario, graphviz=None, teleop=None):
@@ -93,12 +94,13 @@ def run(*, scenario: Scenario, graphviz=None, teleop=None):
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:
-        print(simulator.get_actual_realtime_rate())
+        logging.info(simulator.get_actual_realtime_rate())
         if hardware_station.HasSubsystemNamed("gen3_interface"):
             hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():
+    init_logging()
     parser = argparse.ArgumentParser(
         description="Run teleop demo for real hardware station"
     )
@@ -129,6 +131,7 @@ def main():
         filename=args.scenarios_yaml,
         scenario_name=args.scenario_name,
     )
+    logging.info(f"Running Hardware Demo")
     run(scenario=scenario, graphviz=args.graph_viz, teleop=args.teleop)
 
 

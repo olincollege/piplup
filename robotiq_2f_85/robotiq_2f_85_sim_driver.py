@@ -3,11 +3,14 @@ from types import SimpleNamespace
 from pydrake.all import *
 from .robotiq_2f_85_constants import *
 import numpy as np
+from common.logging import *
 
 
+# Adapted from https://github.com/vincekurtz/kinova_drake
 class Sim2f85Driver(LeafSystem):
     def __init__(self, plant: MultibodyPlant):
         LeafSystem.__init__(self)
+        logging.debug("Creating Simulated Robotiq 2f85 Gripper Driver")
 
         self.plant = plant
         self.context = self.plant.CreateDefaultContext()

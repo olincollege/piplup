@@ -16,8 +16,10 @@ from station import (
 from perception import MakePointCloudGenerator, ImageSegmenter
 import cv2
 
-from piplup.utils import PoseTransform
+from common.utils import PoseTransform
 from planning import SuctionGraspSelector
+
+from common.logging import *
 
 
 def run(*, scenario: Scenario, visualize=False):
@@ -175,20 +177,23 @@ def run(*, scenario: Scenario, visualize=False):
                     break
     except KeyboardInterrupt:
         cv2.destroyAllWindows()
-        print(simulator.get_actual_realtime_rate())
+        logging.info(simulator.get_actual_realtime_rate())
         if hardware_station.HasSubsystemNamed("gen3_interface"):
             hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
 
 
 def main():
+    init_logging()
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim", action="store_true")
     parser.add_argument("-v", action="store_true")
     args = parser.parse_args()
+    scenario_name = "Simulated" if args.sim else "Hardware"
     scenario = load_scenario(
         filename="models/perception_scenarios.yaml",
-        scenario_name="Simulated" if args.sim else "Hardware",
+        scenario_name=scenario_name,
     )
+    logging.info(f"Running {scenario_name} Perception Demo")
     run(scenario=scenario, visualize=args.v)
 
 

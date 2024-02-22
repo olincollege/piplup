@@ -4,7 +4,10 @@ py_binary(
     name = "teleop_demo",
     srcs = ["teleop_demo.py"],
     imports = [".."],
-    deps = ["//station"],
+    deps = [
+        "//station",
+        "//common",
+    ],
 )
 
 py_binary(
@@ -18,7 +21,11 @@ py_binary(
     name = "perception_demo",
     srcs = ["perception_demo.py"],
     imports = [".."],
-    deps = ["//station:station","//planning:planning", "//utils:utils"],
+    deps = [
+        "//planning",
+        "//station",
+        "//common",
+    ],
 )
 
 py_binary(
