@@ -17,6 +17,8 @@ from station import (
 from graphviz import Source
 from kinova_gen3 import Gen3ControlMode
 
+from common.logging import *
+
 
 def run(*, scenario: Scenario, graphviz=None):
     meshcat: Meshcat = StartMeshcat()
@@ -92,6 +94,8 @@ def run(*, scenario: Scenario, graphviz=None):
 
 
 def main():
+    init_logging()
+
     parser = argparse.ArgumentParser(
         description="Run teleop demo for simulated hardware station"
     )
