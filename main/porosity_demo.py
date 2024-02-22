@@ -12,6 +12,8 @@ from station import (
 
 from planning import PorosityPlanner
 
+from common.logging import *
+
 
 def run(*, scenario: Scenario):
     meshcat: Meshcat = StartMeshcat()
@@ -62,16 +64,18 @@ def run(*, scenario: Scenario):
     try:
         simulator.AdvanceTo(scenario.simulation_duration)
     except KeyboardInterrupt:
-        print(simulator.get_actual_realtime_rate())
+        logging.info(simulator.get_actual_realtime_rate())
         hardware_station.GetSubsystemByName("gen3_interface").CleanUp()
         hardware_station.GetSubsystemByName("epick").release()
 
 
 def main():
+    init_logging()
     scenario = load_scenario(
         filename="models/porosity_scenario.yaml",
         scenario_name="PorosityDemo",
     )
+    logging.info(f"Running Porosity Demo")
     run(scenario=scenario)
 
 

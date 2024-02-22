@@ -23,6 +23,7 @@ from common.logging import *
 def run(*, scenario: Scenario, graphviz=None):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
+
     hardware_station: Diagram = builder.AddNamedSystem(
         "hardware_station", MakeHardwareStation(scenario, meshcat)
     )
@@ -115,6 +116,7 @@ def main():
         filename="models/teleop_scenarios.yaml",
         scenario_name=args.scenario_name,
     )
+    logging.info(f"Running Teleop Demo for Scenario: {args.scenario_name}")
     run(scenario=scenario, graphviz=args.graph_viz)
 
 
