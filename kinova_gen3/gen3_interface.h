@@ -28,7 +28,7 @@ namespace piplup
 
         private:
             systems::EventStatus Initialize(const systems::Context<double> &,
-                                            systems::State<double> *);
+                                            systems::State<double> *) const;
             void CalcUpdate(const systems::Context<double> &,
                             systems::State<double> *) const;
             k_api::Base::BaseClient * base_;

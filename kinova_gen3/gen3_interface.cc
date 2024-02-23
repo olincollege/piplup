@@ -13,10 +13,6 @@ namespace piplup
                 &Gen3HardwareInterface::Initialize);
             DeclarePeriodicUnrestrictedUpdateEvent(
                 1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
-        }
-        systems::EventStatus Gen3HardwareInterface::Initialize(
-            const systems::Context<double> &, systems::State<double> *)
-        {
             auto error_callback = [](k_api::KError err) {
                 cout << "_________ callback error _________" << err.toString();
             };
@@ -39,6 +35,10 @@ namespace piplup
 
             // Create services
             base_ = new k_api::Base::BaseClient(router);
+        }
+        systems::EventStatus Gen3HardwareInterface::Initialize(
+            const systems::Context<double> &, systems::State<double> *) const
+        {
             return systems::EventStatus::Succeeded();
         }
 
