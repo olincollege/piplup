@@ -39,6 +39,11 @@ namespace piplup
         systems::EventStatus Gen3HardwareInterface::Initialize(
             const systems::Context<double> &, systems::State<double> *) const
         {
+            if(base_->GetArmState().active_state()
+               != k_api::Common::ArmState::ARMSTATE_SERVOING_READY)
+            {
+                return systems::EventStatus::Failed(this, "Arm not in ready state.");
+            }
             return systems::EventStatus::Succeeded();
         }
 
