@@ -233,7 +233,7 @@ def make_internal_model(meshcat):
 
 
 class PlanarGraspSelector(LeafSystem):
-    def __init__(self, meshcat):
+    def __init__(self):
         LeafSystem.__init__(self)
 
         self.DeclareAbstractInputPort("merged_point_cloud", AbstractValue.Make(PointCloud(0)))
@@ -243,10 +243,9 @@ class PlanarGraspSelector(LeafSystem):
             self.SelectGrasp,
         )
 
-        # self.meshcat: Meshcat = meshcat
-        self.meshcat: Meshcat = StartMeshcat()
+        self.meshcat: Meshcat = Meshcat()
 
-        self._internal_model = make_internal_model(meshcat)
+        self._internal_model = make_internal_model(self.meshcat)
         self._internal_model_context = self._internal_model.CreateDefaultContext()
         self._rng = np.random.default_rng()
 
@@ -280,3 +279,5 @@ class PlanarGraspSelector(LeafSystem):
 
             print(f"Graspability: {graspability}")
             output.set_value((graspability, costs[best], X_Gs[best]))
+        
+        self._internal_model.ForcedPublish(self._internal_model_context)

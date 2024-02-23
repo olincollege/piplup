@@ -42,7 +42,7 @@ def run(*, scenario: Scenario, visualize=False):
     )
 
     planar_grasp: PlanarGraspSelector = builder.AddNamedSystem(
-        "planaer_grasp_selector", PlanarGraspSelector(meshcat)
+        "planaer_grasp_selector", PlanarGraspSelector()
     )
 
     for camera in cameras:
