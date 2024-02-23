@@ -26,3 +26,11 @@ py_binary(
     imports = [".."],
     deps = [":kinova_gen3"],
 )
+
+cc_binary(
+    name = "gen3_interface",
+    srcs = ["gen3_interface.cc"],
+    deps = [
+        "//third_party:kortex"
+    ],
+)

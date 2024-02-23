@@ -14,3 +14,8 @@ alias(
     name = "serial",
     actual = "@libserial//:serial",
 )
+
+alias(
+    name = "kortex",
+    actual = "@linux_kortex//:kortex",
+)

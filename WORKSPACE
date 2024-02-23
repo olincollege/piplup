@@ -64,3 +64,11 @@ new_local_repository(
     path = "/usr/local",
     build_file = "@//third_party:libserial.BUILD"
 )
+
+http_archive(
+    name = "linux_kortex",
+    build_file = "@//third_party:kortex_linux.BUILD",
+    url = "https://artifactory.kinovaapps.com/artifactory/generic-public/kortex/API/2.6.0/linux_x86_64_gcc_5.4.zip",
+    sha256 = "683323c0d28a7309bb567a9033af1871badf0d743ab8c19d7a92f4eb2b3f0797",
+)
+

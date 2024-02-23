@@ -60,7 +60,7 @@ class Gen3HardwareInterface(LeafSystem):
         # 7 values are one of the following:
         #   joint positions
         #   joint velocities
-        #   pose (wxyz, xyz)
+        #   pose (rpy, xyz)
         #   twist (rpy, xyz, 0)
         self.arm_command_input_port = self.DeclareVectorInputPort("command", 7)
         self.control_mode_input_port = self.DeclareAbstractInputPort(
@@ -89,8 +89,7 @@ class Gen3HardwareInterface(LeafSystem):
             self.CalcEndEffectorPose,
             {self.time_ticket()},
         )
-        self.DeclareContinuousState(1)
-        # self.DeclarePeriodicUnrestrictedUpdateEvent(1/40, 0, self.Integrate)
+        self.DeclarePeriodicUnrestrictedUpdateEvent(1 / 40, 0, self.Integrate)
 
         self.last_feedback_time = -np.inf
         self.feedback = None
@@ -253,8 +252,8 @@ class Gen3HardwareInterface(LeafSystem):
 
         self.base.SendJointSpeedsCommand(joint_speeds)
 
-    # def Integrate(self, context: Context, discrete_state: DiscreteValues):
-    def DoCalcTimeDerivatives(self, context, continuous_state):
+    def Integrate(self, context: Context, discrete_state: DiscreteValues):
+        # def DoCalcTimeDerivatives(self, context, continuous_state):
         # TODO this is a bad way to do this:
         ## ------
         t = context.get_time()
@@ -283,6 +282,7 @@ class Gen3HardwareInterface(LeafSystem):
             finger = gripper_command.gripper.finger.add()
             finger.finger_identifier = 1
             finger.value = self.gripper_command_input_port.Eval(context)[0]
+
             self.base.SendGripperCommand(gripper_command)
 
         control_mode: Gen3ControlMode = self.control_mode_input_port.Eval(context)
