@@ -1,3 +1,5 @@
+load("@drake//tools/skylark:py.bzl", "py_binary")
+
 py_library(
     name = "kinova_gen3",
     srcs = [
@@ -18,7 +20,6 @@ py_library(
     ],
 )
 
-load("@drake//tools/skylark:py.bzl", "py_binary")
 
 py_binary(
     name = "interface_demo",
@@ -27,10 +28,16 @@ py_binary(
     deps = [":kinova_gen3"],
 )
 
-cc_binary(
+cc_library(
     name = "gen3_interface",
     srcs = ["gen3_interface.cc"],
+    hdrs = ["gen3_interface.h"],
     deps = [
-        "//third_party:kortex"
+        "//third_party:kortex",
+        "@drake//common:name_value",
+        "@drake//common:scoped_singleton",
+        "@drake//multibody/plant",
+        "@drake//systems/analysis:simulator",
+        "@drake//systems/framework:leaf_system",
     ],
 )
