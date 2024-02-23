@@ -214,7 +214,7 @@ def GenerateAntipodalGraspCandidate(
 
     return np.inf, None
 
-def make_internal_model():
+def make_internal_model(meshcat):
     builder = DiagramBuilder()
     plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.001)
     parser = Parser(plant)
@@ -226,6 +226,9 @@ def make_internal_model():
         "package://piplup_models/scope_station/models/scope_table.sdf"
     )
     plant.Finalize()
+
+    MeshcatVisualizer.AddToBuilder(builder, scene_graph, meshcat)
+    # vis = MeshcatVisualizer.AddToBuilder(builder, scene_graph, meshcat)
     return builder.Build()
 
 
@@ -240,9 +243,10 @@ class PlanarGraspSelector(LeafSystem):
             self.SelectGrasp,
         )
 
-        self.meshcat: Meshcat = meshcat
+        # self.meshcat: Meshcat = meshcat
+        self.meshcat: Meshcat = StartMeshcat()
 
-        self._internal_model = make_internal_model()
+        self._internal_model = make_internal_model(meshcat)
         self._internal_model_context = self._internal_model.CreateDefaultContext()
         self._rng = np.random.default_rng()
 
