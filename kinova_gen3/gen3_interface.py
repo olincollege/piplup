@@ -27,7 +27,8 @@ from .gen3_constants import (
     Gen3NamedPosition,
     kGen3NamedPositions,
 )
-import logging
+
+from common import *
 
 
 class Gen3InterfaceConfig:
@@ -114,13 +115,13 @@ class Gen3HardwareInterface(LeafSystem):
         self.base_cyclic = BaseCyclicClient(self.router)
 
         if self.base.GetArmState().active_state != Base_pb2.ARMSTATE_SERVOING_READY:
-            print(self.base.GetArmState())
+            logging.error(self.base.GetArmState())
             raise RuntimeError(
                 "Arm not in ready state. Clear any faults before trying again."
             )
 
     def CleanUp(self):
-        print("\nClosing Hardware Connection...")
+        logging.info("\nClosing Hardware Connection...")
 
         if self.session_manager is not None:
             router_options = RouterClientSendOptions()
@@ -129,7 +130,7 @@ class Gen3HardwareInterface(LeafSystem):
             self.session_manager.CloseSession()
 
         self.transport.disconnect()
-        print("Hardware Connection Closed.")
+        logging.info("Hardware Connection Closed.")
 
     def GetFeedback(self, current_time):
         """
@@ -151,8 +152,6 @@ class Gen3HardwareInterface(LeafSystem):
         """
 
         def check(notification, e=e):
-            # print("EVENT : " + \
-            #       Base_pb2.ActionEvent.Name(notification.action_event))
             if (
                 notification.action_event == Base_pb2.ACTION_END
                 or notification.action_event == Base_pb2.ACTION_ABORT

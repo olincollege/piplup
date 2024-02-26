@@ -1,9 +1,11 @@
 from pydrake.all import *
 from enum import Enum, auto
-from epick_interface import ObjectDetectionStatus
+from epick_interface import ObjectDetectionStatus # type: ignore
 
 from kinova_gen3 import Gen3ControlMode, Gen3NamedPosition, kGen3NamedPositions
 import time
+
+from common.logging import *
 
 
 class PorosityPlannerState(Enum):
@@ -61,7 +63,7 @@ class PorosityPlanner(LeafSystem):
 
     def Update(self, context: Context, state: State):
         planner_state = context.get_abstract_state(self.planner_state_idx_).get_value()
-        # print(planner_state)
+        logging.debug(f"Current State: {planner_state}")
 
         match planner_state:
             case PorosityPlannerState.INIT:
@@ -118,7 +120,9 @@ class PorosityPlanner(LeafSystem):
             case PorosityPlannerState.MEASURE_SUCTION:
                 obj_det_status = self.get_input_port(self.obj_det_idx_).Eval(context)
                 pressure = self.get_input_port(self.pressure_idx_).Eval(context)
-                print(f"Pressure: {pressure}kPa \t Object Detection: {obj_det_status} ")
+                logging.info(
+                    f"Pressure: {pressure}kPa \t Object Detection: {obj_det_status} "
+                )
                 self.change_command_mode(state, Gen3ControlMode.kTwist)
                 # TODO this should be in the normal direction
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
@@ -148,10 +152,8 @@ class PorosityPlanner(LeafSystem):
                 )
 
             case _:
-                print("Invalid Planner State")
+                logging.error("Invalid Planner State")
 
     def CalcGen3Command(self, context: Context, output: BasicVector):
         cmd = context.get_discrete_state(self.command_idx_)
-        print(self.command_idx_)
-
         output.SetFromVector(cmd)

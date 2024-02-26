@@ -12,9 +12,11 @@ from uss_dbs import USSDBSHardwareInterface, USSDBSInterfaceConfig
 from common import ConfigureParser
 from station.scenario import Scenario
 from typing import Any, ClassVar, List, Optional
-from epick_interface import EPickInterfaceConfig, EPickInterface, ObjectDetectionStatus
+from epick_interface import EPickInterfaceConfig, EPickInterface, ObjectDetectionStatus # type: ignore
 
 import numpy as np
+
+from common.logging import *
 
 
 def MakeHardwareStation(
@@ -23,10 +25,13 @@ def MakeHardwareStation(
 ) -> Diagram:
     builder = DiagramBuilder()
 
+    logging.info(f"Creating Hardware Station")
     if scenario.hardware_interface:
         scenario.plant_config.time_step = 0.0005
         scenario.visualization.publish_period = 0.0005
+
     # Create the multibody plant and scene graph.
+    logging.debug(f"Adding Multibody Plant")
     sim_plant: MultibodyPlant
     sim_plant, scene_graph = AddMultibodyPlant(
         config=scenario.plant_config, builder=builder
@@ -43,6 +48,7 @@ def MakeHardwareStation(
     sim_plant.Finalize()
 
     if scenario.hardware_interface:
+        logging.info(f"Hardware interface exists in scenario, creating interface")
         # Set the actuation of the sim plant to 0
         # zero_actuation_sys = builder.AddSystem(ConstantVectorSource(np.zeros(9)))
         # builder.Connect(
@@ -50,11 +56,10 @@ def MakeHardwareStation(
         # )
 
         return MakeHardwareStationInterface(builder, scenario, meshcat, sim_plant)
-    # tf = sim_plant.CalcRelativeTransform(sim_plant.CreateDefaultContext(), sim_plant.world_frame(), sim_plant.GetFrameByName('image_frame', sim_plant.GetModelInstanceByName('camera4')))
-    # print(list(np.concatenate([tf.translation(), RollPitchYaw(tf.rotation()).vector()])))
 
     lcm_buses = None
 
+    logging.debug(f"Applying Driver Configs")
     # Add actuation inputs.
     ApplyDriverConfigs(
         driver_configs=scenario.model_drivers,
@@ -84,6 +89,7 @@ def MakeHardwareStation(
 
     # Add scene cameras.
     for camera_name, camera in scenario.cameras.items():
+        logging.debug(f"Adding Simulated Camera: {camera_name}")
         ApplyCameraConfig(config=camera, builder=builder, lcm_buses=lcm_buses)
         camera_subsystem: System = builder.GetSubsystemByName(
             f"rgbd_sensor_{camera_name}"
@@ -102,6 +108,7 @@ def MakeHardwareStation(
     builder.ExportOutput(sim_plant.get_state_output_port(), "plant_continuous_state")
     builder.ExportOutput(sim_plant.get_body_poses_output_port(), "body_poses")
 
+    logging.info(f"Finished Creating Hardware Station")
     return builder.Build()
 
 
@@ -149,7 +156,6 @@ def MakeHardwareStationInterface(
             interface_subsystem = builder.AddNamedSystem(
                 "epick", EPickInterface(hardware_interface)
             )
-            print(hardware_interface)
         else:
             raise RuntimeError(
                 f"Invalid hardware interface type {hardware_interface} for model {model_name}"

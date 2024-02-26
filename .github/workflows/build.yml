@@ -2,9 +2,10 @@ name: Build Piplup
 run-name: ${{ github.actor }} is running
 on:
   pull_request:
-    types: [opened, labeled]
-  label:
-    types: [created]
+    types: [opened, synchronize]
+  push:
+    branches:
+      - main
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -27,4 +28,4 @@ jobs:
         with:
           path: "~/.cache/bazel"
           key: bazel
-      - run: bazel build //station:station
+      - run: bazel build //main:teleop_demo

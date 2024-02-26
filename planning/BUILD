@@ -8,5 +8,5 @@ py_library(
     ],
     imports = [".."],
     visibility = ["//visibility:public"],
-    deps = ["//utils",],
+    deps = ["//common"],
 )

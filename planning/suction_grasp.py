@@ -2,7 +2,7 @@ import numpy as np
 from pydrake.all import *
 from pydrake.geometry import Meshcat, StartMeshcat
 
-from piplup.utils import AddMeshcatTriad
+from common.utils import AddMeshcatTriad
 
 
 class SuctionGraspSelector(LeafSystem):
