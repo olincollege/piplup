@@ -16,9 +16,10 @@ from station import (
 from perception import MakePointCloudGenerator, LabelImageSegmentationSystem
 import cv2
 
-from piplup.utils import PoseTransform
 from planning import PlanarGraspSelector
 from kinova_gen3 import Gen3ControlMode
+from common.logging import *
+from common.utils import *
 
 
 def run(*, scenario: Scenario, visualize=False):
@@ -82,6 +83,7 @@ def run(*, scenario: Scenario, visualize=False):
         point_cloud_generator.GetOutputPort("merged_point_cloud"),
         planar_grasp.GetInputPort("merged_point_cloud"),
     )
+
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
 
@@ -132,6 +134,8 @@ def run(*, scenario: Scenario, visualize=False):
 
 
 def main():
+    init_logging()
+    # logging.getLogger().setLevel(logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim", action="store_true")
     parser.add_argument("-v", action="store_true")
