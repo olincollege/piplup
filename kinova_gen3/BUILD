@@ -1,4 +1,5 @@
 load("@drake//tools/skylark:py.bzl", "py_binary")
+load("@drake//tools/skylark:pybind.bzl", "pybind_py_library")
 
 py_library(
     name = "kinova_gen3",
@@ -40,4 +41,18 @@ cc_library(
         "@drake//systems/analysis:simulator",
         "@drake//systems/framework:leaf_system",
     ],
+)
+
+pybind_py_library(
+    name = "gen3_interface_py",
+    cc_deps = [
+        ":gen3_interface",
+        "@drake//bindings/pydrake/common:cpp_template_pybind",
+        "@drake//bindings/pydrake/common:default_scalars_pybind",
+        "@drake//bindings/pydrake/common:serialize_pybind",
+    ],
+    cc_so_name = "gen3_interface",
+    cc_srcs = ["gen3_interface_py.cc"],
+    py_deps = ["@drake//bindings/pydrake"],
+    py_imports = ["."],
 )
