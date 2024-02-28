@@ -90,7 +90,9 @@ def run(*, scenario: Scenario, visualize=False):
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
 
-    hardware_station_context = hardware_station.GetMyContextFromRoot(simulator.get_context())
+    hardware_station_context = hardware_station.GetMyContextFromRoot(
+        simulator.get_context()
+    )
 
     hardware_station.GetInputPort(f"gen3.control_mode").FixValue(
         hardware_station_context,
@@ -104,7 +106,7 @@ def run(*, scenario: Scenario, visualize=False):
         hardware_station_context,
         [0],
     )
-    
+
     # label_image = hardware_station.GetOutputPort(f"camera0.label_image").Eval(
     #     hardware_station_context
     # ).data

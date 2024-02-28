@@ -7,11 +7,12 @@ from common.utils import *
 from common.logging import *
 import time
 
+
 def GraspCandidateCost(
-    meshcat,
-    diagram,
-    context,
-    cloud,
+    meshcat: Meshcat,
+    diagram: Diagram,
+    context: Context,
+    cloud: PointCloud,
     robotiq_body_index=None,
     plant_system_name="plant",
     scene_graph_system_name="scene_graph",
@@ -36,10 +37,10 @@ def GraspCandidateCost(
     If adjust_X_G is True, then it also updates the gripper pose in the plant
     context.
     """
-    plant = diagram.GetSubsystemByName(plant_system_name)
-    plant_context = plant.GetMyMutableContextFromRoot(context)
-    scene_graph = diagram.GetSubsystemByName(scene_graph_system_name)
-    scene_graph_context = scene_graph.GetMyMutableContextFromRoot(context)
+    plant: MultibodyPlant = diagram.GetSubsystemByName(plant_system_name)
+    plant_context: Context = plant.GetMyMutableContextFromRoot(context)
+    scene_graph: SceneGraph = diagram.GetSubsystemByName(scene_graph_system_name)
+    scene_graph_context: Context = scene_graph.GetMyMutableContextFromRoot(context)
     if robotiq_body_index:
         robotiq = plant.get_body(robotiq_body_index)
     else:
@@ -68,10 +69,8 @@ def GraspCandidateCost(
     )
 
     finger_box = Box([0.02, 0.085, 0.035])
-    meshcat.SetObject("/finger_box", finger_box, rgba=Rgba(0, 1, 0, 0.5))
-    meshcat.SetTransform(
-        "/finger_box", X_G @ RigidTransform([0.0, 0.0, 0.1325])
-    )
+    meshcat.SetObject("/finger_box", finger_box, rgba=Rgba(0, 0, 1, 0.5))
+    meshcat.SetTransform("/finger_box", X_G @ RigidTransform([0.0, 0.0, 0.1325]))
 
     if adjust_X_G and np.sum(indices) > 0:
         p_GC_y = p_GC[1, indices]
@@ -80,11 +79,11 @@ def GraspCandidateCost(
         plant.SetFreeBodyPose(plant_context, robotiq, X_G)
         X_GW = X_G.inverse()
 
-    AddMeshcatTriad(
-        meshcat, "/gripper_base", length=0.02, radius=0.001, X_PT=X_G
-    )
+    AddMeshcatTriad(meshcat, "/gripper_base", length=0.02, radius=0.001, X_PT=X_G)
 
-    query_object = scene_graph.get_query_output_port().Eval(scene_graph_context)
+    query_object: QueryObject = scene_graph.get_query_output_port().Eval(
+        scene_graph_context
+    )
 
     # Check collisions between the gripper and the sink
     if query_object.HasCollisions():
@@ -95,11 +94,19 @@ def GraspCandidateCost(
     # Check collisions between the gripper and the point cloud. `margin`` must
     # be smaller than the margin used in the point cloud preprocessing.
     margin = 0.0
+
     for i in range(cloud.size()):
         distances = query_object.ComputeSignedDistanceToPoint(
             cloud.xyz(i), threshold=margin
         )
-        if distances:
+        geometry_names = [query_object.inspector().GetName(d.id_G) for d in distances]
+        keep_idx = ["table" not in n and "extrusion" not in n for n in geometry_names]
+        collisions = np.array(distances)[keep_idx]
+
+        if len(collisions) > 0:
+            # meshcat.SetObject("/collision_point", Sphere(0.005), rgba=Rgba(1, 0, 0, 1))
+            # meshcat.SetTransform("/collision_point", RigidTransform(cloud.xyz(i)))
+            # time.sleep(3)
             logging.debug("Gripper collided with point cloud!")
             cost = np.inf
             return cost
@@ -113,15 +120,14 @@ def GraspCandidateCost(
     # Reward sum |dot product of normals with gripper y|^2
     cost -= np.sum(n_GC[1, :] ** 2)
 
-    logging.debug(f"Cost: {cost}")
     return cost
 
 
 def GenerateAntipodalGraspCandidate(
-    meshcat,
-    diagram,
-    context,
-    cloud,
+    meshcat: Meshcat,
+    diagram: Diagram,
+    context: Context,
+    cloud: PointCloud,
     rng,
     robotiq_body_index=None,
     plant_system_name="plant",
@@ -148,9 +154,9 @@ def GenerateAntipodalGraspCandidate(
     Returns:
         cost: The grasp cost X_G: The grasp candidate
     """
-    plant = diagram.GetSubsystemByName(plant_system_name)
-    plant_context = plant.GetMyMutableContextFromRoot(context)
-    scene_graph = diagram.GetSubsystemByName(scene_graph_system_name)
+    plant: MultibodyPlant = diagram.GetSubsystemByName(plant_system_name)
+    plant_context: Context = plant.GetMyMutableContextFromRoot(context)
+    scene_graph: SceneGraph = diagram.GetSubsystemByName(scene_graph_system_name)
     scene_graph.GetMyMutableContextFromRoot(context)
     if robotiq_body_index:
         robotiq = plant.get_body(robotiq_body_index)
@@ -188,7 +194,11 @@ def GenerateAntipodalGraspCandidate(
     p_GS_G = [0.0, 0.0425 - 0.005, 0.1325]
 
     AddMeshcatTriad(
-        meshcat, "/pick_point", length=0.02, radius=0.001, X_PT=RigidTransform(R_WG.ToQuaternion(), p_WS)
+        meshcat,
+        "/pick_point",
+        length=0.02,
+        radius=0.001,
+        X_PT=RigidTransform(R_WG.ToQuaternion(), p_WS),
     )
 
     # Try orientations from the center out
@@ -197,7 +207,6 @@ def GenerateAntipodalGraspCandidate(
     alpha = np.array([0.5, 0.65, 0.35, 0.8, 0.2, 1.0, 0.0])
 
     for theta in min_roll + (max_roll - min_roll) * alpha:
-        time.sleep(0.5)
         # Rotate the object in the hand by a random rotation (around the
         # normal).
         R_WG2 = R_WG.multiply(RotationMatrix.MakeYRotation(theta))
@@ -212,13 +221,14 @@ def GenerateAntipodalGraspCandidate(
         cost = GraspCandidateCost(meshcat, diagram, context, cloud, adjust_X_G=True)
         X_G = plant.GetFreeBodyPose(plant_context, robotiq)
 
-        diagram.ForcedPublish(context)
+        # diagram.ForcedPublish(context)
 
         if np.isfinite(cost):
-            logging.debug(f"Cost: {cost}")
+            # logging.debug(f"Cost: {cost}")
             return cost, X_G
 
     return np.inf, None
+
 
 def make_internal_model(meshcat):
     builder = DiagramBuilder()
@@ -226,7 +236,7 @@ def make_internal_model(meshcat):
     parser = Parser(plant)
     ConfigureParser(parser)
     parser.AddModelsFromUrl(
-        "package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static.sdf"
+        "package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static_primitive_collision.sdf"
     )
     # parser.AddModelsFromUrl(
     #     "package://piplup_models/scope_station/models/scope_table.sdf"
@@ -242,7 +252,9 @@ class PlanarGraspSelector(LeafSystem):
     def __init__(self):
         LeafSystem.__init__(self)
 
-        self.DeclareAbstractInputPort("merged_point_cloud", AbstractValue.Make(PointCloud(0)))
+        self.DeclareAbstractInputPort(
+            "merged_point_cloud", AbstractValue.Make(PointCloud(0))
+        )
         port = self.DeclareAbstractOutputPort(
             "grasp_selection",
             lambda: AbstractValue.Make((np.inf, np.inf, RigidTransform())),
@@ -252,13 +264,17 @@ class PlanarGraspSelector(LeafSystem):
         self.meshcat: Meshcat = Meshcat()
 
         self._internal_model: Diagram = make_internal_model(self.meshcat)
-        self._internal_model_context = self._internal_model.CreateDefaultContext()
+        self._internal_model_context: Context = (
+            self._internal_model.CreateDefaultContext()
+        )
         self._rng = np.random.default_rng()
 
     def SelectGrasp(self, context, output):
         pcd = self.get_input_port(0).Eval(context)
 
-        self.meshcat.SetObject("/point_cloud", pcd, point_size=0.003, rgba=Rgba(1, 1, 1, 0.5))
+        self.meshcat.SetObject(
+            "/point_cloud", pcd, point_size=0.003, rgba=Rgba(1, 1, 1, 0.5)
+        )
 
         costs = []
         X_Gs = []
@@ -277,9 +293,7 @@ class PlanarGraspSelector(LeafSystem):
 
         if len(costs) == 0:
             # No viable grasp candidates found
-            X_WG = RigidTransform(
-                RollPitchYaw(0, np.pi, 0), [0.5, 0, 0.4]
-            )
+            X_WG = RigidTransform(RollPitchYaw(0, np.pi, 0), [0.5, 0, 0.4])
             output.set_value((np.inf, np.inf, X_WG))
         else:
             best = np.argmin(costs)
@@ -288,11 +302,17 @@ class PlanarGraspSelector(LeafSystem):
             logging.info(f"Best Grasp Score: {costs[best]}")
             logging.info(f"Graspability: {graspability}")
 
-            plant = self._internal_model.GetSubsystemByName("plant")
-            plant_context = plant.GetMyMutableContextFromRoot(self._internal_model_context)
+            plant: MultibodyPlant = self._internal_model.GetSubsystemByName("plant")
+            plant_context = plant.GetMyMutableContextFromRoot(
+                self._internal_model_context
+            )
             robotiq = plant.GetBodyByName("robotiq_arg2f_base_link")
 
-            # plant.SetFreeBodyPose(plant_context, robotiq, X_Gs[best])
-            # self._internal_model.ForcedPublish(self._internal_model_context)
+            finger_box = Box([0.02, 0.085, 0.035])
+            self.meshcat.SetObject("/finger_box", finger_box, rgba=Rgba(0, 1, 0, 0.5))
+            self.meshcat.SetTransform(
+                "/finger_box", X_Gs[best] @ RigidTransform([0.0, 0.0, 0.1325])
+            )
+            plant.SetFreeBodyPose(plant_context, robotiq, X_Gs[best])
+            self._internal_model.ForcedPublish(self._internal_model_context)
             output.set_value((graspability, costs[best], X_Gs[best]))
-        
