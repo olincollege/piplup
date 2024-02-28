@@ -13,6 +13,14 @@ namespace piplup
           : hand_type_(hand_type)
         {
             // State
+            pose_measured_state_index_ = DeclareDiscreteState(6);
+            twist_measured_state_index_ = DeclareDiscreteState(6);
+            wrench_measured_state_index_ = DeclareDiscreteState(6);
+            position_measured_state_index_ = DeclareDiscreteState(7);
+            velocity_measured_state_index_ = DeclareDiscreteState(7);
+            torque_measured_state_index_ = DeclareDiscreteState(7);
+            
+            // DeclareAbstractState(Value<std::future<k_api::BaseCyclic::Feedback>>());
             // Input Ports
             command_port_ = &DeclareVectorInputPort("command", 7);
             control_mode_port_ =
@@ -24,6 +32,12 @@ namespace piplup
             }
 
             // Output Ports
+            DeclareStateOutputPort("pose_measured", pose_measured_state_index_);
+            DeclareStateOutputPort("twist_measured", twist_measured_state_index_);
+            DeclareStateOutputPort("wrench_measured", wrench_measured_state_index_);
+            DeclareStateOutputPort("position_measured", position_measured_state_index_);
+            DeclareStateOutputPort("velocity_measured", velocity_measured_state_index_);
+            DeclareStateOutputPort("torque_measured", torque_measured_state_index_);
 
             // Update Events
             double hz = 40.0;
@@ -53,6 +67,7 @@ namespace piplup
 
             // Create services
             base_ = new k_api::Base::BaseClient(router_);
+            base_cyclic_ = new k_api::BaseCyclic::BaseCyclicClient(router_);
         }
         systems::EventStatus Gen3HardwareInterface::Initialize(
             const systems::Context<double> &, systems::State<double> *) const
@@ -68,6 +83,7 @@ namespace piplup
         void Gen3HardwareInterface::CalcUpdate(const systems::Context<double> & context,
                                                systems::State<double> * state) const
         {
+            
             const auto & command = command_port_->Eval<BasicVector<double>>(context);
             const auto & control_mode =
                 control_mode_port_->Eval<Gen3ControlMode>(context);

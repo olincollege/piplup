@@ -2,6 +2,7 @@
 #define _OS_UNIX
 
 #include <BaseClientRpc.h>
+#include <BaseCyclicClientRpc.h>
 #include <Common.pb.h>
 #include <DeviceConfigClientRpc.h>
 #include <DeviceManagerClientRpc.h>
@@ -61,6 +62,7 @@ namespace piplup
             void CalcUpdate(const systems::Context<double> &,
                             systems::State<double> *) const;
             k_api::Base::BaseClient * base_;
+            k_api::BaseCyclic::BaseCyclicClient * base_cyclic_;
             k_api::SessionManager * session_manager_;
             k_api::RouterClient * router_;
             k_api::TransportClientTcp * transport_;
@@ -68,6 +70,12 @@ namespace piplup
             systems::InputPort<double> * control_mode_port_;
             systems::InputPort<double> * hand_command_port_;
             Gen3HandType hand_type_;
+            systems::DiscreteStateIndex pose_measured_state_index_;
+            systems::DiscreteStateIndex twist_measured_state_index_;
+            systems::DiscreteStateIndex wrench_measured_state_index_;
+            systems::DiscreteStateIndex position_measured_state_index_;
+            systems::DiscreteStateIndex velocity_measured_state_index_;
+            systems::DiscreteStateIndex torque_measured_state_index_;
         };
 
     } // namespace kinova_gen3
