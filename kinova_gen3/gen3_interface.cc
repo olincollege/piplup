@@ -19,7 +19,9 @@ namespace piplup
             position_measured_state_index_ = DeclareDiscreteState(7);
             velocity_measured_state_index_ = DeclareDiscreteState(7);
             torque_measured_state_index_ = DeclareDiscreteState(7);
-            
+            DeclareAbstractState(
+                Value<std::shared_future<k_api::BaseCyclic::Feedback>>());
+
             // DeclareAbstractState(Value<std::future<k_api::BaseCyclic::Feedback>>());
             // Input Ports
             command_port_ = &DeclareVectorInputPort("command", 7);
@@ -28,7 +30,8 @@ namespace piplup
 
             if(hand_type_ == Gen3HandType::k2f85)
             {
-                hand_command_port_ = &DeclareVectorInputPort("2f_85.command", 1);
+                hand_command_port_ =
+                    &DeclareVectorInputPort("2f_85.command", BasicVector<double>({0.0}));
             }
 
             // Output Ports
@@ -40,14 +43,16 @@ namespace piplup
             DeclareStateOutputPort("torque_measured", torque_measured_state_index_);
 
             // Update Events
-            double hz = 40.0;
+            double hz = 30.0;
             DeclareInitializationUnrestrictedUpdateEvent(
                 &Gen3HardwareInterface::Initialize);
-            DeclarePeriodicUnrestrictedUpdateEvent(
-                1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
+            DeclarePeriodicPublishEvent(1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
+            // DeclarePeriodicUnrestrictedUpdateEvent(
+            //     1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
             auto error_callback = [](k_api::KError err) {
                 cout << "_________ callback error _________" << err.toString();
             };
+            drake::log()->info("Connecting to transport client...");
             transport_ = new k_api::TransportClientTcp();
             router_ = new k_api::RouterClient(transport_, error_callback);
             transport_->connect("192.168.1.10", 10000);
@@ -60,46 +65,92 @@ namespace piplup
             create_session_info.set_connection_inactivity_timeout(2000); // (milliseconds)
 
             // Session manager service wrapper
-            std::cout << "Creating session for communication" << std::endl;
+            drake::log()->info("Creating session for communication");
             session_manager_ = new k_api::SessionManager(router_);
             session_manager_->CreateSession(create_session_info);
-            std::cout << "Session created" << std::endl;
-
+            drake::log()->info("Session created");
             // Create services
             base_ = new k_api::Base::BaseClient(router_);
             base_cyclic_ = new k_api::BaseCyclic::BaseCyclicClient(router_);
         }
         systems::EventStatus Gen3HardwareInterface::Initialize(
-            const systems::Context<double> &, systems::State<double> *) const
+            const systems::Context<double> & context,
+            systems::State<double> * state) const
         {
+            auto servoing_mode = k_api::Base::ServoingModeInformation();
+            servoing_mode.set_servoing_mode(
+                k_api::Base::ServoingMode::SINGLE_LEVEL_SERVOING);
+            base_->SetServoingMode(servoing_mode);
             if(base_->GetArmState().active_state()
                != k_api::Common::ArmState::ARMSTATE_SERVOING_READY)
             {
                 return systems::EventStatus::Failed(this, "Arm not in ready state.");
             }
+            auto future = base_cyclic_->RefreshFeedback_async().share();
+            state->get_mutable_abstract_state<
+                std::shared_future<k_api::BaseCyclic::Feedback>>(0) = future;
             return systems::EventStatus::Succeeded();
         }
 
-        void Gen3HardwareInterface::CalcUpdate(const systems::Context<double> & context,
-                                               systems::State<double> * state) const
+        void Gen3HardwareInterface::DoCalcNextUpdateTime(
+            const systems::Context<double> & context,
+            systems::CompositeEventCollection<double> * events, double * time) const
         {
-            
-            const auto & command = command_port_->Eval<BasicVector<double>>(context);
-            const auto & control_mode =
-                control_mode_port_->Eval<Gen3ControlMode>(context);
+            systems::LeafSystem<double>::DoCalcNextUpdateTime(context, events, time);
+            auto callback = [](const System<double> & system,
+                               const systems::Context<double> & callback_context,
+                               const systems::UnrestrictedUpdateEvent<double> &,
+                               systems::State<double> * callback_state) {
+                auto & feedback_future = callback_state->get_abstract_state<
+                    std::shared_future<k_api::BaseCyclic::Feedback>>(0);
+                if(feedback_future.valid()
+                   && feedback_future.wait_for(std::chrono::seconds(0))
+                          == std::future_status::ready)
+                {
+                    drake::log()->debug("Feedback Time: {}", callback_context.get_time());
+                    const auto & self =
+                        dynamic_cast<const Gen3HardwareInterface &>(system);
+                    self.UpdateState(feedback_future.get(), callback_state);
+                    auto future = self.base_cyclic_->RefreshFeedback_async().share();
+                    callback_state->get_mutable_abstract_state<
+                        std::shared_future<k_api::BaseCyclic::Feedback>>(0) = future;
+                }
+                else
+                {
+                    return systems::EventStatus::DidNothing();
+                }
+                return systems::EventStatus::Succeeded();
+            };
+            *time = context.get_time() + 1.0 / 20.0;
+            systems::EventCollection<systems::UnrestrictedUpdateEvent<double>> &
+                uu_events = events->get_mutable_unrestricted_update_events();
+            uu_events.AddEvent(systems::UnrestrictedUpdateEvent<double>(
+                systems::TriggerType::kTimed, callback));
+        }
+
+        void Gen3HardwareInterface::CalcUpdate(
+            const systems::Context<double> & context) const
+        {
             if(hand_type_ == Gen3HandType::k2f85)
             {
                 const auto & hand_command =
                     hand_command_port_->Eval<BasicVector<double>>(context);
-                k_api::Base::GripperCommand gripper_command;
-                gripper_command.set_mode(k_api::Base::GRIPPER_SPEED);
 
+                k_api::Base::GripperCommand gripper_command;
+                auto gripper_command_mode = k_api::Base::GRIPPER_SPEED;
+                gripper_command.set_mode(gripper_command_mode);
+                drake::log()->debug("Sending Gripper Command {} \t Mode: {}",
+                                    hand_command,
+                                    gripper_command_mode);
                 auto finger = gripper_command.mutable_gripper()->add_finger();
                 finger->set_finger_identifier(1);
                 finger->set_value(hand_command[0]);
-                base_->SendGripperCommand(gripper_command);
+                base_->SendGripperCommand_async(gripper_command);
             }
 
+            const auto & command = command_port_->Eval<BasicVector<double>>(context);
+            const auto & control_mode =
+                control_mode_port_->Eval<Gen3ControlMode>(context);
             switch(control_mode)
             {
             case Gen3ControlMode::kTwist:
@@ -123,8 +174,72 @@ namespace piplup
             }
         }
 
+        void Gen3HardwareInterface::UpdateState(
+            const k_api::BaseCyclic::Feedback & feedback,
+            systems::State<double> * state) const
+        {
+            drake::log()->debug("{}", feedback.actuators_size());
+            for(int i = 0; i < feedback.actuators_size(); i++)
+            {
+                drake::log()->debug(
+                    "Actuator {} \t Position: {} \t Velocity: {} \t Torque: {}",
+                    i,
+                    feedback.actuators(i).position(),
+                    feedback.actuators(i).velocity(),
+                    feedback.actuators(i).torque());
+                state->get_mutable_discrete_state(position_measured_state_index_)
+                    .SetAtIndex(i, feedback.actuators(i).position() * (M_PI / 180.0));
+                state->get_mutable_discrete_state(velocity_measured_state_index_)
+                    .SetAtIndex(i, feedback.actuators(i).velocity() * (M_PI / 180.0));
+                state->get_mutable_discrete_state(torque_measured_state_index_)
+                    .SetAtIndex(i, feedback.actuators(i).torque() * (M_PI / 180.0));
+            }
+            state->get_mutable_discrete_state(pose_measured_state_index_)
+                .SetAtIndex(0, feedback.base().tool_pose_theta_x() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(pose_measured_state_index_)
+                .SetAtIndex(1, feedback.base().tool_pose_theta_y() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(pose_measured_state_index_)
+                .SetAtIndex(2, feedback.base().tool_pose_theta_z() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(pose_measured_state_index_)
+                .SetAtIndex(3, feedback.base().tool_pose_x());
+            state->get_mutable_discrete_state(pose_measured_state_index_)
+                .SetAtIndex(4, feedback.base().tool_pose_y());
+            state->get_mutable_discrete_state(pose_measured_state_index_)
+                .SetAtIndex(5, feedback.base().tool_pose_z());
+
+            state->get_mutable_discrete_state(twist_measured_state_index_)
+                .SetAtIndex(0, feedback.base().tool_twist_angular_x() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(twist_measured_state_index_)
+                .SetAtIndex(1, feedback.base().tool_twist_angular_y() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(twist_measured_state_index_)
+                .SetAtIndex(2, feedback.base().tool_twist_angular_z() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(twist_measured_state_index_)
+                .SetAtIndex(3, feedback.base().tool_twist_linear_x());
+            state->get_mutable_discrete_state(twist_measured_state_index_)
+                .SetAtIndex(4, feedback.base().tool_twist_linear_y());
+            state->get_mutable_discrete_state(twist_measured_state_index_)
+                .SetAtIndex(5, feedback.base().tool_twist_linear_z());
+
+            state->get_mutable_discrete_state(wrench_measured_state_index_)
+                .SetAtIndex(
+                    0, feedback.base().tool_external_wrench_torque_x() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(wrench_measured_state_index_)
+                .SetAtIndex(
+                    1, feedback.base().tool_external_wrench_torque_y() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(wrench_measured_state_index_)
+                .SetAtIndex(
+                    2, feedback.base().tool_external_wrench_torque_z() * (M_PI / 180.0));
+            state->get_mutable_discrete_state(wrench_measured_state_index_)
+                .SetAtIndex(3, feedback.base().tool_external_wrench_force_x());
+            state->get_mutable_discrete_state(wrench_measured_state_index_)
+                .SetAtIndex(4, feedback.base().tool_external_wrench_force_y());
+            state->get_mutable_discrete_state(wrench_measured_state_index_)
+                .SetAtIndex(5, feedback.base().tool_external_wrench_force_z());
+        }
+
         Gen3HardwareInterface::~Gen3HardwareInterface()
         {
+            drake::log()->info("Closing Kinova Interface...");
             session_manager_->CloseSession();
 
             // Deactivate the router and cleanly disconnect from the transport object
@@ -136,6 +251,7 @@ namespace piplup
             delete session_manager_;
             delete router_;
             delete transport_;
+            drake::log()->info("Kinova Interface Closed");
         }
     } // namespace kinova_gen3
 } // namespace piplup

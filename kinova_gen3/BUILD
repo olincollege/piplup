@@ -21,7 +21,6 @@ py_library(
     ],
 )
 
-
 py_binary(
     name = "interface_demo",
     srcs = ["interface_demo.py"],
@@ -40,6 +39,16 @@ cc_library(
         "@drake//multibody/plant",
         "@drake//systems/analysis:simulator",
         "@drake//systems/framework:leaf_system",
+    ],
+)
+
+cc_binary(
+    name = "gen3_interface_test",
+    srcs = ["gen3_interface_test.cc"],
+    deps = [
+        ":gen3_interface",
+        "@drake//systems/analysis:simulator",
+        "@drake//systems/framework:diagram_builder",
     ],
 )
 

@@ -9,11 +9,13 @@
 #include <RouterClient.h>
 #include <SessionManager.h>
 #include <TransportClientTcp.h>
+#include <cmath>
 #include <drake/common/drake_copyable.h>
 #include <drake/common/name_value.h>
 #include <drake/common/scoped_singleton.h>
 #include <drake/systems/analysis/simulator.h>
 #include <drake/systems/framework/basic_vector.h>
+#include <drake/systems/framework/event.h>
 #include <drake/systems/framework/leaf_system.h>
 
 namespace piplup
@@ -56,11 +58,16 @@ namespace piplup
             Gen3HardwareInterface(std::string, std::string, Gen3HandType);
             ~Gen3HardwareInterface();
 
-        private:
+            // private:
             systems::EventStatus Initialize(const systems::Context<double> &,
                                             systems::State<double> *) const;
-            void CalcUpdate(const systems::Context<double> &,
-                            systems::State<double> *) const;
+            void CalcUpdate(const systems::Context<double> &) const;
+            void DoCalcNextUpdateTime(const systems::Context<double> & context,
+                                      systems::CompositeEventCollection<double> * events,
+                                      double * time) const final;
+            void UpdateState(const k_api::BaseCyclic::Feedback & feedback,
+                             systems::State<double> * state) const;
+
             k_api::Base::BaseClient * base_;
             k_api::BaseCyclic::BaseCyclicClient * base_cyclic_;
             k_api::SessionManager * session_manager_;
