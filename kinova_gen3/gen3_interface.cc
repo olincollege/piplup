@@ -7,6 +7,7 @@ namespace piplup
         using namespace drake;
         using systems::BasicVector;
         namespace k_api = Kinova::Api;
+
         Gen3HardwareInterface::Gen3HardwareInterface(std::string ip_address,
                                                      std::string port,
                                                      Gen3HandType hand_type)
@@ -77,6 +78,7 @@ namespace piplup
             base_ = new k_api::Base::BaseClient(router_);
             base_cyclic_ = new k_api::BaseCyclic::BaseCyclicClient(router_);
         }
+
         systems::EventStatus Gen3HardwareInterface::Initialize(
             const systems::Context<double> & context,
             systems::State<double> * state) const
@@ -111,7 +113,8 @@ namespace piplup
                           == std::future_status::ready)
                 {
                     drake::log()->debug("Feedback Time: {}", callback_context.get_time());
-                    if (feedback_future.valid()) {
+                    if(feedback_future.valid())
+                    {
                         self.UpdateState(feedback_future.get(), callback_state);
                     }
                     auto future = self.base_cyclic_->RefreshFeedback_async().share();
@@ -175,6 +178,10 @@ namespace piplup
                 {
                 case Gen3ControlMode::kTwist:
                 {
+                    auto servoing_mode = k_api::Base::ServoingModeInformation();
+                    servoing_mode.set_servoing_mode(
+                        k_api::Base::ServoingMode::SINGLE_LEVEL_SERVOING);
+                    base_->SetServoingMode(servoing_mode);
                     drake::log()->debug("Sending Twist Command {}", command);
                     auto twist_command = k_api::Base::TwistCommand();
                     twist_command.set_reference_frame(
@@ -192,6 +199,67 @@ namespace piplup
                         arm_future_index_) = future;
                     break;
                 }
+                case Gen3ControlMode::kPosition:
+                {
+                    drake::log()->debug("Sending Joint Position Command {}", command);
+                    auto servoing_mode = k_api::Base::ServoingModeInformation();
+                    servoing_mode.set_servoing_mode(
+                        k_api::Base::ServoingMode::LOW_LEVEL_SERVOING);
+                    base_->SetServoingMode(servoing_mode);
+                    drake::log()->debug("Set Mode");
+                    k_api::BaseCyclic::Command base_command;
+                    for(size_t i = 0; i < 7; ++i)
+                    {
+                        base_command.add_actuators()->set_position(command[i]
+                                                                   * (180.0 / M_PI));
+                    }
+                    drake::log()->debug("Sending Command");
+                    base_cyclic_->Refresh(base_command);
+                    // auto future =
+                    //     base_cyclic_->RefreshCommand_async(base_command).share();
+                    // state->get_mutable_abstract_state<std::shared_future<void>>(
+                    //     arm_future_index_) = future;
+                    // auto action = k_api::Base::Action();
+                    // action.set_name("Example angular action movement");
+                    // action.set_application_data("");
+                    // auto reach_joint_angles = action.mutable_reach_joint_angles();
+                    // auto joint_angles = reach_joint_angles->mutable_joint_angles();
+                    // auto actuator_count = base_->GetActuatorCount();
+                    // for(size_t i = 0; i < actuator_count.count(); ++i)
+                    // {
+                    //     auto joint_angle = joint_angles->add_joint_angles();
+                    //     joint_angle->set_joint_identifier(i);
+                    //     joint_angle->set_value(command[i] * (180.0 / M_PI));
+                    // }
+
+                    // std::promise<k_api::Base::ActionEvent> finish_promise;
+                    // auto finish_future = finish_promise.get_future();
+                    // auto event_listener =
+                    //     [&finish_promise](k_api::Base::ActionNotification notification)
+                    //     {
+                    //         const auto action_event = notification.action_event();
+                    //         switch(action_event)
+                    //         {
+                    //         case k_api::Base::ActionEvent::ACTION_END:
+                    //         case k_api::Base::ActionEvent::ACTION_ABORT:
+                    //             finish_promise.set_value(action_event);
+                    //             break;
+                    //         default:
+                    //             break;
+                    //         }
+                    //     };
+
+                    // auto promise_notification_handle =
+                    // base_->OnNotificationActionTopic(
+                    //     event_listener, k_api::Common::NotificationOptions());
+                    // base_->ExecuteAction(action);
+                    // const auto status =
+                    // finish_future.wait_for(std::chrono::seconds{20});
+                    // base_->Unsubscribe(promise_notification_handle);
+                    break;
+                }
+                case Gen3ControlMode::kVelocity:
+                case Gen3ControlMode::kPose:
                 default:
                     drake::log()->error("Gen3 control mode not implemented");
                 }

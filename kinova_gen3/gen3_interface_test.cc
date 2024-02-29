@@ -22,16 +22,24 @@ namespace piplup
             auto & interface_context =
                 gen3_interface->GetMyMutableContextFromRoot(&sim_context);
             simulator.set_target_realtime_rate(1.0);
-            gen3_interface->GetInputPort("command").FixValue(&interface_context,
-                                                             VectorX<double>::Zero(7));
+
+            gen3_interface->GetInputPort("command").FixValue(
+                &interface_context,
+                // (VectorX<double>(7) << 0.2, 0.477, 0.0, 1.32, 0.0, 1.33,
+                // 0.0).finished()
+                VectorX<double>::Zero(7));
             gen3_interface->GetInputPort("control_mode")
                 .FixValue(&interface_context, Gen3ControlMode::kTwist);
+
             gen3_interface->GetInputPort("2f_85.command")
                 .FixValue(&interface_context, 0.2);
             simulator.Initialize();
             simulator.AdvanceTo(simulator.get_context().get_time() + 2);
             gen3_interface->GetInputPort("2f_85.command")
                 .FixValue(&interface_context, 0.5);
+            // auto position = gen3_interface->GetOutputPort("position_measured")
+            //                     .Eval(interface_context);
+            // drake::log()->info("Position: {}", position);
             simulator.AdvanceTo(simulator.get_context().get_time() + 2);
             drake::log()->info("Realtime Rate: {}", simulator.get_actual_realtime_rate());
             return 0;
