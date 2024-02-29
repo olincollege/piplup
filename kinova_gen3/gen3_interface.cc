@@ -19,8 +19,11 @@ namespace piplup
             position_measured_state_index_ = DeclareDiscreteState(7);
             velocity_measured_state_index_ = DeclareDiscreteState(7);
             torque_measured_state_index_ = DeclareDiscreteState(7);
-            DeclareAbstractState(
+            feedback_future_index_ = DeclareAbstractState(
                 Value<std::shared_future<k_api::BaseCyclic::Feedback>>());
+            gripper_future_index_ =
+                DeclareAbstractState(Value<std::shared_future<void>>());
+            arm_future_index_ = DeclareAbstractState(Value<std::shared_future<void>>());
 
             // DeclareAbstractState(Value<std::future<k_api::BaseCyclic::Feedback>>());
             // Input Ports
@@ -43,12 +46,13 @@ namespace piplup
             DeclareStateOutputPort("torque_measured", torque_measured_state_index_);
 
             // Update Events
-            double hz = 30.0;
+            double hz = 20.0;
             DeclareInitializationUnrestrictedUpdateEvent(
                 &Gen3HardwareInterface::Initialize);
-            DeclarePeriodicPublishEvent(1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
-            // DeclarePeriodicUnrestrictedUpdateEvent(
-            //     1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
+            // DeclarePeriodicPublishEvent(1 / hz, 0.0,
+            // &Gen3HardwareInterface::CalcUpdate);
+            DeclarePeriodicUnrestrictedUpdateEvent(
+                1 / hz, 0.0, &Gen3HardwareInterface::CalcUpdate);
             auto error_callback = [](k_api::KError err) {
                 cout << "_________ callback error _________" << err.toString();
             };
@@ -86,9 +90,6 @@ namespace piplup
             {
                 return systems::EventStatus::Failed(this, "Arm not in ready state.");
             }
-            auto future = base_cyclic_->RefreshFeedback_async().share();
-            state->get_mutable_abstract_state<
-                std::shared_future<k_api::BaseCyclic::Feedback>>(0) = future;
             return systems::EventStatus::Succeeded();
         }
 
@@ -101,19 +102,22 @@ namespace piplup
                                const systems::Context<double> & callback_context,
                                const systems::UnrestrictedUpdateEvent<double> &,
                                systems::State<double> * callback_state) {
+                const auto & self = dynamic_cast<const Gen3HardwareInterface &>(system);
                 auto & feedback_future = callback_state->get_abstract_state<
-                    std::shared_future<k_api::BaseCyclic::Feedback>>(0);
-                if(feedback_future.valid()
-                   && feedback_future.wait_for(std::chrono::seconds(0))
+                    std::shared_future<k_api::BaseCyclic::Feedback>>(
+                    self.feedback_future_index_);
+                if(!feedback_future.valid()
+                   || feedback_future.wait_for(std::chrono::seconds(0))
                           == std::future_status::ready)
                 {
                     drake::log()->debug("Feedback Time: {}", callback_context.get_time());
-                    const auto & self =
-                        dynamic_cast<const Gen3HardwareInterface &>(system);
-                    self.UpdateState(feedback_future.get(), callback_state);
+                    if (feedback_future.valid()) {
+                        self.UpdateState(feedback_future.get(), callback_state);
+                    }
                     auto future = self.base_cyclic_->RefreshFeedback_async().share();
                     callback_state->get_mutable_abstract_state<
-                        std::shared_future<k_api::BaseCyclic::Feedback>>(0) = future;
+                        std::shared_future<k_api::BaseCyclic::Feedback>>(
+                        self.feedback_future_index_) = future;
                 }
                 else
                 {
@@ -128,16 +132,23 @@ namespace piplup
                 systems::TriggerType::kTimed, callback));
         }
 
-        void Gen3HardwareInterface::CalcUpdate(
-            const systems::Context<double> & context) const
+        void Gen3HardwareInterface::CalcUpdate(const systems::Context<double> & context,
+                                               systems::State<double> * state) const
         {
-            if(hand_type_ == Gen3HandType::k2f85)
+            auto gripper_future = state->get_abstract_state<std::shared_future<void>>(
+                gripper_future_index_);
+            auto arm_future =
+                state->get_abstract_state<std::shared_future<void>>(arm_future_index_);
+            if(hand_type_ == Gen3HandType::k2f85
+               && (!gripper_future.valid()
+                   || gripper_future.wait_for(std::chrono::seconds(0))
+                          == std::future_status::ready))
             {
                 const auto & hand_command =
                     hand_command_port_->Eval<BasicVector<double>>(context);
 
                 k_api::Base::GripperCommand gripper_command;
-                auto gripper_command_mode = k_api::Base::GRIPPER_SPEED;
+                auto gripper_command_mode = k_api::Base::GRIPPER_POSITION;
                 gripper_command.set_mode(gripper_command_mode);
                 drake::log()->debug("Sending Gripper Command {} \t Mode: {}",
                                     hand_command,
@@ -145,32 +156,45 @@ namespace piplup
                 auto finger = gripper_command.mutable_gripper()->add_finger();
                 finger->set_finger_identifier(1);
                 finger->set_value(hand_command[0]);
-                base_->SendGripperCommand_async(gripper_command);
+
+                auto future = base_->SendGripperCommand_async(gripper_command).share();
+                state->get_mutable_abstract_state<std::shared_future<void>>(
+                    gripper_future_index_) = future;
             }
 
             const auto & command = command_port_->Eval<BasicVector<double>>(context);
             const auto & control_mode =
                 control_mode_port_->Eval<Gen3ControlMode>(context);
-            switch(control_mode)
+
+            if(!arm_future.valid()
+               || arm_future.wait_for(std::chrono::seconds(0))
+                      == std::future_status::ready)
             {
-            case Gen3ControlMode::kTwist:
-            {
-                auto twist_command = k_api::Base::TwistCommand();
-                twist_command.set_reference_frame(
-                    k_api::Common::CARTESIAN_REFERENCE_FRAME_BASE);
-                twist_command.set_duration(0);
-                auto twist = twist_command.mutable_twist();
-                twist->set_angular_x(command[0]);
-                twist->set_angular_y(command[1]);
-                twist->set_angular_z(command[2]);
-                twist->set_linear_x(command[3]);
-                twist->set_linear_y(command[4]);
-                twist->set_linear_z(command[5]);
-                base_->SendTwistCommand_async(twist_command);
-                break;
-            }
-            default:
-                drake::log()->error("Gen3 control mode not implemented");
+
+                switch(control_mode)
+                {
+                case Gen3ControlMode::kTwist:
+                {
+                    drake::log()->debug("Sending Twist Command {}", command);
+                    auto twist_command = k_api::Base::TwistCommand();
+                    twist_command.set_reference_frame(
+                        k_api::Common::CARTESIAN_REFERENCE_FRAME_BASE);
+                    twist_command.set_duration(0);
+                    auto twist = twist_command.mutable_twist();
+                    twist->set_angular_x(command[0]);
+                    twist->set_angular_y(command[1]);
+                    twist->set_angular_z(command[2]);
+                    twist->set_linear_x(command[3]);
+                    twist->set_linear_y(command[4]);
+                    twist->set_linear_z(command[5]);
+                    auto future = base_->SendTwistCommand_async(twist_command).share();
+                    state->get_mutable_abstract_state<std::shared_future<void>>(
+                        arm_future_index_) = future;
+                    break;
+                }
+                default:
+                    drake::log()->error("Gen3 control mode not implemented");
+                }
             }
         }
 
@@ -178,15 +202,14 @@ namespace piplup
             const k_api::BaseCyclic::Feedback & feedback,
             systems::State<double> * state) const
         {
-            drake::log()->debug("{}", feedback.actuators_size());
             for(int i = 0; i < feedback.actuators_size(); i++)
             {
-                drake::log()->debug(
-                    "Actuator {} \t Position: {} \t Velocity: {} \t Torque: {}",
-                    i,
-                    feedback.actuators(i).position(),
-                    feedback.actuators(i).velocity(),
-                    feedback.actuators(i).torque());
+                // drake::log()->debug(
+                //     "Actuator {} \t Position: {} \t Velocity: {} \t Torque: {}",
+                //     i,
+                //     feedback.actuators(i).position(),
+                //     feedback.actuators(i).velocity(),
+                //     feedback.actuators(i).torque());
                 state->get_mutable_discrete_state(position_measured_state_index_)
                     .SetAtIndex(i, feedback.actuators(i).position() * (M_PI / 180.0));
                 state->get_mutable_discrete_state(velocity_measured_state_index_)

@@ -31,7 +31,7 @@ namespace piplup
             simulator.Initialize();
             simulator.AdvanceTo(simulator.get_context().get_time() + 2);
             gen3_interface->GetInputPort("2f_85.command")
-                .FixValue(&interface_context, -0.2);
+                .FixValue(&interface_context, 0.5);
             simulator.AdvanceTo(simulator.get_context().get_time() + 2);
             drake::log()->info("Realtime Rate: {}", simulator.get_actual_realtime_rate());
             return 0;

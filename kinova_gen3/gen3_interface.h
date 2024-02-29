@@ -61,7 +61,8 @@ namespace piplup
             // private:
             systems::EventStatus Initialize(const systems::Context<double> &,
                                             systems::State<double> *) const;
-            void CalcUpdate(const systems::Context<double> &) const;
+            void CalcUpdate(const systems::Context<double> & context,
+                            systems::State<double> * state) const;
             void DoCalcNextUpdateTime(const systems::Context<double> & context,
                                       systems::CompositeEventCollection<double> * events,
                                       double * time) const final;
@@ -83,6 +84,9 @@ namespace piplup
             systems::DiscreteStateIndex position_measured_state_index_;
             systems::DiscreteStateIndex velocity_measured_state_index_;
             systems::DiscreteStateIndex torque_measured_state_index_;
+            systems::AbstractStateIndex feedback_future_index_;
+            systems::AbstractStateIndex gripper_future_index_;
+            systems::AbstractStateIndex arm_future_index_;
         };
 
     } // namespace kinova_gen3
