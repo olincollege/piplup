@@ -232,15 +232,30 @@ def GenerateAntipodalGraspCandidate(
 
 def make_internal_model(meshcat):
     builder = DiagramBuilder()
+    plant: MultibodyPlant
+    scene_graph: SceneGraph
     plant, scene_graph = AddMultibodyPlantSceneGraph(builder, time_step=0.001)
     parser = Parser(plant)
     ConfigureParser(parser)
     parser.AddModelsFromUrl(
         "package://piplup_models/robotiq_description/sdf/robotiq_2f_85_static_primitive_collision.sdf"
     )
-    # parser.AddModelsFromUrl(
-    #     "package://piplup_models/scope_station/models/scope_table.sdf"
-    # )
+    parser.AddModelsFromUrl(
+        "package://piplup_models/scope_station/models/scope_table.sdf"
+    )
+
+    model_inspector: SceneGraphInspector = scene_graph.model_inspector()
+    geometry_ids = model_inspector.GetAllGeometryIds()
+    geometry_names = [model_inspector.GetName(id) for id in geometry_ids]
+    valid_collision_idx = np.array(
+        ["table" in n or "extrusion" in n for n in geometry_names]
+    )
+    excluded_bodies = np.array(geometry_ids)[~valid_collision_idx]
+    gripper_exclude = CollisionFilterDeclaration().ExcludeWithin(
+        GeometrySet(excluded_bodies)
+    )
+    scene_graph.collision_filter_manager().Apply(gripper_exclude)
+
     plant.Finalize()
 
     MeshcatVisualizer.AddToBuilder(builder, scene_graph, meshcat)

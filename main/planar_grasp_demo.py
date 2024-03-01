@@ -137,7 +137,7 @@ def run(*, scenario: Scenario, visualize=False):
 
 def main():
     init_logging()
-    # logging.getLogger().setLevel(logging.INFO)
+    logging.getLogger().setLevel(logging.INFO)
     parser = argparse.ArgumentParser()
     parser.add_argument("--sim", action="store_true")
     parser.add_argument("-v", action="store_true")
