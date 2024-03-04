@@ -17,7 +17,7 @@
         </material>
       </visual>
       <collision name="table_collision">
-        <pose> 1 0 0 0 0 0</pose>
+        <pose> 1 0 -0.02 0 0 0</pose>
         <geometry>
           <box>
             <size>2 0.99 0.04</size>
