@@ -72,8 +72,15 @@ def GraspCandidateCost(
     meshcat.SetObject("/finger_box", finger_box, rgba=Rgba(0, 0, 1, 0.5))
     meshcat.SetTransform("/finger_box", X_G @ RigidTransform([0.0, 0.0, 0.1325]))
 
+    grip_width = np.inf
+
+    if np.sum(indices) > 0:
+        p_GC_y = p_GC[1, indices]
+        grip_width = p_GC_y.max() - p_GC_y.min()
+
     if adjust_X_G and np.sum(indices) > 0:
         p_GC_y = p_GC[1, indices]
+        grip_width = p_GC_y.max() - p_GC_y.min()
         p_Gcenter_y = (p_GC_y.min() + p_GC_y.max()) / 2.0
         X_G.set_translation(X_G @ np.array([0, p_Gcenter_y, 0]))
         plant.SetFreeBodyPose(plant_context, robotiq, X_G)
@@ -89,7 +96,7 @@ def GraspCandidateCost(
     if query_object.HasCollisions():
         logging.debug("Gripper collided with World!")
         cost = np.inf
-        return cost
+        return cost, np.inf
 
     # Check collisions between the gripper and the point cloud. `margin`` must
     # be smaller than the margin used in the point cloud preprocessing.
@@ -109,18 +116,18 @@ def GraspCandidateCost(
             # time.sleep(3)
             logging.debug("Gripper collided with point cloud!")
             cost = np.inf
-            return cost
+            return cost, np.inf
 
     n_GC = X_GW.rotation().multiply(cloud.normals()[:, indices])
 
     # Penalize deviation of the gripper from vertical.
     # weight * -dot([0, 0, -1], R_G * [0, 1, 0]) = weight * R_G[2,1]
-    cost = 20.0 * X_G.rotation().matrix()[2, 1]
+    cost = 20.0 * np.abs(X_G.rotation().matrix()[2, 0])
 
     # Reward sum |dot product of normals with gripper y|^2
     cost -= np.sum(n_GC[1, :] ** 2)
 
-    return cost
+    return cost, grip_width
 
 
 def GenerateAntipodalGraspCandidate(
@@ -165,7 +172,7 @@ def GenerateAntipodalGraspCandidate(
         robotiq_body_index = robotiq.index()
 
     if cloud.size() < 1:
-        return np.inf, None
+        return np.inf, None, np.inf
 
     index = rng.integers(0, cloud.size() - 1)
 
@@ -184,7 +191,7 @@ def GenerateAntipodalGraspCandidate(
     z = np.array([0.0, 0.0, -1.0])
     if np.abs(np.dot(z, Gy)) > 1 - 1e-2:
         # normal was pointing straight down.  reject this sample.
-        return np.inf, None
+        return np.inf, None, np.inf
 
     Gx = np.cross(Gy, z)
     Gz = np.cross(Gx, Gy)
@@ -218,16 +225,18 @@ def GenerateAntipodalGraspCandidate(
         X_G = RigidTransform(R_WG2, p_WG)
 
         plant.SetFreeBodyPose(plant_context, robotiq, X_G)
-        cost = GraspCandidateCost(meshcat, diagram, context, cloud, adjust_X_G=True)
+        cost, grip_width = GraspCandidateCost(
+            meshcat, diagram, context, cloud, adjust_X_G=True
+        )
         X_G = plant.GetFreeBodyPose(plant_context, robotiq)
 
         # diagram.ForcedPublish(context)
 
         if np.isfinite(cost):
             # logging.debug(f"Cost: {cost}")
-            return cost, X_G
+            return cost, X_G, grip_width
 
-    return np.inf, None
+    return np.inf, None, np.inf
 
 
 def make_internal_model(meshcat):
@@ -272,7 +281,7 @@ class PlanarGraspSelector(LeafSystem):
         )
         port = self.DeclareAbstractOutputPort(
             "grasp_selection",
-            lambda: AbstractValue.Make((np.inf, np.inf, RigidTransform())),
+            lambda: AbstractValue.Make((np.inf, np.inf, RigidTransform(), np.inf)),
             self.SelectGrasp,
         )
 
@@ -293,9 +302,11 @@ class PlanarGraspSelector(LeafSystem):
 
         costs = []
         X_Gs = []
+        grip_widths = []
+        grasp_attempts = 100
 
-        for i in range(100):
-            cost, X_G = GenerateAntipodalGraspCandidate(
+        for _ in range(grasp_attempts):
+            cost, X_G, grip_width = GenerateAntipodalGraspCandidate(
                 self.meshcat,
                 self._internal_model,
                 self._internal_model_context,
@@ -305,17 +316,20 @@ class PlanarGraspSelector(LeafSystem):
             if np.isfinite(cost):
                 costs.append(cost)
                 X_Gs.append(X_G)
+                grip_widths.append(grip_width)
 
         if len(costs) == 0:
             # No viable grasp candidates found
             X_WG = RigidTransform(RollPitchYaw(0, np.pi, 0), [0.5, 0, 0.4])
-            output.set_value((np.inf, np.inf, X_WG))
+            output.set_value((np.inf, np.inf, X_WG, np.inf))
         else:
             best = np.argmin(costs)
-            graspability = np.average(costs)
+            # Percentage of valid grasps found
+            graspability = len(costs) / grasp_attempts
 
             logging.info(f"Best Grasp Score: {costs[best]}")
             logging.info(f"Graspability: {graspability}")
+            logging.info(f"Grasp width: {grip_widths[best]}")
 
             plant: MultibodyPlant = self._internal_model.GetSubsystemByName("plant")
             plant_context = plant.GetMyMutableContextFromRoot(
@@ -330,4 +344,4 @@ class PlanarGraspSelector(LeafSystem):
             )
             plant.SetFreeBodyPose(plant_context, robotiq, X_Gs[best])
             self._internal_model.ForcedPublish(self._internal_model_context)
-            output.set_value((graspability, costs[best], X_Gs[best]))
+            output.set_value((graspability, costs[best], X_Gs[best], grip_widths[best]))

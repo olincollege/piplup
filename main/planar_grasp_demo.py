@@ -13,7 +13,11 @@ from station import (
     load_scenario,
 )
 
-from perception import MakePointCloudGenerator, LabelImageSegmentationSystem
+from perception import (
+    MakePointCloudGenerator,
+    LabelImageSegmentationSystem,
+    ImageSegmenter,
+)
 import cv2
 
 from planning import PlanarGraspSelector
@@ -71,12 +75,32 @@ def run(*, scenario: Scenario, visualize=False):
         )
 
         builder.Connect(
-            camera_pose.GetOutputPort("pose"),
-            point_cloud_generator.GetInputPort(f"{camera}_pose"),
-        )
-        builder.Connect(
             seg.GetOutputPort(f"masked_image"),
             point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
+        )
+
+        # seg: System = builder.AddNamedSystem(
+        #     f"{camera}_segmenter", ImageSegmenter(camera)
+        # )
+
+        # builder.Connect(
+        #     hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+        #     seg.GetInputPort(f"{camera}_depth_image"),
+        # )
+
+        # builder.Connect(
+        #     hardware_station.GetOutputPort(f"{camera}.color_image"),
+        #     seg.GetInputPort(f"{camera}_color_image"),
+        # )
+
+        # builder.Connect(
+        #     seg.GetOutputPort(f"{camera}_masked_depth_image"),
+        #     point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
+        # )
+
+        builder.Connect(
+            camera_pose.GetOutputPort("pose"),
+            point_cloud_generator.GetInputPort(f"{camera}_pose"),
         )
 
     builder.Connect(
