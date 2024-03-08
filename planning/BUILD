@@ -4,7 +4,8 @@ py_library(
         "__init__.py",
         "porosity_planner.py",
         "suction_grasp.py",
-        "planar_grasp.py"
+        "planar_grasp.py",
+        "planar_planner.py",
     ],
     imports = [".."],
     visibility = ["//visibility:public"],

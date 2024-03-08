@@ -1,3 +1,11 @@
+"""
+Grasp selector for Robotiq 2f 85 planar gripper.
+
+Adapted from: 
+https://github.com/RussTedrake/manipulation/blob/master/manipulation/clutter.py
+https://github.com/RussTedrake/manipulation/blob/master/book/clutter/clutter_clearing.ipynb
+"""
+
 import numpy as np
 from pydrake.all import *
 from copy import copy
@@ -253,6 +261,7 @@ def make_internal_model(meshcat):
         "package://piplup_models/scope_station/models/scope_table.sdf"
     )
 
+    # Exclude collisions between gripper components
     model_inspector: SceneGraphInspector = scene_graph.model_inspector()
     geometry_ids = model_inspector.GetAllGeometryIds()
     geometry_names = [model_inspector.GetName(id) for id in geometry_ids]
@@ -279,6 +288,7 @@ class PlanarGraspSelector(LeafSystem):
         self.DeclareAbstractInputPort(
             "merged_point_cloud", AbstractValue.Make(PointCloud(0))
         )
+        # Output port: [graspability, cost of best grasp, best grasp pose, grip width]
         port = self.DeclareAbstractOutputPort(
             "grasp_selection",
             lambda: AbstractValue.Make((np.inf, np.inf, RigidTransform(), np.inf)),
