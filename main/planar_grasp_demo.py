@@ -26,7 +26,7 @@ from common.logging import *
 from common.utils import *
 
 
-def run(*, scenario: Scenario, visualize=False):
+def run(*, scenario: Scenario, simulation=True, visualize=False):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
     hardware_station: Diagram = builder.AddNamedSystem(
@@ -50,9 +50,9 @@ def run(*, scenario: Scenario, visualize=False):
         "planaer_grasp_selector", PlanarGraspSelector()
     )
 
-    planar_planner: PlanarPlanner = builder.AddNamedSystem(
-        "planar_planner", PlanarPlanner()
-    )
+    # planar_planner: PlanarPlanner = builder.AddNamedSystem(
+    #     "planar_planner", PlanarPlanner()
+    # )
 
     for camera in cameras:
         camera_pose: PoseTransform = builder.AddNamedSystem(
@@ -64,43 +64,44 @@ def run(*, scenario: Scenario, visualize=False):
             camera_pose.GetInputPort("pose"),
         )
 
-        seg: System = builder.AddNamedSystem(
-            f"{camera}_segmenter", LabelImageSegmentationSystem(1)
-        )
+        if simulation:
+            seg: System = builder.AddNamedSystem(
+                f"{camera}_segmenter", LabelImageSegmentationSystem(1)
+            )
 
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
-            seg.GetInputPort(f"depth_image"),
-        )
+            builder.Connect(
+                hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+                seg.GetInputPort(f"depth_image"),
+            )
 
-        builder.Connect(
-            hardware_station.GetOutputPort(f"{camera}.label_image"),
-            seg.GetInputPort(f"label_image"),
-        )
+            builder.Connect(
+                hardware_station.GetOutputPort(f"{camera}.label_image"),
+                seg.GetInputPort(f"label_image"),
+            )
 
-        builder.Connect(
-            seg.GetOutputPort(f"masked_image"),
-            point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
-        )
+            builder.Connect(
+                seg.GetOutputPort(f"masked_image"),
+                point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
+            )
+        else:
+            seg: System = builder.AddNamedSystem(
+                f"{camera}_segmenter", ImageSegmenter(camera)
+            )
 
-        # seg: System = builder.AddNamedSystem(
-        #     f"{camera}_segmenter", ImageSegmenter(camera)
-        # )
+            builder.Connect(
+                hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
+                seg.GetInputPort(f"{camera}_depth_image"),
+            )
 
-        # builder.Connect(
-        #     hardware_station.GetOutputPort(f"{camera}.depth_image_16u"),
-        #     seg.GetInputPort(f"{camera}_depth_image"),
-        # )
+            builder.Connect(
+                hardware_station.GetOutputPort(f"{camera}.color_image"),
+                seg.GetInputPort(f"{camera}_color_image"),
+            )
 
-        # builder.Connect(
-        #     hardware_station.GetOutputPort(f"{camera}.color_image"),
-        #     seg.GetInputPort(f"{camera}_color_image"),
-        # )
-
-        # builder.Connect(
-        #     seg.GetOutputPort(f"{camera}_masked_depth_image"),
-        #     point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
-        # )
+            builder.Connect(
+                seg.GetOutputPort(f"{camera}_masked_depth_image"),
+                point_cloud_generator.GetInputPort(f"{camera}_depth_image"),
+            )
 
         builder.Connect(
             camera_pose.GetOutputPort("pose"),
@@ -112,26 +113,26 @@ def run(*, scenario: Scenario, visualize=False):
         planar_grasp.GetInputPort("merged_point_cloud"),
     )
 
-    builder.Connect(
-        planar_grasp.GetOutputPort("grasp_selection"),
-        planar_planner.GetInputPort("planar_grasp_selection"),
-    )
+    # builder.Connect(
+    #     planar_grasp.GetOutputPort("grasp_selection"),
+    #     planar_planner.GetInputPort("planar_grasp_selection"),
+    # )
 
-    builder.Connect(
-        planar_planner.GetOutputPort("control_mode"),
-        hardware_station.GetInputPort("gen3.control_mode"),
-    )
+    # builder.Connect(
+    #     planar_planner.GetOutputPort("control_mode"),
+    #     hardware_station.GetInputPort("gen3.control_mode"),
+    # )
 
-    builder.Connect(
-        planar_planner.GetOutputPort("arm_command"),
-        hardware_station.GetInputPort("gen3.command"),
-    )
+    # builder.Connect(
+    #     planar_planner.GetOutputPort("arm_command"),
+    #     hardware_station.GetInputPort("gen3.command"),
+    # )
 
-    gripper_name = scenario.model_drivers["gen3"].hand_model_name
-    builder.Connect(
-        planar_planner.GetOutputPort("gripper_command"),
-        hardware_station.GetInputPort(f"{gripper_name}.command"),
-    )
+    # gripper_name = scenario.model_drivers["gen3"].hand_model_name
+    # builder.Connect(
+    #     planar_planner.GetOutputPort("gripper_command"),
+    #     hardware_station.GetInputPort(f"{gripper_name}.command"),
+    # )
 
     # Build the diagram and its simulator.
     diagram: Diagram = builder.Build()
@@ -139,22 +140,22 @@ def run(*, scenario: Scenario, visualize=False):
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
 
-    # hardware_station_context = hardware_station.GetMyContextFromRoot(
-    #     simulator.get_context()
-    # )
+    hardware_station_context = hardware_station.GetMyContextFromRoot(
+        simulator.get_context()
+    )
 
-    # hardware_station.GetInputPort(f"gen3.control_mode").FixValue(
-    #     hardware_station_context,
-    #     Gen3ControlMode.kPosition,
-    # )
-    # hardware_station.GetInputPort(f"gen3.command").FixValue(
-    #     hardware_station_context,
-    #     [0, 0.56, 0, 1.02, 0, 1.29, 0],
-    # )
-    # hardware_station.GetInputPort(f"2f_85.command").FixValue(
-    #     hardware_station_context,
-    #     [0],
-    # )
+    hardware_station.GetInputPort(f"gen3.control_mode").FixValue(
+        hardware_station_context,
+        Gen3ControlMode.kPosition,
+    )
+    hardware_station.GetInputPort(f"gen3.command").FixValue(
+        hardware_station_context,
+        [0, 0.56, 0, 1.02, 0, 1.29, 0],
+    )
+    hardware_station.GetInputPort(f"2f_85.command").FixValue(
+        hardware_station_context,
+        [0],
+    )
 
     # label_image = hardware_station.GetOutputPort(f"camera0.label_image").Eval(
     #     hardware_station_context
@@ -172,10 +173,11 @@ def run(*, scenario: Scenario, visualize=False):
     # Simulate.
     try:
         while True:
-            simulator.AdvanceTo(scenario.simulation_duration)
-            # planar_grasp.GetOutputPort("grasp_selection").Eval(
-            #     planar_grasp.GetMyContextFromRoot(simulator.get_context())
-            # )
+            simulator.AdvanceTo(simulator.get_context().get_time() + 0.5)
+            # simulator.AdvanceTo(scenario.simulation_duration)
+            planar_grasp.GetOutputPort("grasp_selection").Eval(
+                planar_grasp.GetMyContextFromRoot(simulator.get_context())
+            )
 
     except KeyboardInterrupt:
         cv2.destroyAllWindows()
@@ -195,7 +197,7 @@ def main():
         filename="models/grasp_planning_scenario.yaml",
         scenario_name="Simulated" if args.sim else "Hardware",
     )
-    run(scenario=scenario, visualize=args.v)
+    run(scenario=scenario, simulation=args.sim, visualize=args.v)
 
 
 if __name__ == "__main__":
