@@ -30,7 +30,7 @@ class PlanarPlanner(LeafSystem):
             AbstractValue.Make(PlanarPlannerState.INIT)
         )
         self.control_mode_idx_ = self.DeclareAbstractState(
-            AbstractValue.Make(Gen3ControlMode.kPose)
+            AbstractValue.Make(Gen3ControlMode.kTwist)
         )
         self.command_idx_ = self.DeclareDiscreteState(7)
         # TODO: What is neutral and what is closed? 0-1?
@@ -57,16 +57,16 @@ class PlanarPlanner(LeafSystem):
 
     def Update(self, context: Context, state: State):
         planner_state = context.get_abstract_state(self.planner_state_idx_).get_value()
-        logging.debug(f"Current State: {planner_state}")
+        logging.info(f"Current State: {planner_state}")
 
         match planner_state:
             case PlanarPlannerState.INIT:
-                time.sleep(2)
                 self.change_planner_state(state, PlanarPlannerState.MOVE_TO_NEUTRAL)
                 state.get_mutable_discrete_state(self.gripper_command_idx_).set_value(
                     np.array([0.0])
                 )
             case PlanarPlannerState.MOVE_TO_NEUTRAL:
+                time.sleep(2)
                 self.change_command_mode(state, Gen3ControlMode.kPosition)
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     kGen3NamedPositions[Gen3NamedPosition.NEUTRAL]
@@ -82,22 +82,23 @@ class PlanarPlanner(LeafSystem):
                 self.change_planner_state(state, PlanarPlannerState.CALC_PICK_POSE)
             case PlanarPlannerState.CALC_PICK_POSE:
                 self.planar_grasp_selection = self.planar_grasp_port_.Eval(context)
-                self.pick_pose_transform: RigidTransform = self.planar_grasp_selection[
-                    2
-                ]
+                self.pick_pose_transform: RigidTransform = self.planar_grasp_selection[2] @ RigidTransform([0.0, 0.0, 0.1325])
                 self.grip_width = self.planar_grasp_selection[3]
                 self.change_planner_state(state, PlanarPlannerState.MOVE_TO_PRE_PICK)
             case PlanarPlannerState.MOVE_TO_PRE_PICK:
                 self.change_command_mode(state, Gen3ControlMode.kPose)
-                rotation_matrix: RotationMatrix = self.pick_pose_transform.rotation()
+                rotation_matrix: RotationMatrix = self.pick_pose_transform.rotation() @ RollPitchYaw([0, 0, -np.pi/2]).ToRotationMatrix()
                 translation: np.ndarray = self.pick_pose_transform.translation()
                 self.pick_pose_array = np.concatenate(
                     [rotation_matrix.ToRollPitchYaw().vector(), translation, [0]]
                 )
+                logging.info(f"Pick pose: {self.pick_pose_array}")
                 # Move along -z axis of gripper by 5cm
                 pre_pick_offset = rotation_matrix.col(2) * -0.05
-                pre_pick_pose = self.pick_pose_array
+                pre_pick_pose = copy.copy(self.pick_pose_array)
                 pre_pick_pose[3:6] += pre_pick_offset
+
+                logging.info(f"Pre-pick pose: {pre_pick_pose}")
 
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     pre_pick_pose
@@ -106,40 +107,45 @@ class PlanarPlanner(LeafSystem):
                 self.change_planner_state(state, PlanarPlannerState.MOVE_TO_PICK)
             case PlanarPlannerState.MOVE_TO_PICK:
                 self.change_command_mode(state, Gen3ControlMode.kPose)
+                logging.info(f"Pick pose: {self.pick_pose_array}")
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     self.pick_pose_array
                 )
                 self.change_planner_state(state, PlanarPlannerState.CLOSE_GRIPPER)
             case PlanarPlannerState.CLOSE_GRIPPER:
+                gripper_command = np.clip(1 - self.grip_width / 0.085 + 0.2, 0, 1)
+                logging.info(f"Gripper command: {gripper_command}")
                 state.get_mutable_discrete_state(self.gripper_command_idx_).set_value(
-                    [1 - self.grip_width / 0.085]
+                    np.array([gripper_command])
                 )
                 self.change_planner_state(state, PlanarPlannerState.PICK_MANIPULAND)
                 self.last_time = context.get_time()
             case PlanarPlannerState.PICK_MANIPULAND:
-                self.change_command_mode(state, Gen3ControlMode.kPose)
-                pick_up_pose = self.pick_pose_array
-                pick_up_pose[5] += 0.05
-                state.get_mutable_discrete_state(self.command_idx_).set_value(
-                    pick_up_pose
-                )
-
-                if (context.get_time() - self.last_time) > 0.003:
+                if (context.get_time() - self.last_time) > 0.0005:
+                    self.change_command_mode(state, Gen3ControlMode.kPose)
+                    pick_up_pose = copy.copy(self.pick_pose_array)
+                    pick_up_pose[5] += 0.1
+                    state.get_mutable_discrete_state(self.command_idx_).set_value(
+                        pick_up_pose
+                    )
                     self.change_planner_state(state, PlanarPlannerState.DROP_MANIPULAND)
             case PlanarPlannerState.DROP_MANIPULAND:
                 self.change_command_mode(state, Gen3ControlMode.kPose)
+                logging.info(f"Pick pose: {self.pick_pose_array}")
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     self.pick_pose_array
                 )
                 state.get_mutable_discrete_state(self.gripper_command_idx_).set_value(
-                    [0.0]
+                    np.array([0.0])
                 )
                 self.change_planner_state(state, PlanarPlannerState.IDLE)
+                self.last_time = context.get_time()
             case PlanarPlannerState.IDLE:
-                self.change_command_mode(state, Gen3ControlMode.kPosition)
-                state.get_mutable_discrete_state(self.command_idx_).set_value(
-                    kGen3NamedPositions[Gen3NamedPosition.NEUTRAL]
-                )
+                if (context.get_time() - self.last_time) > 0.001:
+                    self.change_command_mode(state, Gen3ControlMode.kPosition)
+                    state.get_mutable_discrete_state(self.command_idx_).set_value(
+                        kGen3NamedPositions[Gen3NamedPosition.NEUTRAL]
+                    )
             case _:
                 logging.error("Invalid Planner State")
 

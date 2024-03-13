@@ -278,7 +278,7 @@ class Gen3HardwareInterface(LeafSystem):
         ## ------
         if self.hand_model_name == "2f_85":
             gripper_command = Base_pb2.GripperCommand()
-            gripper_command.mode = Base_pb2.GRIPPER_SPEED
+            gripper_command.mode = Base_pb2.GRIPPER_POSITION
 
             finger = gripper_command.gripper.finger.add()
             finger.finger_identifier = 1
@@ -298,7 +298,7 @@ class Gen3HardwareInterface(LeafSystem):
                 translation = command[3:-1]
                 rpy = RollPitchYaw(command[:3])
                 # X_WE = X_WB @ X_BE
-                X_BE = self.X_WB_inv = RigidTransform(rpy.ToQuaternion(), translation)
+                X_BE = self.X_WB_inv @ RigidTransform(rpy.ToQuaternion(), translation)
                 self.SendPoseCommand(
                     X_BE.translation(), X_BE.rotation().ToRollPitchYaw()
                 )

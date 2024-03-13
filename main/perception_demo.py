@@ -99,9 +99,9 @@ def run(*, scenario: Scenario, visualize=False):
     try:
         while True:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.5)
-            suction_grasp.GetOutputPort("grasp_selection").Eval(
-                suction_grasp.GetMyContextFromRoot(simulator.get_context())
-            )
+            # suction_grasp.GetOutputPort("grasp_selection").Eval(
+            #     suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            # )
             if visualize:
                 for camera in cameras:
                     if camera == "camera3":
