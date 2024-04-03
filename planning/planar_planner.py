@@ -84,7 +84,10 @@ class PlanarPlanner(LeafSystem):
                 self.planar_grasp_selection = self.planar_grasp_port_.Eval(context)
                 self.pick_pose_transform: RigidTransform = self.planar_grasp_selection[2] @ RigidTransform([0.0, 0.0, 0.1325])
                 self.grip_width = self.planar_grasp_selection[3]
-                self.change_planner_state(state, PlanarPlannerState.MOVE_TO_PRE_PICK)
+                if np.isinf(self.planar_grasp_selection[0]):
+                    self.change_planner_state(state, PlanarPlannerState.IDLE)
+                else:
+                    self.change_planner_state(state, PlanarPlannerState.MOVE_TO_PRE_PICK)
             case PlanarPlannerState.MOVE_TO_PRE_PICK:
                 self.change_command_mode(state, Gen3ControlMode.kPose)
                 rotation_matrix: RotationMatrix = self.pick_pose_transform.rotation() @ RollPitchYaw([0, 0, -np.pi/2]).ToRotationMatrix()
