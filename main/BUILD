@@ -54,3 +54,13 @@ py_binary(
         "//station",
     ],
 )
+
+py_binary(
+    name = "com_demo",
+    srcs = ["com_demo.py"],
+    imports = [".."],
+    deps = [
+        "//planning",
+        "//station",
+    ],
+)
