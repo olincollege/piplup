@@ -33,7 +33,6 @@ class PlanarPlanner(LeafSystem):
             AbstractValue.Make(Gen3ControlMode.kTwist)
         )
         self.command_idx_ = self.DeclareDiscreteState(7)
-        # TODO: What is neutral and what is closed? 0-1?
         self.gripper_command_idx_ = self.DeclareDiscreteState(1)
 
         # Input Ports
