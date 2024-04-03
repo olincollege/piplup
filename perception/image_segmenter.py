@@ -42,7 +42,7 @@ class ImageSegmenter(LeafSystem):
             lambda: AbstractValue.Make(Image[PixelType.kRgba8U]()),
             self.MaskColorImage,
         )
-        self.model = FastSAM("/home/ali1/code/piplup/perception/weights/FastSAM.pt")
+        self.model = FastSAM("/home/piplup/piplup/perception/weights/FastSAM.pt")
         self.DEVICE = torch.device(
             "cuda"
             if torch.cuda.is_available()
@@ -50,7 +50,7 @@ class ImageSegmenter(LeafSystem):
         )
 
     def get_params(self, camera):
-        file_path = "/home/ali1/code/piplup/perception/perception_configs.yaml"
+        file_path = "/home/piplup/piplup/perception/perception_configs.yaml"
         with open(file_path, "r") as file:
             parsed_yaml = yaml.safe_load(file)
 
@@ -107,7 +107,7 @@ class ImageSegmenter(LeafSystem):
             cv2.cvtColor(color_image, cv2.COLOR_RGB2BGR),
             device=self.DEVICE,
             retina_masks=True,
-            imgsz=1024,
+            imgsz=640,
             conf=0.8,
             iou=0.9,
         )
@@ -119,7 +119,7 @@ class ImageSegmenter(LeafSystem):
         points = [*self.object_coordinates, *self.background_coordinates]
         pointlabel = [
             *[*[1] * len(self.object_coordinates)],
-            *[*[0] * len(self.object_coordinates)],
+            *[*[0] * len(self.background_coordinates)],
         ]
         ann = prompt_process.point_prompt(points=points, pointlabel=pointlabel)
         if isinstance(ann, list):

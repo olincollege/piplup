@@ -47,7 +47,7 @@ class SuctionGraspSelector(LeafSystem):
         candidates = []
         scores = []
         crops = []
-        for i in range(300):
+        for i in range(1000):
             index = self._rng.integers(0, pc.size() - 1)
             p_WS = pc.xyz(index)
             n_WS = pc.normal(index)
@@ -80,6 +80,12 @@ class SuctionGraspSelector(LeafSystem):
                 scores.append(score)
                 candidates.append(RigidTransform(R_WG, p_WS))
                 crops.append(cropped)
+            self.meshcat.SetObject(
+                "/cropping_box",
+                Cylinder(self.cup_diam / 2, self.cup_depth),
+                rgba=Rgba(0, 0, 1, 0.25),
+            )
+            self.meshcat.SetTransform("/cropping_box", RigidTransform(R_WG, p_WS))
 
         if scores:
             i = np.array(scores).argmax()

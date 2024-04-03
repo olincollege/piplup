@@ -332,10 +332,19 @@ class PlanarGraspSelector(LeafSystem):
             # No viable grasp candidates found
             X_WG = RigidTransform(RollPitchYaw(0, np.pi, 0), [0.5, 0, 0.4])
             output.set_value((np.inf, np.inf, X_WG, np.inf))
+            finger_box = Box([0.02, 0.085, 0.035])
+            self.meshcat.SetObject("/finger_box", finger_box, rgba=Rgba(1, 0, 0, 0.5))
         else:
             best = np.argmin(costs)
             # Percentage of valid grasps found
             graspability = len(costs) / grasp_attempts
+
+            if graspability < 0.05:
+                X_WG = RigidTransform(RollPitchYaw(0, np.pi, 0), [0.5, 0, 0.4])
+                output.set_value((np.inf, np.inf, X_WG, np.inf))
+                finger_box = Box([0.02, 0.085, 0.035])
+                self.meshcat.SetObject("/finger_box", finger_box, rgba=Rgba(1, 0, 0, 0.5))
+                return
 
             logging.info(f"Best Grasp Score: {costs[best]}")
             logging.info(f"Graspability: {graspability}")

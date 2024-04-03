@@ -22,6 +22,10 @@ from planning import SuctionGraspSelector
 from common.logging import *
 
 
+def click_event(event, x, y, flags, params): 
+    if event == cv2.EVENT_LBUTTONDOWN: 
+        print(x, ' ', y) 
+
 def run(*, scenario: Scenario, visualize=False):
     meshcat: Meshcat = StartMeshcat()
     builder = DiagramBuilder()
@@ -99,12 +103,12 @@ def run(*, scenario: Scenario, visualize=False):
     try:
         while True:
             simulator.AdvanceTo(simulator.get_context().get_time() + 0.5)
-            # suction_grasp.GetOutputPort("grasp_selection").Eval(
-            #     suction_grasp.GetMyContextFromRoot(simulator.get_context())
-            # )
+            suction_grasp.GetOutputPort("grasp_selection").Eval(
+                suction_grasp.GetMyContextFromRoot(simulator.get_context())
+            )
             if visualize:
                 for camera in cameras:
-                    if camera == "camera3":
+                    if camera == "camera0":
                         img_color = (
                             hardware_station.GetOutputPort(f"{camera}.color_image")
                             .Eval(
@@ -171,7 +175,8 @@ def run(*, scenario: Scenario, visualize=False):
                             img_comb_c = cv2.hconcat([img_color, masked_color])
                             img_comb_d = cv2.hconcat([img_depth, masked_depth])
                             cv2.imshow(f"{camera}_all", img_comb_c)
-                            cv2.imshow(f"{camera}_d", img_comb_d)
+                            # cv2.imshow(f"{camera}_d", img_comb_d)
+                            cv2.setMouseCallback(f"{camera}_all", click_event) 
 
                 if cv2.waitKey(1) == ord("q"):
                     break
