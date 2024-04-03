@@ -86,7 +86,9 @@ namespace piplup
             systems::DiscreteStateIndex torque_measured_state_index_;
             systems::AbstractStateIndex feedback_future_index_;
             systems::AbstractStateIndex gripper_future_index_;
-            systems::AbstractStateIndex arm_future_index_;
+            systems::AbstractStateIndex twist_future_index_;
+            systems::AbstractStateIndex position_future_index_;
+            systems::AbstractStateIndex promise_notification_handle_index_;
         };
 
     } // namespace kinova_gen3
