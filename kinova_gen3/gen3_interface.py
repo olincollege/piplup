@@ -77,9 +77,9 @@ class Gen3HardwareInterface(LeafSystem):
         # self.DeclareVectorOutputPort(
         #     "velocity_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmVelocity
         # )
-        # self.DeclareVectorOutputPort(
-        #     "torque_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmTorque
-        # )
+        self.DeclareVectorOutputPort(
+            "torque_measured", BasicVector(kGen3ArmNumJoints), self.CalcArmTorque
+        )
         # self.DeclareVectorOutputPort(
         #     "state_estimated", BasicVector(kGen3ArmNumJoints * 2), self.CalcState
         # )

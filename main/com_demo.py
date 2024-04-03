@@ -128,6 +128,11 @@ def run(*, scenario: Scenario, simulation=False, visualize=False):
         hardware_station.GetInputPort("gen3.command"),
     )
 
+    builder.Connect(
+        hardware_station.GetOutputPort("gen3.torque_measured"),
+        com_planner.GetInputPort("torque_measured"),
+    )
+
     gripper_name = scenario.model_drivers["gen3"].hand_model_name
     builder.Connect(
         com_planner.GetOutputPort("gripper_command"),
@@ -164,9 +169,9 @@ def run(*, scenario: Scenario, simulation=False, visualize=False):
     # plt.imshow(label_image)
     # plt.show()
 
-    # hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
-    #     simulator.get_mutable_context()
-    # )
+    hardware_station.GetSubsystemByName("gen3_interface").root_ctx = (
+        simulator.get_mutable_context()
+    )
 
     simulator.Initialize()
 
