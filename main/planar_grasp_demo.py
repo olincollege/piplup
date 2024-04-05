@@ -7,6 +7,8 @@ from pydrake.geometry import Meshcat, StartMeshcat
 from pydrake.systems.analysis import ApplySimulatorConfig, Simulator
 from pydrake.systems.framework import DiagramBuilder
 
+from kinova_gen3.gen3_constants import Gen3NamedPosition, kGen3NamedPositions
+
 from station import (
     MakeHardwareStation,
     Scenario,
@@ -150,7 +152,7 @@ def run(*, scenario: Scenario, simulation=False, visualize=False):
     )
     hardware_station.GetInputPort(f"gen3.command").FixValue(
         hardware_station_context,
-        [0, 0.56, 0, 1.02, 0, 1.29, 0],
+        kGen3NamedPositions[Gen3NamedPosition.CAMCLEAR]
     )
     hardware_station.GetInputPort(f"2f_85.command").FixValue(
         hardware_station_context,
