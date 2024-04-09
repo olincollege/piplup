@@ -51,7 +51,7 @@ def run(*, scenario: Scenario, simulation=False, visualize=False):
     )
 
     com_planner: COMPlanner = builder.AddNamedSystem(
-        "com_planner", COMPlanner()
+        "com_planner", COMPlanner(meshcat=meshcat)
     )
 
     for camera in cameras:
@@ -111,6 +111,11 @@ def run(*, scenario: Scenario, simulation=False, visualize=False):
     builder.Connect(
         point_cloud_generator.GetOutputPort("merged_point_cloud"),
         planar_grasp.GetInputPort("merged_point_cloud"),
+    )
+
+    builder.Connect(
+        point_cloud_generator.GetOutputPort("merged_point_cloud"),
+        com_planner.GetInputPort("merged_point_cloud"),
     )
 
     builder.Connect(

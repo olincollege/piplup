@@ -307,22 +307,22 @@ class Gen3HardwareInterface(LeafSystem):
             case _:
                 raise RuntimeError(f"Unsupported control mode {control_mode}")
 
-    def CalcArmPosition(self, context, output):
-        """
-        Compute the current joint angles and send as output.
-        """
-        # Get feedback from the base, but only if we haven't already this timestep
-        t = context.get_time()
-        if self.last_feedback_time != t:
-            self.GetFeedback(t)
+    # def CalcArmPosition(self, context, output):
+    #     """
+    #     Compute the current joint angles and send as output.
+    #     """
+    #     # Get feedback from the base, but only if we haven't already this timestep
+    #     t = context.get_time()
+    #     if self.last_feedback_time != t:
+    #         self.GetFeedback(t)
 
-        q = np.zeros(kGen3ArmNumJoints)
-        for i in range(kGen3ArmNumJoints):
-            q[i] = np.radians(
-                self.feedback.actuators[i].position
-            )  # Kortex provides joint angles
-            # in degrees for some reason
-        output.SetFromVector(q)
+    #     q = np.zeros(kGen3ArmNumJoints)
+    #     for i in range(kGen3ArmNumJoints):
+    #         q[i] = np.radians(
+    #             self.feedback.actuators[i].position
+    #         )  # Kortex provides joint angles
+    #         # in degrees for some reason
+    #     output.SetFromVector(q)
 
     def CalcArmVelocity(self, context, output):
         """
@@ -347,7 +347,7 @@ class Gen3HardwareInterface(LeafSystem):
 
         tau = np.zeros(kGen3ArmNumJoints)
         for i in range(kGen3ArmNumJoints):
-            tau[i] = np.radians(self.feedback.actuators[i].torque)  # in Nm
+            tau[i] = self.feedback.actuators[i].torque  # in Nm
 
         output.SetFromVector(tau)
 
