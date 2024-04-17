@@ -31,7 +31,7 @@ class COMPlannerState(Enum):
 
 
 class COMPlanner(LeafSystem):
-    def __init__(self, meshcat=None, mass=.275):
+    def __init__(self, meshcat=None, mass=.215):
         LeafSystem.__init__(self)
 
         self.DeclareAbstractInputPort(
@@ -62,11 +62,17 @@ class COMPlanner(LeafSystem):
         self.calibration_torques = [0, 0, 0]
         self.calibration = True
 
-        self.num_measurements = 100
+        self.measured_torques = [0, 0, 0]
+
+        self.num_measurements = 10
 
         #temp solution for demo - shouldn't be variable passed in while initialized
         #obejct mass in kg
         self.mass = mass
+
+        self.iter = 0
+        self.pick_torque = 0
+        self.wait = .1
 
         # Output Ports
         self.DeclareStateOutputPort("arm_command", self.command_idx_)
@@ -176,23 +182,26 @@ class COMPlanner(LeafSystem):
                 self.change_planner_state(state, COMPlannerState.MEASURE_AT_POSITION_1)
 
             case COMPlannerState.MEASURE_AT_POSITION_1:
-                pick_torque = 0
-                for i in range(self.num_measurements):
-                        print(i)
-                        pick_torque += self.arm_torque_port_.Eval(context)[3]
-                        sleep(.1)
-                pick_torque = pick_torque / self.num_measurements
+                while self.iter < self.num_measurements:
+                        print("torque 1: ", self.arm_torque_port_.Eval(context))
+                        self.pick_torque += self.arm_torque_port_.Eval(context)[3]
+                        sleep(self.wait)
+                        self.iter += 1
+                        return
+                self.iter = 0
+
+                self.pick_torque = self.pick_torque / self.num_measurements
                 if self.calibration:
-                    self.calibration_torques[0] = pick_torque
+                    self.calibration_torques[0] = self.pick_torque
                 else:
-                    distance = calc_distance(self.mass, self.calibration_torques[0], pick_torque)
+                    distance = calc_distance(self.mass, self.calibration_torques[0], self.pick_torque)
                     self.add_plane_to_meshcat(distance, "pos_1_plane")
+                    self.measured_torques[0] = self.pick_torque
                     print("Pos 1 dis: ", distance)
 
-                print("POS 1: ", pick_torque)
-                
+                print("POS 1: ", self.pick_torque)
+                self.pick_torque = 0
                 self.change_planner_state(state, COMPlannerState.MOVE_TO_POSITION_2)
-
             case COMPlannerState.MOVE_TO_POSITION_2:
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
                     [0, 0, 0, 1.57, 0, 1.57, 0]
@@ -200,44 +209,58 @@ class COMPlanner(LeafSystem):
                 self.change_planner_state(state, COMPlannerState.MEASURE_AT_POSITION_2)
 
             case COMPlannerState.MEASURE_AT_POSITION_2:
-                pick_torque = 0
-                for i in range(self.num_measurements):
-                        pick_torque += self.arm_torque_port_.Eval(context)[3]
-                        sleep(.1)
-                pick_torque = pick_torque / self.num_measurements
+                while self.iter < self.num_measurements:
+                        print("torque 2: ", self.arm_torque_port_.Eval(context))
+                        self.pick_torque += self.arm_torque_port_.Eval(context)[3]
+                        sleep(self.wait)
+                        self.iter += 1
+                        return
+                self.iter = 0
+                self.pick_torque = self.pick_torque / self.num_measurements
                 if self.calibration:
-                    self.calibration_torques[1] = pick_torque
+                    self.calibration_torques[1] = self.pick_torque
                 else:
-                    distance = calc_distance(self.mass, self.calibration_torques[1], pick_torque)
+                    distance = calc_distance(self.mass, self.calibration_torques[1], self.pick_torque)
                     self.add_plane_to_meshcat(distance, "pos_2_plane")
+                    self.measured_torques[1] = self.pick_torque
                     print("Pos 2 dis: ", distance)
-                    
-                print("POS 2: ", pick_torque)
+
+                print("POS 2: ", self.pick_torque)
+                self.pick_torque = 0
                 self.change_planner_state(state, COMPlannerState.MOVE_TO_POSITION_3)
 
             case COMPlannerState.MOVE_TO_POSITION_3:
                 state.get_mutable_discrete_state(self.command_idx_).set_value(
-                    [0, 0, 0, 1.57, 1.57, 1.57, 0]
+                    [0, 0, 0, 1.57, 1.57, 1.57, 1.57]
                 )
                 self.change_planner_state(state, COMPlannerState.MEASURE_AT_POSITION_3)
 
             case COMPlannerState.MEASURE_AT_POSITION_3:
-                pick_torque = 0
-                for i in range(self.num_measurements):
-                        pick_torque += self.arm_torque_port_.Eval(context)[3]
-                        sleep(.1)
-                pick_torque = pick_torque / self.num_measurements
+                while self.iter < self.num_measurements:
+                        print("torque 3: ", self.arm_torque_port_.Eval(context))
+                        self.pick_torque += self.arm_torque_port_.Eval(context)[3]
+                        sleep(self.wait)
+                        self.iter += 1
+                        return
+                self.iter = 0
+                self.pick_torque = self.pick_torque / self.num_measurements
                 if self.calibration:
-                    self.calibration_torques[2] = pick_torque
+                    self.calibration_torques[2] = self.pick_torque
                     self.calibration = False
+                    self.pick_torque = 0
                     self.change_planner_state(state, COMPlannerState.MOVE_TO_PRE_SCAN)
                     print("calibration: ", self.calibration_torques)
                 else:
-                    distance = calc_distance(self.mass, self.calibration_torques[2], pick_torque)
+                    distance = calc_distance(self.mass, self.calibration_torques[2], self.pick_torque)
                     print("Pos 3 dis: ", distance)
+                    self.measured_torques[2] = self.pick_torque
                     self.add_plane_to_meshcat(distance, "pos_3_plane")
+                    self.pick_torque = 0
                     self.change_planner_state(state, COMPlannerState.DROP_MANIPULAND)
-                print("POS 3: ", pick_torque)
+                    print("calibration: ", self.calibration_torques)
+                    print("measured: ", self.measured_torques)
+                    print("distances: ", [calc_distance(self.mass, cal_torque, meas_torque) for cal_torque, meas_torque in zip(self.calibration_torques, self.measured_torques)])
+                print("POS 3: ", self.pick_torque)
 
             case COMPlannerState.DROP_MANIPULAND:
                 self.change_command_mode(state, Gen3ControlMode.kPose)

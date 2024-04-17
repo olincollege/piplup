@@ -1,8 +1,8 @@
 camera0:
   object_points: 
-    - [400, 315]
+    - [470, 320]
   background_points:
-    - [300,350]
+    - [408,360]
   top_left_coordinate: [340, 220]
   bottom_right_coordinate: [480, 380]
 
@@ -16,24 +16,24 @@ camera1:
 
 camera2:
   object_points: 
-    - [400, 400]
+    - [345, 365]
   background_points:
-    - [240, 357]
+    - [365, 325]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
 
 camera3:
   object_points: 
-    - [200, 350]
+    - [240, 310]
   background_points:
-    - [70, 280]
+    - [215, 275]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
 
 camera4:
   object_points: 
-    - [500, 300]
+    - [425, 300]
   background_points:
-    - [530, 160]
+    - [455, 250]
   top_left_coordinate: [0, 0]
   bottom_right_coordinate: [640, 480]
