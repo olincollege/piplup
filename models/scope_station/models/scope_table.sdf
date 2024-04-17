@@ -161,11 +161,11 @@
       </collision>
     </link>
     <link name="scale_link">
-      <pose> 0.65 0 0.0375 0 0 0</pose>
+      <pose> 0.65 0.075 0.0375 0 0 0</pose>
       <visual name="scale_visual">
         <geometry>
           <box>
-            <size>0.4 0.4 0.08</size>
+            <size>0.25 0.25 0.08</size>
           </box>
         </geometry>
         <material>

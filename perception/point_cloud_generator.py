@@ -61,6 +61,7 @@ def MakePointCloudGenerator(
         ),
     )
     meshcat_point_cloud.set_point_size(0.002)
+    # meshcat_point_cloud.set_default_rgba(Rgba(74.0/255.0, 140.0/255.0, 1.0))
 
     builder.Connect(
         point_cloud_processor.GetOutputPort("merged_point_cloud"),

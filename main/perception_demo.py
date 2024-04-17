@@ -92,7 +92,11 @@ def run(*, scenario: Scenario, visualize=False):
 
     simulator = Simulator(diagram)
     ApplySimulatorConfig(scenario.simulator_config, simulator)
-
+    meshcat.SetCameraPose(np.array([1, -0.5, 0.5]), np.array([0.75, 0, 0.3]))
+    # meshcat.SetProperty("/Background", "top_color", [1.0, 1.0, 1.0])
+    # meshcat.SetProperty("/Background", "bottom_color", [1.0, 1.0, 1.0])
+    meshcat.SetProperty("/Grid", "visible", False)
+    meshcat.SetProperty("/Axes", "visible", False)
     simulator.Initialize()
 
     # from graphviz import Source

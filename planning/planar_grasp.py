@@ -302,12 +302,16 @@ class PlanarGraspSelector(LeafSystem):
             self._internal_model.CreateDefaultContext()
         )
         self._rng = np.random.default_rng()
-
+        self.meshcat.SetCameraPose(np.array([1, -0.5, 0.5]), np.array([0.75, 0, 0.3]))
+        # meshcat.SetProperty("/Background", "top_color", [1.0, 1.0, 1.0])
+        # meshcat.SetProperty("/Background", "bottom_color", [1.0, 1.0, 1.0])
+        self.meshcat.SetProperty("/Grid", "visible", False)
+        self.meshcat.SetProperty("/Axes", "visible", False)
     def SelectGrasp(self, context, output):
         pcd = self.get_input_port(0).Eval(context)
 
         self.meshcat.SetObject(
-            "/point_cloud", pcd, point_size=0.003, rgba=Rgba(1, 1, 1, 0.5)
+            "/point_cloud", pcd, point_size=0.002, rgba=Rgba(1, 1, 1, 0.5)
         )
 
         costs = []
