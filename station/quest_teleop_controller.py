@@ -27,9 +27,12 @@ class QuestTwistTeleopController(LeafSystem):
         else:
             raise RuntimeError("Invalid hand model name")
 
+        self.buttons_state_idx = self.DeclareAbstractState(AbstractValue.Make(dict()))
+
         self.robot_pose_port = self.DeclareVectorInputPort("pose", 6)
         self.DeclareVectorOutputPort("V_WE_desired", 6, self.CalcTwist)
         self.DeclareStateOutputPort("gripper_command", self.gripper_cmd_state_idx)
+        self.DeclareStateOutputPort("buttons", self.buttons_state_idx)
         self.DeclarePeriodicDiscreteUpdateEvent(self._time_step, 0, self.Integrate)
         self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
 
@@ -70,8 +73,10 @@ class QuestTwistTeleopController(LeafSystem):
         else:
             self.movement_freeze_pose = None
             self.ee_freeze_pose = copy(X_WE_desired)
+            reset = True
 
         if buttons:
+            context.SetAbstractState(self.buttons_state_idx, copy(buttons))
             if self.hand_model_name == "2f_85":
                 clipped_vel = np.array(buttons["rightTrig"]) - np.array(
                     buttons["rightGrip"]
@@ -115,8 +120,8 @@ class QuestTwistTeleopController(LeafSystem):
         error_pose = X_WE.InvertAndCompose(X_WE_desired)
         translation_error = X_WE_desired.translation() - X_WE.translation()
         rpy_error = RollPitchYaw(error_pose.rotation()).vector()
-        twist[:3] = 4 * (X_WE.rotation().matrix() @ rpy_error)
-        twist[3:] = 4.5 * translation_error
+        twist[:3] = 1 * (X_WE.rotation().matrix() @ rpy_error)
+        twist[3:] = 1.5 * translation_error
         self.last_translation_error = translation_error
         # self.last_t =
         output.SetFromVector(twist)
@@ -143,21 +148,24 @@ class QuestTeleopController(LeafSystem):
         )
 
         self.gripper_cmd_state_idx = self.DeclareDiscreteState(1)
+        self.b_state_idx = self.DeclareAbstractState(AbstractValue.Make(False))
 
         self.robot_state_port = self.DeclareVectorInputPort(
-            "robot_state", controller_plant.num_multibody_states()
+            "ee_pose", 6
         )
         self.DeclareStateOutputPort("X_WE_desired", self.X_WE_desired_state_idx)
         self.DeclareStateOutputPort("gripper_command", self.gripper_cmd_state_idx)
+        self.DeclareStateOutputPort("b", self.b_state_idx)
         self.DeclarePeriodicDiscreteUpdateEvent(self._time_step, 0, self.Integrate)
         self.DeclareInitializationDiscreteUpdateEvent(self.Initialize)
 
     def Initialize(self, context: Context, discrete_state: DiscreteValues):
         robot_state = self.robot_state_port.Eval(context)
-        self.controller_plant.SetPositions(self.plant_context, robot_state[:7])
-        ee_pose: RigidTransform = self.controller_plant.CalcRelativeTransform(
-            self.plant_context, self.world_frame, self.ee_frame
-        )
+        # self.controller_plant.SetPositions(self.plant_context, robot_state[:7])
+        # ee_pose: RigidTransform = self.controller_plant.CalcRelativeTransform(
+        #     self.plant_context, self.world_frame, self.ee_frame
+        # )
+        ee_pose = RigidTransform(RollPitchYaw(robot_state[:3]).ToQuaternion(), robot_state[3:])
         context.SetAbstractState(self.X_WE_desired_state_idx, ee_pose)
 
     def Integrate(self, context: Context, discrete_state: DiscreteValues):
@@ -195,6 +203,9 @@ class QuestTeleopController(LeafSystem):
             discrete_state.set_value(
                 self.gripper_cmd_state_idx, np.array(buttons["rightTrig"])
             )
+
+        if "B" in buttons:
+            discrete_state.set_value(self.b_state_idx, buttons["B"])
 
         context.SetAbstractState(
             self.X_WE_desired_state_idx, self.ee_freeze_pose.multiply(pose_delta)

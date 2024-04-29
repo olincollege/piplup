@@ -6,6 +6,7 @@ py_library(
         "suction_grasp.py",
         "planar_grasp.py",
         "planar_planner.py",
+        "oreo_planner.py",
     ],
     imports = [".."],
     visibility = ["//visibility:public"],

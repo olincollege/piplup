@@ -175,6 +175,9 @@ class Gen3HardwareInterface(LeafSystem):
         cartesian_pose.x = position[0]
         cartesian_pose.y = position[1]
         cartesian_pose.z = position[2]
+        action.reach_pose.constraint.speed.translation = 1.0
+        action.reach_pose.constraint.speed.orientation = 50.0
+
 
         e = threading.Event()
         notification_handle = self.base.OnNotificationActionTopic(

@@ -54,3 +54,13 @@ py_binary(
         "//station",
     ],
 )
+
+py_binary(
+    name = "oreo_demo",
+    srcs = ["oreo_demo.py"],
+    imports = [".."],
+    deps = [
+        "//planning",
+        "//station",
+    ],
+)
