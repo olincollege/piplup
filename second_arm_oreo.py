@@ -195,20 +195,19 @@ def main():
         # Example core
         success = True
         success &= gripper_command(base, 0.35)
-        success &= cartesian_action_movement(base, base_cyclic, [0.739, 0.042, 0.153, 81.76, -94.171, 68.573])
-        success &= joint_movement(base, [166, 292, 169, 86, 131, 80, 20])
-        success &= cartesian_action_movement(base, base_cyclic, [0.739, 0.042, 0.153, 81.76, -94.171, 68.573])
+        success &= cartesian_action_movement(base, base_cyclic, [0.658, 0.146, 0.145, 81.9, -94, 66])
+        success &= joint_movement(base, [154, 291, 164, 89, 119, 92, 21])
+        success &= cartesian_action_movement(base, base_cyclic, [0.658, 0.146, 0.145, 81.9, -94, 66])
         input("Enter to start")
-        time.sleep(1)
-        success &= cartesian_action_movement(base, base_cyclic, [0.888, -0.024, 0.152, 105.69, -94.73, 42.76])
+        success &= cartesian_action_movement(base, base_cyclic, [0.89, -0.03, 0.152, 105.69, -94.73, 42.76])
         input("Enter to continue")
         success &= gripper_command(base, 0.485)
         input("Enter to continue")
-        success &= joint_movement_wrist(base, base_cyclic, -20)
+        success &= joint_movement(base, [174.7, 292.2, 168.9, 44.1, 43.9, 35.4, 36.8])
         input("Enter to continue")
         success &= gripper_command(base, 0.2)
         input("Enter to continue")
-        success &= cartesian_action_movement(base, base_cyclic, [0.739, 0.042, 0.153, 81.76, -94.171, 68.573])
+        success &= cartesian_action_movement(base, base_cyclic, [0.658, 0.146, 0.145, 81.9, -94, 66])
 
         # You can also refer to the 110-Waypoints examples if you want to execute
         # a trajectory defined by a series of waypoints in joint space or in Cartesian space
