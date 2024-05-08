@@ -174,7 +174,103 @@ def gripper_command(base, position):
             break
 
     return True
+def populateAngularPose(jointPose,durationFactor):
+    waypoint = Base_pb2.AngularWaypoint()
+    waypoint.angles.extend(jointPose)
+    waypoint.duration = durationFactor*0.8
+    
+    return waypoint
+ 
 
+def example_trajectory(base, base_cyclic, jointPoses):
+
+    base_servo_mode = Base_pb2.ServoingModeInformation()
+    base_servo_mode.servoing_mode = Base_pb2.SINGLE_LEVEL_SERVOING
+    base.SetServoingMode(base_servo_mode)
+
+    # jointPoses = tuple(tuple())
+    product = base.GetProductConfiguration()
+
+    # if(   product.model == Base_pb2.ProductConfiguration__pb2.MODEL_ID_L53 
+    # or product.model == Base_pb2.ProductConfiguration__pb2.MODEL_ID_L31):
+    #     if(product.model == Base_pb2.ProductConfiguration__pb2.MODEL_ID_L31):
+    #         jointPoses = (  (0.0,  344.0, 75.0,  360.0, 300.0, 0.0),
+    #                         (0.0,  21.0,  145.0, 272.0, 32.0,  273.0),
+    #                         (42.0, 334.0, 79.0,  241.0, 305.0, 56.0))
+    #     else:
+    #         # Binded to degrees of movement and each degrees correspond to one degree of liberty
+    #         degreesOfFreedom = base.GetActuatorCount();
+
+    #         if(degreesOfFreedom.count == 6):
+    #             jointPoses = (  ( 360.0, 35.6, 281.8, 0.8,  23.8, 88.9 ),
+    #                             ( 359.6, 49.1, 272.1, 0.3,  47.0, 89.1 ),
+    #                             ( 320.5, 76.5, 335.5, 293.4, 46.1, 165.6 ),
+    #                             ( 335.6, 38.8, 266.1, 323.9, 49.7, 117.3 ),
+    #                             ( 320.4, 76.5, 335.5, 293.4, 46.1, 165.6 ),
+    #                             ( 28.8,  36.7, 273.2, 40.8,  39.5, 59.8 ),
+    #                             ( 360.0, 45.6, 251.9, 352.2, 54.3, 101.0 ))
+    #         else:
+    #             jointPoses = (  ( 360.0, 35.6, 180.7, 281.8, 0.8,   23.8, 88.9  ),
+    #                             ( 359.6, 49.1, 181.0, 272.1, 0.3,   47.0, 89.1  ),
+    #                             ( 320.5, 76.5, 166.5, 335.5, 293.4, 46.1, 165.6 ),
+    #                             ( 335.6, 38.8, 177.0, 266.1, 323.9, 49.7, 117.3 ),
+    #                             ( 320.4, 76.5, 166.5, 335.5, 293.4, 46.1, 165.6 ),
+    #                             ( 28.8,  36.7, 174.7, 273.2, 40.8,  39.5, 59.8  ),
+    #                             ( 360.0, 45.6, 171.0, 251.9, 352.2, 54.3, 101.0 ))
+            
+    # else:
+    #     print("Product is not compatible to run this example please contact support with KIN number bellow")
+    #     print("Product KIN is : " + product.kin())
+
+
+    waypoints = Base_pb2.WaypointList()    
+    waypoints.duration = 0.0
+    waypoints.use_optimal_blending = True
+    
+    index = 0
+    for jointPose in jointPoses:
+        waypoint = waypoints.waypoints.add()
+        waypoint.name = "waypoint_" + str(index)
+        durationFactor = 1
+        # Joints/motors 5 and 7 are slower and need more time
+        if(index == 1):
+            durationFactor = 1.1
+        if(index == 4 or index == 6):
+            durationFactor = 6 # Min 30 seconds
+        
+        waypoint.angular_waypoint.CopyFrom(populateAngularPose(jointPose, durationFactor))
+        index = index + 1 
+    
+    
+   # Verify validity of waypoints
+    result = base.ValidateWaypointList(waypoints);
+    if(len(result.trajectory_error_report.trajectory_error_elements) == 0):
+
+        e = threading.Event()
+        notification_handle = base.OnNotificationActionTopic(
+            check_for_end_or_abort(e),
+            Base_pb2.NotificationOptions()
+        )
+
+        print("Reaching angular pose trajectory...")
+        
+        
+        base.ExecuteWaypointTrajectory(waypoints)
+
+        print("Waiting for trajectory to finish ...")
+        finished = e.wait(TIMEOUT_DURATION)
+        base.Unsubscribe(notification_handle)
+
+        if finished:
+            print("Angular movement completed")
+        else:
+            print("Timeout on action notification wait")
+        return finished
+    else:
+        print("Error found in trajectory") 
+        print(result.trajectory_error_report)
+        finished = True
+        return finished
 
 def main():
 
@@ -191,46 +287,67 @@ def main():
         # Create required services
         base = BaseClient(router)
         base_cyclic = BaseCyclicClient(router)
-        pick_pose = [0.55, 0.0, 0.23, 0, 180, 45]
+        pick_pose = [0.561, -0.008, 29, 0, 180, 45]
         drop_pose = [341.7, 40.32, 9.41, 109.9, 253.0, 340.0, 87]
         twist_pose = [0.776, -0.011, 0.166, 91.9, 173.7, 62.5]
-        regrip_pose = []
-        dunk_pose = []
+        regrip_pre_pose = [0.77, -0.057, 0.127, -169.77, 47.29, 166]
+        regrip_pose = [00.8, -0.073, 0.103, -172.0, 47.9, 168.5]
+        dunk_pose = [0.318, -0.233, 0.2, 180, 0, 168]
+        feed_pose = [0.315, -0.44, 0.3, 90, -180, 0]
         # Example core
         success = True
-        success &= gripper_command(base, 0.35)
-        success &= joint_movement(base, [7.0, 37.3, 348.7, 71.8, 5.0, 70.33, 37.0])
-        success &= cartesian_action_movement(base, base_cyclic, pick_pose)
-        input("Enter to start")
-        #Pick
-        pick_pose[2] = 0.078
-        success &= cartesian_action_movement(base, base_cyclic, pick_pose)
-        success &= gripper_command(base, 0.485)
-        #Move to twist
-        pick_pose[2] = 0.15
-        success &= cartesian_action_movement(base, base_cyclic, pick_pose)
-        success &= joint_movement(base, [332.0, 70.2, 11.1, 86.8, 299.1, 288.6, 95.2])
-        input("Enter to continue")
-        # time.sleep(1)
-        success &= joint_movement_wrist(base, base_cyclic, 50)
-        success &= cartesian_action_movement(base, base_cyclic, [0.688, 0.093, 0.148, 91.58, 125.7, 61.741])
-        input("Enter to continue")
-        #Move to drop
-        success &= joint_movement(base, drop_pose)
-        success &= gripper_command(base, 0.3)
-        return 0
-        #regrip
-        success &= cartesian_action_movement(base, base_cyclic, regrip_pose)
-        regrip_pose[2] = 0.3
-        success &= cartesian_action_movement(base, base_cyclic, regrip_pose)
-        success &= gripper_command(base, 0.8)
-        #Dunk
-        success &= cartesian_action_movement(base, base_cyclic, dunk_pose)
-        success &= cartesian_action_movement(base, base_cyclic, dunk_pose)
+        # success &= gripper_command(base, 0.35)
+        # success &= joint_movement(base, [5, 35, 348, 64, 5, 80, 37])
+        # success &= cartesian_action_movement(base, base_cyclic, pick_pose)
+        # input("Enter to start")
+        # # #Pick
+        # pick_pose[2] = 0.033
+        # success &= cartesian_action_movement(base, base_cyclic, pick_pose)
+        # success &= gripper_command(base, 0.485)
+        # #Move to twist
+        # pick_pose[2] = 0.15
+        # success &= cartesian_action_movement(base, base_cyclic, pick_pose)
+        # success &= joint_movement(base, [332.0, 70.2, 11.1, 86.8, 299.1, 288.6, 95.2])
+        # input("Enter to continue")
+        # # time.sleep(1)
+        # success &= joint_movement_wrist(base, base_cyclic, 60)
+        # success &= cartesian_action_movement(base, base_cyclic, [0.688, 0.093, 0.148, 91.58, 125.7, 61.741])
+        # # #Move to drop
+        # success &= joint_movement(base, drop_pose)
+        # success &= gripper_command(base, 0.3)
+        # #regrip
+        # success &= cartesian_action_movement(base, base_cyclic, regrip_pre_pose)
+        # success &= cartesian_action_movement(base, base_cyclic, regrip_pose)
+        # success &= gripper_command(base, 0.9)
+        # input("Enter to continue")
+        # # #Dunk
+        # dunk_pose[2] = 0.25
+        # success &= cartesian_action_movement(base, base_cyclic, dunk_pose)
+        # for _ in range(2):
+        #     dunk_pose[2] = 0.15
+        #     success &= cartesian_action_movement(base, base_cyclic, dunk_pose)
+        #     dunk_pose[2] = 0.18
+        #     success &= cartesian_action_movement(base, base_cyclic, dunk_pose)
+        # dunk_pose[2] = 0.22
+        # success &= cartesian_action_movement(base, base_cyclic, dunk_pose)
+        # success &= cartesian_action_movement(base, base_cyclic, feed_pose)
+        # success &= gripper_command(base, 0.85)
+        # input()
+        # success &= gripper_command(base, 0.9)
+        # feed_pose[1] = -0.7
+        # success &= cartesian_action_movement(base, base_cyclic, feed_pose)
+        # success &= gripper_command(base, 0.85)
         # time.sleep(1)
         # success &= gripper_command(base, 0.4)
         # success &= joint_movement(base, [])
-
+        success &= joint_movement(base, [54, 51, 356, 91, 313, 295, 118])
+        success &= gripper_command(base, 0.85)
+        input()
+        success &= gripper_command(base, 0.92)
+        input()
+        success &= example_trajectory(base, base_cyclic, [ [54, 58, 359, 70, 338, 313, 109], [58, 52, 2.6, 77, 305, 309, 130]])
+        # success &= joint_movement(base, [54, 58, 359, 70, 338, 313, 109])
+        # success &= joint_movement(base, [58, 52, 2.6, 77, 305, 309, 130])
         # You can also refer to the 110-Waypoints examples if you want to execute
         # a trajectory defined by a series of waypoints in joint space or in Cartesian space
 
