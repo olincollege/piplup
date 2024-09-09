@@ -1,5 +1,6 @@
 # piplup
 Repo for code and documentation related to the 2023-2024 Amazon Robotics SCOPE team at Olin College of Engineering.
+![poster-1](https://github.com/user-attachments/assets/47f9c288-f277-459c-a70d-d390a290b3d6)
 
 
 # Setup and Build Instructions
